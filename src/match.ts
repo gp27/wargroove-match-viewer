@@ -178,3 +178,35 @@ export function getPlayerTurns(states: State[]){
     return groups
   }
 }
+
+export const terrains = {
+  forest:   "F",
+  river:    "I",
+  mountain: "M",
+  reefs:    "R",
+  bridge:   "b",
+  deepsea:  "d",
+  beach:    "e",
+  flagstone:"f",
+  plains:   "p",
+  road:     "r",
+  sea:      "s"
+}
+
+export const terrainAbbrvs: Record<string,string> = Object.entries(terrains)
+  .reduce((o, [key, val]) => (o[val] = key, o), {})
+
+
+export const terrainColors = {
+  forest: 0x277d23,
+  river: 0x9ad6d4,
+  mountain: 0x5c3600,
+  reefs: 0x33312e,
+  bridge: 0xd9d9d9,
+  deepsea: 0x03005c,
+  beach: 0xf0e8a5,
+  flagstone: 0x9c9c9c,
+  plains: 0xadd49f,
+  road: 0xe0cea4,
+  sea: 0x549af0
+}

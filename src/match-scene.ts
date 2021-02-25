@@ -1,8 +1,9 @@
-import 'phaser'
-import { ScrollablePanel, RoundRectangle, GridTable, Label } from 'phaser3-rex-plugins/templates/ui/ui-components'
+import * as Phaser from'phaser'
+import { RoundRectangle, GridTable, Label } from 'phaser3-rex-plugins/templates/ui/ui-components'
 import { getMatchStates, getPlayerTurns, Match, PlayerTurn, State } from './match'
+import { WargrooveBoard } from './wargroove-board'
 
-import * as testMatch from '../wg-match.json'
+import { testMatch } from '../wg-match'
 
 const COLOR_PRIMARY = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
@@ -41,17 +42,23 @@ export class MatchScene extends Phaser.Scene {
   create(){
     //let map = this.make.tilemap({ key: 'map' })
     var gridTable = new GridTable(this, {
-      x: 10, y: 0,
+
+      anchor: {
+        left: 'left+10',
+        top: 'top+10',
+        bottom: '100%'
+      },
       width: 300,
-      height: 500,
+      height: 580,
 
       scrollMode: 0,
 
-      background: new RoundRectangle(this, 0, 0, 20, 10, 10, COLOR_PRIMARY),
+      background: this.add.existing(new RoundRectangle(this, 0, 0, 20, 10, 10, COLOR_PRIMARY)),
 
-      header: {
+      header: this.add.existing(new Label(this, {
+        height: 20,
         text: this.add.text(0, 0, 'Turns')
-      },
+      })),
 
       table: {
         cellHeight: 60,
@@ -62,56 +69,55 @@ export class MatchScene extends Phaser.Scene {
         reuseCellContainer: true
       },
 
-      /*slider: {
-        track: new RoundRectangle(this, 0, 0, 20, 10, 10, COLOR_DARK),
-        thumb: new RoundRectangle(this, 0, 0, 0, 0, 13, COLOR_LIGHT),
-      },*/
+      slider: {
+        track: this.add.existing(new RoundRectangle(this, 0, 0, 20, 10, 10, COLOR_DARK)),
+        thumb: this.add.existing(new RoundRectangle(this, 0, 0, 0, 0, 13, COLOR_LIGHT)),
+      },
 
       space: {
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: 20,
+        left: 10,
+        right: 10,
+        top: 10,
+        bottom: 10,
 
         table: 10,
         header: 10,
       },
 
-      items: this.turns,
+      items: this.states,
 
       createCellContainerCallback: ({ scene, width, height, item, index }, cellContainer) => {
         if(cellContainer === null){
-          cellContainer = new Label(scene, {
+          cellContainer = scene.add.existing(new Label(scene, {
             width,
             height,
-            icon: new RoundRectangle(scene, 0, 0, 20, 20, 10, 0x0),
-            text: scene.add.text(0, 0, "")
-          })
+
+            background: scene.add.existing(new RoundRectangle(scene, 0, 0, 20, 20, 0)).setStrokeStyle(1, COLOR_DARK),
+            icon: scene.add.existing(new RoundRectangle(scene, 0, 0, 20, 20, 10, 0x0)),
+            text: scene.add.text(0, 0, ""),
+
+            space: {
+              icon: 10,
+              left: 15,
+              top: 0
+            }
+          }))
         }
 
         cellContainer.setMinSize(width, height)
         cellContainer.getElement('text').setText(item.id)
-        cellContainer.getElement('icon').setColor(item.playerId ? 0xff0000 : 0x00ff00)
+        cellContainer.getElement('icon').setFillStyle(item.playerId ? 0xff0000 : 0x00ff00)
+        cellContainer.getElement('background').setStrokeStyle(1, COLOR_DARK).setDepth(0)
 
+        return cellContainer
       }
     })
+    this.add.existing(gridTable).layout()
 
-    /*var turnsPanel = this.ui.turnsPanel = new ScrollablePanel(this, {
-      x: 0,
-      y: 0,
-      width: 100,
-      height: 400,
-      scrollMode: 'v',
-      panel: {
-        child: new GridTable(this, { width: 100, height: 400 })
-      },
-      slider: {
-        track: this.add.existing(new RoundRectangle(this, 0, 0, 20, 10, 10, 0x260e04)),
-        thumb: this.add.existing(new RoundRectangle(this, 0, 0, 0, 0, 13, 0x7b5e57))
-      }
-    })*/
 
-    this.add.existing(gridTable)
+    let board = new WargrooveBoard(this).setMap(this.match.map)
+
+    this.add.existing(board) 
   }
 
   update(){
