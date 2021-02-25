@@ -1,9 +1,9 @@
 import * as Phaser from'phaser'
 import { RoundRectangle, GridTable, Label } from 'phaser3-rex-plugins/templates/ui/ui-components'
-import { getMatchStates, getPlayerTurns, Match, PlayerTurn, State } from './match'
+import { MatchData, Match, PlayerTurn, State, getPlayerColor } from './match'
 import { WargrooveBoard } from './wargroove-board'
 
-import { testMatch } from '../wg-match'
+import { testMatch } from './wg-match'
 
 const COLOR_PRIMARY = 0x4e342e;
 const COLOR_LIGHT = 0x7b5e57;
@@ -11,26 +11,14 @@ const COLOR_DARK = 0x260e04;
 
 export class MatchScene extends Phaser.Scene {
   match: Match
-  states: State[]
-  turns: PlayerTurn[]
-
-  currentTurn: PlayerTurn | null = null
-  currentState: State | null = null
-
-  ui: Record<string,any> = {}
 
   constructor() {
     super({key: 'MatchScene'})
   }
 
-  init([match = testMatch]: [Match]) {
-    this.match = match
-    this.states = getMatchStates(match)
-    this.turns = getPlayerTurns(this.states)
-    
-    this.selectTurnState(0, 0)
-
-    console.log(this.turns)
+  init({ match = testMatch }: { match: MatchData }) {
+    this.match = new Match(match)
+    console.log(this.match)
   }
 
   preload(){
@@ -40,8 +28,9 @@ export class MatchScene extends Phaser.Scene {
   }
 
   create(){
-    //let map = this.make.tilemap({ key: 'map' })
-    var gridTable = new GridTable(this, {
+    //let map = this.make.tilemap({ key: 'map' })    
+
+    let gridTable = new GridTable(this, {
 
       anchor: {
         left: 'left+10',
@@ -49,7 +38,7 @@ export class MatchScene extends Phaser.Scene {
         bottom: '100%'
       },
       width: 300,
-      height: 580,
+      height: 1060,
 
       scrollMode: 0,
 
@@ -84,7 +73,7 @@ export class MatchScene extends Phaser.Scene {
         header: 10,
       },
 
-      items: this.states,
+      items: this.match.getEntries(),
 
       createCellContainerCallback: ({ scene, width, height, item, index }, cellContainer) => {
         if(cellContainer === null){
@@ -93,7 +82,7 @@ export class MatchScene extends Phaser.Scene {
             height,
 
             background: scene.add.existing(new RoundRectangle(scene, 0, 0, 20, 20, 0)).setStrokeStyle(1, COLOR_DARK),
-            icon: scene.add.existing(new RoundRectangle(scene, 0, 0, 20, 20, 10, 0x0)),
+            icon: scene.add.existing(new RoundRectangle(scene, 0, 0, 20, 20, 10, 0)),
             text: scene.add.text(0, 0, ""),
 
             space: {
@@ -105,27 +94,51 @@ export class MatchScene extends Phaser.Scene {
         }
 
         cellContainer.setMinSize(width, height)
-        cellContainer.getElement('text').setText(item.id)
-        cellContainer.getElement('icon').setFillStyle(item.playerId ? 0xff0000 : 0x00ff00)
-        cellContainer.getElement('background').setStrokeStyle(1, COLOR_DARK).setDepth(0)
+
+        this.updateCellContainer(cellContainer, item)
 
         return cellContainer
       }
     })
     this.add.existing(gridTable).layout()
 
+    let board = new WargrooveBoard(this)
+      .setMap(this.match.getMap())
+      .loadMatchEntry(this.match.getCurrentEntry())
 
-    let board = new WargrooveBoard(this).setMap(this.match.map)
-
-    this.add.existing(board) 
+    gridTable.on('cell.click', (cellContainer, cellIndex, pointer) => {
+      let entry = this.match.selectEntry(cellIndex)
+      gridTable.refresh()
+      board.loadMatchEntry(entry)
+    })
   }
 
   update(){
-
   }
 
-  selectTurnState(turnId, stateId){
-    this.currentTurn = this.turns.find(t => t.id == turnId)
-    this.currentState = this.currentTurn.states.find(s=> s.id == stateId)
+  updateCellContainer(cellContainer, item) {
+    let { turnNumber, playerId } = item.turn
+    let moveNumber = item.turn.entries.indexOf(item) + 1
+    let playerColor = getPlayerColor(playerId)
+
+    let background = cellContainer.getElement('background')
+    let currentEntry = this.match.getCurrentEntry()
+
+    if (item.turn.mainEntry != item) {
+      background.setStrokeStyle(1, COLOR_DARK).setDepth(0)
+    }
+    else {
+      background.setStrokeStyle(1, playerColor).setDepth(1)
+    }
+
+    cellContainer.getElement('text').setText(`T${turnNumber} P${playerId + 1} - Move ${moveNumber}`).setDepth(2)
+    cellContainer.getElement('icon').setFillStyle(playerColor).setDepth(2)
+
+    if (item == currentEntry) {
+      background.setFillStyle(COLOR_LIGHT)
+    }
+    else {
+      background.setFillStyle()
+    }
   }
 }

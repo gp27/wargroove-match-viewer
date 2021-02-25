@@ -2,7 +2,7 @@ import * as jsondiffpatch from 'jsondiffpatch'
 
 const diffpatcher = jsondiffpatch.create()
 
-export type Match = {
+export type MatchData = {
   map: {
     size: Pos,
     tiles: string
@@ -89,28 +89,90 @@ export interface State {
   units: LuaArray<Unit>
 }
 
-export interface StateMeta {
+export type Status = Record<number,{
   income: number
   armyValue: number
   unitCount: number // hq does not count
   combatUnitCount: number
   //activeUnitCount: number
-}
+}>
 
 export interface PlayerTurn {
   id: number
   turnNumber: number
   playerId: number
-  states: State[]
-  meta: Record<number,StateMeta>[]
+  entries: Entry[]
+  mainEntry: Entry
 }
 
-export function getMatchStates(match: Match){
+export interface Entry {
+  id: number
+  state: State
+  status: Status
+  turn?: PlayerTurn
+}
+
+export class Match {
+
+  private entries: Entry[]
+  private turns: PlayerTurn[]
+
+  currentTurn: PlayerTurn | null = null
+  currentEntry: Entry | null = null
+
+  constructor(private matchData: MatchData){
+    let states = generateStates(matchData)
+
+    this.entries = states.map(state => ({
+      get id(){
+        return this.state.id
+      },
+      state,
+      status: getStateStatus(state),
+    }))
+
+    this.turns = getPlayerTurns(this.entries)
+
+    this.selectEntry(0)
+  }
+
+  selectEntry(entryId: number) {
+    this.currentEntry = this.entries.find(e => e.id == entryId)
+    this.currentTurn = this.currentEntry.turn
+    return this.currentEntry
+  }
+
+  getCurrentEntry(){
+    return this.currentEntry
+  }
+
+  getCurrentTurn() {
+    return this.currentTurn
+  }
+
+  getEntries(){
+    return this.entries
+  }
+
+  getTurns() {
+    return this.turns
+  }
+
+  getMap(){
+    return this.matchData.map
+  }
+
+  getPlayers(){
+    return this.matchData.players
+  }
+}
+
+function generateStates(matchData: MatchData){
   let states: State[] = [
-    diffpatcher.clone(match.state)
+    diffpatcher.clone(matchData.state)
   ]
 
-  for(let delta of match.deltas){
+  for(let delta of matchData.deltas){
     let prev = diffpatcher.clone(states[states.length - 1])
     states.push(diffpatcher.patch(prev, delta))
   }
@@ -118,8 +180,8 @@ export function getMatchStates(match: Match){
   return states
 }
 
-export function getStateMetadata({ units }: State){
-  let metas: Record<number,StateMeta> = {}
+function getStateStatus({ units }: State){
+  let meta: Status = {}
 
   for(let i in units){
     let unit = units[i]
@@ -128,10 +190,10 @@ export function getStateMetadata({ units }: State){
     let { playerId, unitClassId, unitClass: { cost } } = unit
     if(playerId < 0) continue
 
-    let meta = metas[playerId]
+    let playerMeta = meta[playerId]
 
-    if(!meta){
-      meta = metas[playerId] = {
+    if(!playerMeta){
+      playerMeta = meta[playerId] = {
         income: 100,
         armyValue: 0,
         unitCount: 0,
@@ -140,43 +202,44 @@ export function getStateMetadata({ units }: State){
     }
     
     if (['city', 'hq'].includes(unitClassId)){
-      meta.income += 100
+      playerMeta.income += 100
     }
 
     if(unitClassId != 'hq'){
-      meta.unitCount++
+      playerMeta.unitCount++
     }
 
     if (!['city', 'hq', 'barracks', 'port', 'tower'].includes(unitClassId)){
-      meta.combatUnitCount++
-      meta.armyValue += cost
+      playerMeta.combatUnitCount++
+      playerMeta.armyValue += cost
     }
   }
 
-  return metas
+  return meta
 }
 
-export function getPlayerTurns(states: State[]){
-  let groups: PlayerTurn[] = []
-  let groupsById: Record<string, PlayerTurn> = {}
+function getPlayerTurns(entries: Entry[]){
+  let turns: PlayerTurn[] = []
+  let turnsById: Record<string, PlayerTurn> = {}
 
-  for(let state of states){
-    let { playerId, turnNumber } = state
+  for(let entry of entries){
+    let { playerId, turnNumber } = entry.state
 
     let id = turnNumber - 1 + playerId
-    let group = groupsById[id]
+    let turn = turnsById[id]
 
-    if(!group){
-      group = { id, turnNumber, playerId, states: [], meta: [] }
-      groupsById[id] = group
-      groups.push(group)
+    if(!turn){
+      turn = { id, turnNumber, playerId, entries: [], mainEntry: entry }
+      turnsById[id] = turn
+      turns.push(turn)
     }
 
-    group.states.push(state)
-    group.meta.push(getStateMetadata(state))
+    entry.turn = turn
+    turn.entries.push(entry)
 
-    return groups
   }
+
+  return turns
 }
 
 export const terrains = {
@@ -209,4 +272,12 @@ export const terrainColors = {
   plains: 0xadd49f,
   road: 0xe0cea4,
   sea: 0x549af0
+}
+
+export function getPlayerColor(playerId: number){
+  return ({
+    '-1': 0xaaaaaa,
+    '0': 0xff0000,
+    '1': 0x0000ff
+  })[playerId] || 0xffffff
 }
