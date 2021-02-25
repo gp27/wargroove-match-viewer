@@ -1,6 +1,8 @@
 import './match'
 import * as Phaser from "phaser";
-//import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin'
+import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin'
+import AwaitLoaderPlugin from 'phaser3-rex-plugins/plugins/awaitloader-plugin.js';
+
 
 import { MatchScene } from './match-scene';
 
@@ -15,14 +17,19 @@ const config: Phaser.Types.Core.GameConfig = {
     
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH
-  }
-  /*plugins: {
-    scene: [{
+  },
+  plugins: {
+    global: [{
+      key: 'rexAwaitLoader',
+      plugin: AwaitLoaderPlugin,
+      start: true
+    }],
+    /*scene: [{
       key: 'rexUI',
       plugin: UIPlugin,
       mapping: 'rexUI'
-    }]
-  }*/
+    }]*/
+  }
 };
 export class WargrooveMatchViewer extends Phaser.Game {
   

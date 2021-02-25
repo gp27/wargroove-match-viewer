@@ -1,6 +1,6 @@
 import * as Phaser from'phaser'
 import { RoundRectangle, GridTable, Label } from 'phaser3-rex-plugins/templates/ui/ui-components'
-import { MatchData, Match, PlayerTurn, State, getPlayerColor } from './match'
+import { MatchData, Match, PlayerTurn, State, getPlayerColor, loadMatchData } from './match'
 import { WargrooveBoard } from './wargroove-board'
 
 import { testMatch } from './wg-match'
@@ -16,12 +16,21 @@ export class MatchScene extends Phaser.Scene {
     super({key: 'MatchScene'})
   }
 
-  init({ match = testMatch }: { match: MatchData }) {
-    this.match = new Match(match)
+  init() {
     console.log(this.match)
   }
 
   preload(){
+    (this.load as any).rexAwait((resolve, reject) => {
+      loadMatchData().then((matchData) => {
+        matchData = matchData || testMatch
+        console.log(matchData)
+        if(!matchData) return reject()
+
+        this.match = new Match(matchData)
+        resolve()
+      }).catch(reject)
+    })
     
 
     //this.load.image('maptiles', "assets/maptiles.png")

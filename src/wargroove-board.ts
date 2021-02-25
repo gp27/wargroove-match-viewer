@@ -15,8 +15,8 @@ export class WargrooveBoard extends Board {
                 gridType: 'quadGrid',
                 type: 'orthogonal',
                 dir: 4,
-                cellWidth: 30,
-                cellHeight: 30
+                cellWidth: 40,
+                cellHeight: 40
             }
         })
 
@@ -78,12 +78,19 @@ export class ChessUnit extends Shape {
     constructor(board: Board, unit: Unit){
         let { pos: { x, y } } = unit
 
-        super(board, x, y, 1, getPlayerColor(unit.playerId))
+        let outOfBoard = (x < 0 || y < 0)
+
+        let color = getPlayerColor(unit.playerId)
+        if(unit.hadTurn){
+            color = Phaser.Display.Color.IntegerToColor(color).darken(50).color
+        }
+
+        super(board, x, y, 1, color, 1, !outOfBoard)
         board.scene.add.existing(this)
 
         this.setScale(0.65)
 
-        if( x < 0 || y < 0) return
+        if(outOfBoard) return
 
         //this.monopoly = new Monopoly(this, { face: 0, pathTileZ: 0, })
         //board.scene.add.existing(this.monopoly)

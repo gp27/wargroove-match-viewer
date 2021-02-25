@@ -167,15 +167,35 @@ export class Match {
   }
 }
 
-function generateStates(matchData: MatchData){
+export async function loadMatchData(id?: string): Promise<MatchData|null>{
+  let url = new URL(location.href)
+  if(id){
+    url.searchParams.set('match_id', id)
+    history?.replaceState(null, null, url.href)
+  }
+  let match_id = url.searchParams.get('match_id')
+
+  let matchUrl = new URL('https://worker.wgroove.tk')
+  matchUrl.searchParams.set('match_id', match_id)
+
+  return null
+
+  return fetch(matchUrl.href).then(res => {
+    return res.json().catch(err => null)
+  })
+}
+
+function generateStates({ state, deltas }: MatchData){
   let states: State[] = [
-    diffpatcher.clone(matchData.state)
+    diffpatcher.clone(state)
   ]
 
-  for(let delta of matchData.deltas){
-    let prev = diffpatcher.clone(states[states.length - 1])
-    states.push(diffpatcher.patch(prev, delta))
+  for(let delta of deltas.reverse()){
+    let prev = diffpatcher.clone(states[0])
+    states.unshift(diffpatcher.unpatch(prev, delta))
   }
+
+  console.log(states)
 
   return states
 }
