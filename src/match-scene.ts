@@ -12,24 +12,32 @@ const COLOR_DARK = 0x260e04;
 export class MatchScene extends Phaser.Scene {
   match: Match
 
+  ui: Record<string,any> = {}
+
   constructor() {
     super({key: 'MatchScene'})
   }
 
   init() {
-    console.log(this.match)
+    
   }
 
   preload(){
+    this.makeUi();
+
     (this.load as any).rexAwait((resolve, reject) => {
       loadMatchData().then((matchData) => {
         matchData = matchData || testMatch
-        console.log(matchData)
-        if(!matchData) return reject()
+        //if(!matchData) return reject()
 
         this.match = new Match(matchData)
+        
+        this.loadMatch()
         resolve()
-      }).catch(reject)
+      }).catch(err => {
+        console.error(err)
+        reject()
+      })
     })
     
 
@@ -38,8 +46,12 @@ export class MatchScene extends Phaser.Scene {
 
   create(){
     //let map = this.make.tilemap({ key: 'map' })    
+    //this.makeUi()
+    
+  }
 
-    let gridTable = new GridTable(this, {
+  makeUi(){
+    let gridTable = this.ui.gridTable = new GridTable(this, {
 
       anchor: {
         left: 'left+10',
@@ -82,10 +94,10 @@ export class MatchScene extends Phaser.Scene {
         header: 10,
       },
 
-      items: this.match.getEntries(),
+      items: [],
 
       createCellContainerCallback: ({ scene, width, height, item, index }, cellContainer) => {
-        if(cellContainer === null){
+        if (cellContainer === null) {
           cellContainer = scene.add.existing(new Label(scene, {
             width,
             height,
@@ -111,21 +123,33 @@ export class MatchScene extends Phaser.Scene {
     })
     this.add.existing(gridTable).layout()
 
-    let board = new WargrooveBoard(this)
-      .setMap(this.match.getMap())
-      .loadMatchEntry(this.match.getCurrentEntry())
+    let board = this.ui.board = new WargrooveBoard(this)
 
     gridTable.on('cell.click', (cellContainer, cellIndex, pointer) => {
-      let entry = this.match.selectEntry(cellIndex)
+      let entry = gridTable.getCellContainer(cellIndex).getData('entry')
+      this.match.selectEntry(entry.id)
       gridTable.refresh()
       board.loadMatchEntry(entry)
     })
+  }
+
+  loadMatch(){
+    let { gridTable, board } = this.ui
+    
+    gridTable
+      .setItems(this.match.getEntries())
+    
+      board
+      .setMap(this.match.getMap())
+      .loadMatchEntry(this.match.getCurrentEntry())
   }
 
   update(){
   }
 
   updateCellContainer(cellContainer, item) {
+    cellContainer.setData('entry', item)
+
     let { turnNumber, playerId } = item.turn
     let moveNumber = item.turn.entries.indexOf(item) + 1
     let playerColor = getPlayerColor(playerId)

@@ -134,10 +134,12 @@ export class Match {
     this.turns = getPlayerTurns(this.entries)
 
     this.selectEntry(0)
+
+    console.log(this)
   }
 
   selectEntry(entryId: number) {
-    this.currentEntry = this.entries.find(e => e.id == entryId)
+    this.currentEntry = this.entries.find(e => e.id == entryId) || this.entries[0]
     this.currentTurn = this.currentEntry.turn
     return this.currentEntry
   }
@@ -175,10 +177,8 @@ export async function loadMatchData(id?: string): Promise<MatchData|null>{
   }
   let match_id = url.searchParams.get('match_id')
 
-  let matchUrl = new URL('https://worker.wgroove.tk')
+  let matchUrl = new URL('https://wargroove-match-worker.gp27.workers.dev')
   matchUrl.searchParams.set('match_id', match_id)
-
-  return null
 
   return fetch(matchUrl.href).then(res => {
     return res.json().catch(err => null)
@@ -266,9 +266,9 @@ export const terrains = {
   forest:   "F",
   river:    "I",
   mountain: "M",
-  reefs:    "R",
+  reef:     "R",
   bridge:   "b",
-  deepsea:  "d",
+  ocean  :  "o",
   beach:    "e",
   flagstone:"f",
   plains:   "p",
@@ -284,9 +284,9 @@ export const terrainColors = {
   forest: 0x277d23,
   river: 0x9ad6d4,
   mountain: 0x5c3600,
-  reefs: 0x33312e,
+  reef: 0x33312e,
   bridge: 0xd9d9d9,
-  deepsea: 0x03005c,
+  ocean: 0x03005c,
   beach: 0xf0e8a5,
   flagstone: 0x9c9c9c,
   plains: 0xadd49f,
