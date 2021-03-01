@@ -1,4 +1,6 @@
 import * as jsondiffpatch from 'jsondiffpatch'
+import 'chart.js'
+import { ChartConfiguration, ChartData, ChartDataSets } from 'chart.js'
 
 const diffpatcher = jsondiffpatch.create()
 
@@ -131,7 +133,7 @@ export class Match {
       status: getStateStatus(state),
     }))
 
-    this.turns = getPlayerTurns(this.entries)
+    this.turns = getPlayerTurns(this.entries, this.getPlayers().length)
 
     this.selectEntry(0)
 
@@ -165,7 +167,63 @@ export class Match {
   }
 
   getPlayers(){
-    return this.matchData.players
+    return Object.values(this.matchData.players)
+  }
+
+  getCharts(): ChartConfiguration[] {
+    function getDataSet(datasets: ChartDataSets[], index: number, dataset: ChartDataSets = {}): ChartDataSets{
+      return datasets[index] = datasets[index] || Object.assign({ data: [] }, dataset)
+    }
+
+    let labels: string[] = []
+
+    let incomeDataSet: ChartDataSets[] = []
+    let armyValueDataSet: ChartDataSets[] = []
+    let unitCountDataSet: ChartDataSets[] = []
+    let combatUnitCountDataSet: ChartDataSets[] = []
+
+
+    for(let entry of this.entries){
+      let { status, turn: { turnNumber, playerId, entries: tEntries } } = entry
+      labels.push(`T${turnNumber}-P${playerId+1}-M${tEntries.indexOf(entry) + 1}`)
+
+      Object.entries(status).forEach(([playerIdStr, { income, armyValue, unitCount, combatUnitCount }], i)=> {
+        let playerId = +playerIdStr
+        let colorRGB = Phaser.Display.Color.IntegerToRGB(getPlayerColor(playerId))
+        let color = Phaser.Display.Color.RGBToString(colorRGB.r, colorRGB.g, colorRGB.b, colorRGB.a);
+
+        getDataSet(incomeDataSet, i, { label: `P${playerId + 1} Income`, borderColor: color }).data.push(income)
+        getDataSet(armyValueDataSet, i, { label: `P${playerId + 1} Army Value`, borderColor: color }).data.push(armyValue)
+        getDataSet(unitCountDataSet, i, { label: `P${playerId + 1} Unit Count`, borderColor: color }).data.push(unitCount)
+        getDataSet(combatUnitCountDataSet, i, { label: `P${playerId + 1} Combat Unit Count`, borderColor: color }).data.push(combatUnitCount)
+      })
+    }
+
+    return [{
+      type: 'line',
+      data: {
+        labels,
+        datasets: incomeDataSet
+      }
+    }, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: armyValueDataSet
+        }
+      }, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: unitCountDataSet
+        }
+      }, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: combatUnitCountDataSet
+        }
+      }]
   }
 }
 
@@ -238,14 +296,14 @@ function getStateStatus({ units }: State){
   return meta
 }
 
-function getPlayerTurns(entries: Entry[]){
+function getPlayerTurns(entries: Entry[], n: number){
   let turns: PlayerTurn[] = []
   let turnsById: Record<string, PlayerTurn> = {}
 
   for(let entry of entries){
     let { playerId, turnNumber } = entry.state
 
-    let id = turnNumber - 1 + playerId
+    let id = (turnNumber - 1) * n + playerId
     let turn = turnsById[id]
 
     if(!turn){
@@ -263,17 +321,18 @@ function getPlayerTurns(entries: Entry[]){
 }
 
 export const terrains = {
-  forest:   "F",
-  river:    "I",
-  mountain: "M",
-  reef:     "R",
-  bridge:   "b",
-  ocean  :  "o",
-  beach:    "e",
-  flagstone:"f",
-  plains:   "p",
-  road:     "r",
-  sea:      "s"
+  forest:     "F",
+  river:      "I",
+  mountain:   "M",
+  reef:       "R",
+  wall:       "W",
+  bridge:     "b",
+  ocean:      "o",
+  beach:      "e",
+  cobblestone:"f",
+  plains:     "p",
+  road:       "r",
+  sea:        "s"
 }
 
 export const terrainAbbrvs: Record<string,string> = Object.entries(terrains)
@@ -285,10 +344,11 @@ export const terrainColors = {
   river: 0x9ad6d4,
   mountain: 0x5c3600,
   reef: 0x33312e,
+  wall: 0x333333,
   bridge: 0xd9d9d9,
   ocean: 0x03005c,
   beach: 0xf0e8a5,
-  flagstone: 0x9c9c9c,
+  cobblestone: 0x9c9c9c,
   plains: 0xadd49f,
   road: 0xe0cea4,
   sea: 0x549af0

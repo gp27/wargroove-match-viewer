@@ -1,7 +1,8 @@
 import * as Phaser from'phaser'
-import { RoundRectangle, GridTable, Label } from 'phaser3-rex-plugins/templates/ui/ui-components'
+import { RoundRectangle, GridTable, Label, Chart } from 'phaser3-rex-plugins/templates/ui/ui-components'
 import { MatchData, Match, PlayerTurn, State, getPlayerColor, loadMatchData } from './match'
 import { WargrooveBoard } from './wargroove-board'
+import 'chart.js'
 
 import { testMatch } from './wg-match'
 
@@ -23,6 +24,7 @@ export class MatchScene extends Phaser.Scene {
   }
 
   preload(){
+    //this.load.script('chartjs', 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js')
     this.makeUi();
 
     (this.load as any).rexAwait((resolve, reject) => {
@@ -131,17 +133,28 @@ export class MatchScene extends Phaser.Scene {
       gridTable.refresh()
       board.loadMatchEntry(entry)
     })
+
+    this.ui.charts = []
   }
 
   loadMatch(){
-    let { gridTable, board } = this.ui
+    let { gridTable, board, charts } = this.ui
     
     gridTable
       .setItems(this.match.getEntries())
     
-      board
+    board
       .setMap(this.match.getMap())
       .loadMatchEntry(this.match.getCurrentEntry())
+
+    this.match.getCharts().forEach((chartData, i) => {
+      let chart = charts[i] || new Chart(this, 1520, 100 + 310 * i, 700, 300)
+      if (!charts[i]){
+        charts[i] = chart
+        this.add.existing(chart)
+      }
+      chart.setChart(chartData)
+    })
   }
 
   update(){

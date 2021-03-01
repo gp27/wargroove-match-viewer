@@ -20,6 +20,8 @@
     "webpack-cli": "^4.5.0"
   },
   "dependencies": {
+    "@types/chart.js": "^2.9.31",
+    "chart.js": "^2.9.4",
     "jsondiffpatch": "^0.4.1",
     "phaser3-rex-plugins": "^1.1.39"
   }

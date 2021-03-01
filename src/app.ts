@@ -11,7 +11,7 @@ const config: Phaser.Types.Core.GameConfig = {
   width: 1920,
   height: 1080,
   parent: "game",
-  //backgroundColor: "#aaa",
+  backgroundColor: "#fff",
   scene: [MatchScene],
   scale: {
     
