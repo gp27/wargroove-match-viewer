@@ -1,4 +1,4 @@
-import * as Phaser from'phaser'
+import Phaser from'phaser'
 import { RoundRectangle, GridTable, Label, Chart } from 'phaser3-rex-plugins/templates/ui/ui-components'
 import { MatchData, Match, PlayerTurn, State, getPlayerColor, loadMatchData } from './match'
 import { WargrooveBoard } from './wargroove-board'
@@ -53,7 +53,7 @@ export class MatchScene extends Phaser.Scene {
   }
 
   makeUi(){
-    let gridTable = this.ui.gridTable = new GridTable(this, {
+    /*let gridTable = this.ui.gridTable = new GridTable(this, {
 
       anchor: {
         left: 'left+10',
@@ -123,16 +123,16 @@ export class MatchScene extends Phaser.Scene {
         return cellContainer
       }
     })
-    this.add.existing(gridTable).layout()
+    this.add.existing(gridTable).layout()*/
 
     let board = this.ui.board = new WargrooveBoard(this)
 
-    gridTable.on('cell.click', (cellContainer, cellIndex, pointer) => {
+    /*gridTable.on('cell.click', (cellContainer, cellIndex, pointer) => {
       let entry = gridTable.getCellContainer(cellIndex).getData('entry')
       this.match.selectEntry(entry.id)
       gridTable.refresh()
       board.loadMatchEntry(entry)
-    })
+    })*/
 
     this.ui.charts = []
   }
@@ -140,8 +140,8 @@ export class MatchScene extends Phaser.Scene {
   loadMatch(){
     let { gridTable, board, charts } = this.ui
     
-    gridTable
-      .setItems(this.match.getEntries())
+    /*gridTable
+      .setItems(this.match.getEntries())*/
     
     board
       .setMap(this.match.getMap())

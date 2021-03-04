@@ -112,6 +112,7 @@ export interface Entry {
   state: State
   status: Status
   turn?: PlayerTurn
+  moveNumber?: number
 }
 
 export class Match {
@@ -121,6 +122,12 @@ export class Match {
 
   currentTurn: PlayerTurn | null = null
   currentEntry: Entry | null = null
+
+  static load(id?: string){
+    return loadMatchData(id).then(matchData => {
+      return new Match(matchData)
+    })
+  }
 
   constructor(private matchData: MatchData){
     let states = generateStates(matchData)
@@ -312,9 +319,9 @@ function getPlayerTurns(entries: Entry[], n: number){
       turns.push(turn)
     }
 
-    entry.turn = turn
     turn.entries.push(entry)
-
+    entry.turn = turn
+    entry.moveNumber = turn.entries.length
   }
 
   return turns
@@ -360,4 +367,14 @@ export function getPlayerColor(playerId: number){
     '0': 0xff0000,
     '1': 0x0000ff
   })[playerId] || 0xffffff
+}
+
+export function getPlayerColorString(playerId: number) {
+  return VBColorToHEX(getPlayerColor(playerId))
+}
+
+function VBColorToHEX(i) {
+  var bbggrr = ("000000" + i.toString(16)).slice(-6);
+  var rrggbb = bbggrr.substr(4, 2) + bbggrr.substr(2, 2) + bbggrr.substr(0, 2);
+  return "#" + rrggbb;
 }
