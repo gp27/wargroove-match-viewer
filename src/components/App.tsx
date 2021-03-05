@@ -1,17 +1,23 @@
-import React, { PropsWithChildren } from "react"
-import { Grommet, ThemeType, Box, Sidebar, Main, DataTable, Text, Avatar } from 'grommet'
+import React from "react"
+import { Grommet, ThemeType, Box, Sidebar, Main, Text, Button } from 'grommet'
+import { hpe } from 'grommet-theme-hpe'
 import GameBoard from './GameBoard'
-import { getPlayerColor, getPlayerColorString, Match } from "../match"
+import MoveList from './MoveList'
+import UnitList from './UnitList'
+import PlayerStatus from './PlayerStatus'
+import StatusGraphs from './StatusGraphs'
+import { Match } from "../match"
 
 const theme: ThemeType = {
     global: {
-        colors: {
-            //brand: ''
-        },
+        /*colors: {
+            brand: 'gray'
+        },*/
         font: {
-            family: 'Roboto',
-            size: '18px',
-            height: '20px',
+            family: 'Raleway',
+            size: '16px',
+            height: '18px',
+            
         },
     }
 }
@@ -26,49 +32,69 @@ const NavBar = props => <Box
     {...props}
 />
 
-const MoveList = ({ match }: { match: Match }) => <DataTable
-    border="horizontal"
-    data={match?.getEntries() || []}
-    columns={[
-        {
-            property: 'player',
-            render: ({ turn }) => (<Avatar size="small" background={getPlayerColorString(turn.playerId)}>P{turn.playerId + 1}</Avatar>)
-        },
-        {
-            property: 'move',
-            render: (entry) => <Text>Move {entry.moveNumber}</Text>
-        }
-    ]}
-/>
-
 export default class App extends React.Component {
     match: Match
 
     constructor(props) {
         super(props)
+
+        this.update = this.update.bind(this)
+
         Match.load().then(match => {
             this.match = match
             this.setState({})
         })
     }
 
+    update(){
+        this.setState(this.state)
+    }
+
     render() {
         return (
-            <Grommet plain theme={theme} full>
-                <NavBar>Wargroove Match Viewer</NavBar>
+            <Grommet theme={hpe} full>
+                <Box fill direction="column">
+                    <NavBar>
+                        <Text size="1.3em">Wargroove Match Viewer</Text>
+                        <StatusGraphs match={this.match} />
+                    </NavBar>
 
-                <Box direction='row' flex>
-                    <Sidebar
-                        background="brand"
-                        round="small"
-                        margin="small"
-                    >
-                        <MoveList match={this.match}></MoveList>
-                    </Sidebar>
+                    <Box direction='row' flex pad="small">
+                        <Sidebar
+                            background="light-2"
+                            round="small"
+                            margin="small"
+                            overflow="auto"
+                        >
+                            <MoveList match={this.match} onSelected={this.update}/>
+                        </Sidebar>
 
-                    <Main flex align='center' justify='center'>
-                        <GameBoard />
-                    </Main>
+                        <Main flex align='center' justify='center' margin="small">
+                            <GameBoard match={this.match}/>
+                        </Main>
+
+                        <Box direction="column">
+                            <Box background="light-2"
+                                round="small"
+                                margin="small"
+                            >
+                                <PlayerStatus match={this.match}/>
+                            </Box>
+                            <Box flex direction="row">
+                                {this.match?.getPlayers().map(({ id }) => (
+                                    <Sidebar
+                                        key={id}
+                                        background="light-2"
+                                        round="small"
+                                        margin="small"
+                                        overflow="auto"
+                                    >
+                                        <UnitList match={this.match} playerId={id} />
+                                    </Sidebar>
+                                ))}
+                            </Box>
+                        </Box>
+                    </Box>
                 </Box>
             </Grommet>
         );

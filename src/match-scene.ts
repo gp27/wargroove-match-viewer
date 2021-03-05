@@ -27,7 +27,7 @@ export class MatchScene extends Phaser.Scene {
     //this.load.script('chartjs', 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js')
     this.makeUi();
 
-    (this.load as any).rexAwait((resolve, reject) => {
+    /*(this.load as any).rexAwait((resolve, reject) => {
       loadMatchData().then((matchData) => {
         matchData = matchData || testMatch
         //if(!matchData) return reject()
@@ -40,7 +40,7 @@ export class MatchScene extends Phaser.Scene {
         console.error(err)
         reject()
       })
-    })
+    })*/
     
 
     //this.load.image('maptiles', "assets/maptiles.png")
@@ -137,30 +137,36 @@ export class MatchScene extends Phaser.Scene {
     this.ui.charts = []
   }
 
-  loadMatch(){
+  loadMatch(match: Match){
+    this.match = match
     let { gridTable, board, charts } = this.ui
     
     /*gridTable
       .setItems(this.match.getEntries())*/
     
-    board
-      .setMap(this.match.getMap())
-      .loadMatchEntry(this.match.getCurrentEntry())
+    board.setMap(match.getMap())
+    this.reloadMatchEntry()
 
-    this.match.getCharts().forEach((chartData, i) => {
+    /*this.match.getCharts().forEach((chartData, i) => {
       let chart = charts[i] || new Chart(this, 1520, 100 + 310 * i, 700, 300)
       if (!charts[i]){
         charts[i] = chart
         this.add.existing(chart)
       }
       chart.setChart(chartData)
-    })
+    })*/
+  }
+
+  reloadMatchEntry(){
+    if(!this.match) return
+    this.ui.board.loadEntry(this.match.getCurrentEntry())
   }
 
   update(){
+    this.reloadMatchEntry()
   }
 
-  updateCellContainer(cellContainer, item) {
+  /*updateCellContainer(cellContainer, item) {
     cellContainer.setData('entry', item)
 
     let { turnNumber, playerId } = item.turn
@@ -186,5 +192,5 @@ export class MatchScene extends Phaser.Scene {
     else {
       background.setFillStyle()
     }
-  }
+  }*/
 }

@@ -10,8 +10,6 @@ export class WargrooveBoard extends Board {
 
         super(scene, {
             grid: {
-                x: 350,
-                y: 50,
                 gridType: 'quadGrid',
                 type: 'orthogonal',
                 dir: 4,
@@ -54,7 +52,7 @@ export class WargrooveBoard extends Board {
         return this
     }
 
-    loadMatchEntry(entry: Entry){
+    loadEntry(entry: Entry){
         this.removeAllChess(true)
 
         this.createTiles(this.tiles)

@@ -177,6 +177,25 @@ export class Match {
     return Object.values(this.matchData.players)
   }
 
+  getCurrentCombatUnits(playerId?: number){
+    let players = this.getPlayers()
+    let relativePlayerId = (playerId, currentPlayerId) => (playerId - currentPlayerId + players.length) % players.length
+
+    let entry = this.getCurrentEntry()
+
+    return Object.values(entry.state.units)
+      .filter(u => playerId === undefined ? u.playerId >= 0 : u.playerId == playerId)
+      .filter(u => !u.garrisonClassId)
+      .sort((u1, u2) => {
+
+        let deltaPlayer = relativePlayerId(u1.playerId, entry.state.playerId) - relativePlayerId(u2.playerId, entry.state.playerId)
+        
+        if(deltaPlayer != 0) return deltaPlayer
+
+        return Number(u2.unitClass.isCommander) - Number(u1.unitClass.isCommander)
+      })
+  }
+
   getCharts(): ChartConfiguration[] {
     function getDataSet(datasets: ChartDataSets[], index: number, dataset: ChartDataSets = {}): ChartDataSets{
       return datasets[index] = datasets[index] || Object.assign({ data: [] }, dataset)
@@ -272,7 +291,7 @@ function getStateStatus({ units }: State){
     let unit = units[i]
     if(!unit) continue
 
-    let { playerId, unitClassId, unitClass: { cost } } = unit
+    let { playerId, health, unitClassId, unitClass: { cost } } = unit
     if(playerId < 0) continue
 
     let playerMeta = meta[playerId]
@@ -294,9 +313,9 @@ function getStateStatus({ units }: State){
       playerMeta.unitCount++
     }
 
-    if (!['city', 'hq', 'barracks', 'port', 'tower'].includes(unitClassId)){
+    if (!['city', 'hq', 'barracks', 'port', 'tower', 'hideout'].includes(unitClassId)){
       playerMeta.combatUnitCount++
-      playerMeta.armyValue += cost
+      playerMeta.armyValue += Math.round(cost * health / 100)
     }
   }
 
@@ -321,7 +340,7 @@ function getPlayerTurns(entries: Entry[], n: number){
 
     turn.entries.push(entry)
     entry.turn = turn
-    entry.moveNumber = turn.entries.length
+    entry.moveNumber = turn.entries.length - 1
   }
 
   return turns
@@ -376,5 +395,5 @@ export function getPlayerColorString(playerId: number) {
 function VBColorToHEX(i) {
   var bbggrr = ("000000" + i.toString(16)).slice(-6);
   var rrggbb = bbggrr.substr(4, 2) + bbggrr.substr(2, 2) + bbggrr.substr(0, 2);
-  return "#" + rrggbb;
+  return "#" + bbggrr;
 }

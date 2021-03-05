@@ -24,6 +24,7 @@
     "@types/chart.js": "^2.9.31",
     "chart.js": "^2.9.4",
     "grommet": "^2.16.3",
+    "grommet-theme-hpe": "^2.0.3",
     "jsondiffpatch": "^0.4.1",
     "phaser": "^3.52.0",
     "phaser3-rex-plugins": "^1.1.39",
