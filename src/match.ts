@@ -4,6 +4,8 @@ import { ChartConfiguration, ChartData, ChartDataSets } from 'chart.js'
 
 const diffpatcher = jsondiffpatch.create()
 
+type LuaArray<T> = T[] | Record<number, T>
+
 export type MatchData = {
   map: {
     size: Pos,
@@ -13,10 +15,8 @@ export type MatchData = {
   players: LuaArray<Player>
 
   state: State,
-  deltas: jsondiffpatch.Delta[]
+  deltas: LuaArray<jsondiffpatch.Delta>
 }
-
-type LuaArray<T> = T[] | Record<number,T>
 
 export interface Pos { x: number, y: number, facing?: number }
 
@@ -84,7 +84,6 @@ export interface Weapon {
 }
 
 export interface State {
-  id: number
   playerId: number
   turnNumber: number
   gold: Record<number,number>
@@ -132,17 +131,17 @@ export class Match {
   constructor(private matchData: MatchData){
     let states = generateStates(matchData)
 
-    this.entries = states.map(state => ({
-      get id(){
-        return this.state.id
-      },
+    this.entries = states.map((state, id) => ({
+      id,
       state,
       status: getStateStatus(state),
     }))
 
     this.turns = getPlayerTurns(this.entries, this.getPlayers().length)
 
-    this.selectEntry(0)
+
+
+    this.selectEntry(this.getWinners().length ? 0 : this.entries.length - 1)
 
     console.log(this)
   }
@@ -171,6 +170,10 @@ export class Match {
 
   getMap(){
     return this.matchData.map
+  }
+
+  getWinners(){
+    return this.getPlayers().filter(p => p.is_victorious)
   }
 
   getPlayers(){
@@ -274,7 +277,7 @@ function generateStates({ state, deltas }: MatchData){
     diffpatcher.clone(state)
   ]
 
-  for(let delta of deltas.reverse()){
+  for(let delta of Object.values(deltas).reverse()){
     let prev = diffpatcher.clone(states[0])
     states.unshift(diffpatcher.unpatch(prev, delta))
   }
