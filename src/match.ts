@@ -1,6 +1,7 @@
 import * as jsondiffpatch from 'jsondiffpatch'
 import 'chart.js'
 import { ChartConfiguration, ChartData, ChartDataSets } from 'chart.js'
+import { getCommanderMeta, PlayerColor, playerColors } from './match-utils'
 
 const diffpatcher = jsondiffpatch.create()
 
@@ -26,6 +27,11 @@ export interface Player {
   is_victorious: boolean,
   is_local: boolean,
   is_human: boolean
+
+  commander?: string
+  faction?: string
+  username?: string
+  color?: PlayerColor
 }
 
 export interface Unit {
@@ -118,6 +124,7 @@ export class Match {
 
   private entries: Entry[]
   private turns: PlayerTurn[]
+  private players: Player[]
 
   currentTurn: PlayerTurn | null = null
   currentEntry: Entry | null = null
@@ -134,12 +141,11 @@ export class Match {
     this.entries = states.map((state, id) => ({
       id,
       state,
-      status: getStateStatus(state),
+      status: generateStateStatus(state),
     }))
 
-    this.turns = getPlayerTurns(this.entries, this.getPlayers().length)
-
-
+    this.players = generatePlayers(this.entries, this.matchData)
+    this.turns = generatePlayerTurns(this.entries, this.getPlayers().length)
 
     this.selectEntry(this.getWinners().length ? 0 : this.entries.length - 1)
 
@@ -177,7 +183,12 @@ export class Match {
   }
 
   getPlayers(){
-    return Object.values(this.matchData.players)
+    return this.players
+  }
+
+  getPlayerColorHex(playerId){
+    let color =  this.players[playerId].color || 'grey'
+    return playerColors[color].hex
   }
 
   getCurrentCombatUnits(playerId?: number){
@@ -211,25 +222,36 @@ export class Match {
     let unitCountDataSet: ChartDataSets[] = []
     let combatUnitCountDataSet: ChartDataSets[] = []
 
+    let pointBackgroundColor: string[] = []
+
 
     for(let entry of this.entries){
       let { status, turn: { turnNumber, playerId, entries: tEntries } } = entry
       labels.push(`T${turnNumber}-P${playerId+1}-M${tEntries.indexOf(entry) + 1}`)
 
+      let color = this.getPlayerColorHex(playerId)
+      pointBackgroundColor.push(color)
+
       Object.entries(status).forEach(([playerIdStr, { income, armyValue, unitCount, combatUnitCount }], i)=> {
         let playerId = +playerIdStr
-        let colorRGB = Phaser.Display.Color.IntegerToRGB(getPlayerColor(playerId))
-        let color = Phaser.Display.Color.RGBToString(colorRGB.r, colorRGB.g, colorRGB.b, colorRGB.a);
+        let color = this.getPlayerColorHex(playerId)
 
-        getDataSet(incomeDataSet, i, { label: `P${playerId + 1} Income`, borderColor: color }).data.push(income)
-        getDataSet(armyValueDataSet, i, { label: `P${playerId + 1} Army Value`, borderColor: color }).data.push(armyValue)
-        getDataSet(unitCountDataSet, i, { label: `P${playerId + 1} Unit Count`, borderColor: color }).data.push(unitCount)
-        getDataSet(combatUnitCountDataSet, i, { label: `P${playerId + 1} Combat Unit Count`, borderColor: color }).data.push(combatUnitCount)
+        getDataSet(incomeDataSet, i, { label: `P${playerId + 1} Income`, borderColor: color, pointBackgroundColor }).data.push(income)
+        getDataSet(armyValueDataSet, i, { label: `P${playerId + 1} Army Value`, borderColor: color, pointBackgroundColor }).data.push(armyValue)
+        getDataSet(unitCountDataSet, i, { label: `P${playerId + 1} Unit Count`, borderColor: color, pointBackgroundColor }).data.push(unitCount)
+        getDataSet(combatUnitCountDataSet, i, { label: `P${playerId + 1} Combat Unit Count`, borderColor: color, pointBackgroundColor }).data.push(combatUnitCount)
       })
     }
 
     return [{
       type: 'line',
+      options: {
+        scales: {
+          yAxes: [{
+            ticks: { stepSize: 100 }
+          }]
+        }
+      },
       data: {
         labels,
         datasets: incomeDataSet
@@ -242,12 +264,26 @@ export class Match {
         }
       }, {
         type: 'line',
+        options: {
+          scales: {
+            yAxes: [{
+              ticks: { stepSize: 1 }
+            }]
+          }
+        },
         data: {
           labels,
           datasets: unitCountDataSet
         }
       }, {
         type: 'line',
+        options: {
+          scales: {
+            yAxes: [{
+              ticks: { stepSize: 1 }
+            }]
+          }
+        },
         data: {
           labels,
           datasets: combatUnitCountDataSet
@@ -282,12 +318,10 @@ function generateStates({ state, deltas }: MatchData){
     states.unshift(diffpatcher.unpatch(prev, delta))
   }
 
-  console.log(states)
-
   return states
 }
 
-function getStateStatus({ units }: State){
+function generateStateStatus({ units }: State){
   let meta: Status = {}
 
   for(let i in units){
@@ -325,7 +359,26 @@ function getStateStatus({ units }: State){
   return meta
 }
 
-function getPlayerTurns(entries: Entry[], n: number){
+function generatePlayers(entries: Entry[], { players }: MatchData){
+  let commanderUnits = Object.values(entries[0].state.units).filter(u => u.unitClass.isCommander)
+
+  let comm: Record<number,{ commander: string, faction: string, color: PlayerColor }> = {}
+
+  for(let c of commanderUnits){
+    let commander = c.unitClassId.replace(/commander_/, '')
+    let { color, faction } = getCommanderMeta(commander)
+
+    comm[c.playerId] = {
+      commander,
+      color,
+      faction
+    }
+  }
+
+  return Object.values(players).map(p => Object.assign({}, p, comm[p.id]))
+}
+
+function generatePlayerTurns(entries: Entry[], n: number){
   let turns: PlayerTurn[] = []
   let turnsById: Record<string, PlayerTurn> = {}
 
@@ -349,41 +402,8 @@ function getPlayerTurns(entries: Entry[], n: number){
   return turns
 }
 
-export const terrains = {
-  forest:     "F",
-  river:      "I",
-  mountain:   "M",
-  reef:       "R",
-  wall:       "W",
-  bridge:     "b",
-  ocean:      "o",
-  beach:      "e",
-  cobblestone:"f",
-  plains:     "p",
-  road:       "r",
-  sea:        "s"
-}
 
-export const terrainAbbrvs: Record<string,string> = Object.entries(terrains)
-  .reduce((o, [key, val]) => (o[val] = key, o), {})
-
-
-export const terrainColors = {
-  forest: 0x277d23,
-  river: 0x9ad6d4,
-  mountain: 0x5c3600,
-  reef: 0x33312e,
-  wall: 0x333333,
-  bridge: 0xd9d9d9,
-  ocean: 0x03005c,
-  beach: 0xf0e8a5,
-  cobblestone: 0x9c9c9c,
-  plains: 0xadd49f,
-  road: 0xe0cea4,
-  sea: 0x549af0
-}
-
-export function getPlayerColor(playerId: number){
+/*export function getPlayerColor(playerId: number){
   return ({
     '-1': 0xaaaaaa,
     '0': 0xff0000,
@@ -391,12 +411,24 @@ export function getPlayerColor(playerId: number){
   })[playerId] || 0xffffff
 }
 
-export function getPlayerColorString(playerId: number) {
+export function getPlayerColorHex(playerId: number) {
   return VBColorToHEX(getPlayerColor(playerId))
+}
+
+function hexToRGB(hex, alpha) {
+  var r = parseInt(hex.slice(1, 3), 16),
+    g = parseInt(hex.slice(3, 5), 16),
+    b = parseInt(hex.slice(5, 7), 16);
+
+  if (alpha) {
+    return "rgba(" + [r, g, b, alpha].join(',') + ")";
+  } else {
+    return "rgb(" + [r, g, b].join(',') + ")";
+  }
 }
 
 function VBColorToHEX(i) {
   var bbggrr = ("000000" + i.toString(16)).slice(-6);
   var rrggbb = bbggrr.substr(4, 2) + bbggrr.substr(2, 2) + bbggrr.substr(0, 2);
   return "#" + bbggrr;
-}
+}*/

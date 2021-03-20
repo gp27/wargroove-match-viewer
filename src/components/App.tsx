@@ -1,11 +1,8 @@
 import React from "react"
 import { Grommet, ThemeType, Box, Sidebar, Main, Text, Button } from 'grommet'
 import { hpe } from 'grommet-theme-hpe'
-import GameBoard from './GameBoard'
-import MoveList from './MoveList'
-import UnitList from './UnitList'
-import PlayerStatus from './PlayerStatus'
 import StatusGraphs from './StatusGraphs'
+import MatchUI from './MatchUI'
 import { Match } from "../match"
 
 const theme: ThemeType = {
@@ -32,22 +29,15 @@ const NavBar = props => <Box
     {...props}
 />
 
-export default class App extends React.Component {
-    match: Match
-
+export default class App extends React.Component <any,{ match?: Match}> {
     constructor(props) {
         super(props)
 
-        this.update = this.update.bind(this)
-
         Match.load().then(match => {
-            this.match = match
-            this.setState({})
+            this.setState({ match })
         })
-    }
 
-    update(){
-        this.setState(this.state)
+        this.state = {}
     }
 
     render() {
@@ -56,45 +46,12 @@ export default class App extends React.Component {
                 <Box fill direction="column">
                     <NavBar>
                         <Text size="1.3em">Wargroove Match Viewer</Text>
-                        <StatusGraphs match={this.match} />
+                        <Text>Credit to <a href="https://chucklefish.org/">Chucklefish</a> for all images</Text>
+                        {this.state.match ? <StatusGraphs match={this.state.match} /> : null}
+                        
                     </NavBar>
 
-                    <Box direction='row' flex pad="small">
-                        <Sidebar
-                            background="light-2"
-                            round="small"
-                            margin="small"
-                            overflow="auto"
-                        >
-                            <MoveList match={this.match} onSelected={this.update}/>
-                        </Sidebar>
-
-                        <Main flex align='center' justify='center' margin="small">
-                            <GameBoard match={this.match}/>
-                        </Main>
-
-                        <Box direction="column">
-                            <Box background="light-2"
-                                round="small"
-                                margin="small"
-                            >
-                                <PlayerStatus match={this.match}/>
-                            </Box>
-                            <Box flex direction="row">
-                                {this.match?.getPlayers().map(({ id }) => (
-                                    <Sidebar
-                                        key={id}
-                                        background="light-2"
-                                        round="small"
-                                        margin="small"
-                                        overflow="auto"
-                                    >
-                                        <UnitList match={this.match} playerId={id} />
-                                    </Sidebar>
-                                ))}
-                            </Box>
-                        </Box>
-                    </Box>
+                    {this.state.match ? <MatchUI match={this.state.match}/> : null}
                 </Box>
             </Grommet>
         );

@@ -1,21 +1,31 @@
 import React from "react"
 import { Box, List, Text, Avatar } from 'grommet'
 
-import { getPlayerColorString, Match, Unit } from "../match"
+import { Match, Player, Unit } from "../match"
+import { MatchViewerContext } from "./GameBoard"
 
 const UnitList = ({ match, playerId }: { match: Match, playerId?: number }) => {
     if (!match) return null
 
     let units = match.getCurrentCombatUnits(playerId)
+    
 
-    return <List
-        border="bottom"
-        data={units}
-        primaryKey={({ playerId, unitClassId, health, grooveCharge, grooveId }: Unit) => (<Box direction="row">
-            <Avatar size="small" background={getPlayerColorString(playerId)} margin={{ right: 'small' }}></Avatar>
-            <Text>{unitClassId} <br/> {health}%{grooveId ? ' Groove: ' + grooveCharge + '%' : ''}</Text>
-        </Box>)}
-    />
+    function getFrame(game, unitClassId, playerId){
+        let { faction = 'cherrystone', color = 'grey' } = match.getPlayers()[playerId] || {}
+        return game?.getFrameCanvas(color, [unitClassId + '_' + faction, unitClassId])
+    }
+    
+    return <MatchViewerContext.Consumer>
+        {({ game }) => <List
+            border="bottom"
+            data={units}
+            primaryKey={({ id, playerId, unitClassId, health, grooveCharge, grooveId, unitClass: { maxGroove } }: Unit) => ( <Box direction="row">
+                {/*<Avatar size="small" background={match.getPlayerColorHex(playerId)} margin={{ right: 'small' }}/>*/}
+                <div ref={ele => ele && (ele.innerHTML = '', true) && ele.append(getFrame(game, unitClassId, playerId) || "")}></div>
+                <Text>{unitClassId.replace("commander_", "")} (ID:{id})<br /> {health}%{grooveId ? ' Groove: ' + Math.round(grooveCharge / maxGroove * 100) + '%' : ''}</Text>
+            </Box>)}
+        />}
+    </MatchViewerContext.Consumer>
 }
 
 export default UnitList

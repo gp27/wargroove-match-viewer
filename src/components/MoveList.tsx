@@ -1,7 +1,7 @@
 import React from "react"
 import { Box, List, Text, Avatar } from 'grommet'
 
-import { getPlayerColorString, Match } from "../match"
+import { Match } from "../match"
 
 const MoveList = ({ match, onSelected }: { match: Match, onSelected: Function }) => {
     if (!match) return null
@@ -16,10 +16,10 @@ const MoveList = ({ match, onSelected }: { match: Match, onSelected: Function })
         data={entries}
         itemProps={selected >= 0 ? { [selected]: { background: 'focus' } } : undefined}
         primaryKey={({ turn, moveNumber }) => (<Box direction="row">
-            <Avatar size="small" background={getPlayerColorString(turn.playerId)} margin={{ right: 'small' }}>
+            <Avatar size="small" background={match.getPlayerColorHex(turn.playerId)} margin={{ right: 'small' }}>
                 P{turn.playerId + 1}
             </Avatar>
-            <Text>{moveNumber > 0 ? 'Move ' + moveNumber : 'Start of Turn'}</Text>
+            <Text weight={moveNumber > 0 ? 'normal' : 'bold'}>{moveNumber > 0 ? 'Move ' + moveNumber : 'Turn ' + turn.turnNumber}</Text>
         </Box>)}
         onClickItem={event => {
             match.selectEntry(event.item.id)

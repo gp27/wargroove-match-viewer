@@ -6,6 +6,8 @@ declare module 'phaser3-rex-plugins/plugins/board-components' {
         setBoardHeight: Function
         removeAllChess: Function
         addChess: Function
+        moveChess: Function
+        getGridPoints: Function
     }
 
     export class Shape extends Phaser.GameObjects.GameObject {

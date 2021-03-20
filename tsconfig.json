@@ -9,6 +9,8 @@
   "include": [
     "src/*",
     "desc.d.ts",
-    "src/components/app.tsx"
+    "src/components/app.tsx",
+    "src/phaser/wargroove-board.ts",
+    "src/phaser/match-scene.ts"
   ]
 }

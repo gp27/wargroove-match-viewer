@@ -1,46 +1,39 @@
-import React from "react"
-
-import Phaser from "phaser";
-import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin'
-import AwaitLoaderPlugin from 'phaser3-rex-plugins/plugins/awaitloader-plugin.js';
-
-
-import { MatchScene } from '../match-scene';
+import React, { useContext, useEffect, useState } from "react"
 import { Box } from "grommet";
 import { Match } from "../match";
 
-const config: Phaser.Types.Core.GameConfig = {
-    title: "Wargroove Match Viewer",
-    parent: "game-board",
-    backgroundColor: "#fff",
-    scene: [MatchScene],
-    scale: {
-        mode: Phaser.Scale.RESIZE ,
-        autoCenter: Phaser.Scale.CENTER_BOTH,
-        zoom: Phaser.Scale.MAX_ZOOM
-    },
-    plugins: {
-        global: [{
-            key: 'rexAwaitLoader',
-            plugin: AwaitLoaderPlugin,
-            start: true
-        }],
-        /*scene: [{
-          key: 'rexUI',
-          plugin: UIPlugin,
-          mapping: 'rexUI'
-        }]*/
-    }
-};
+import { WargrooveMatchViewer } from '../phaser/macth-viewer'
 
-export class WargrooveMatchViewer extends Phaser.Game {
-    setMatch(match: Match){
-        let scene = this.scene.getScene('MatchScene') as MatchScene
-        scene.loadMatch(match)
-    }
+let game: WargrooveMatchViewer = null
+export const MatchViewerContext = React.createContext({
+    get game(){ return game },
+    setGame: (v: WargrooveMatchViewer) => { game = v }
+})
+
+const GameBoard = ({ match }: { match: Match }) => {
+    let { game, setGame } = useContext(MatchViewerContext)
+    //let [game, setGame] = useState<WargrooveMatchViewer>(null)
+
+    useEffect(() => {
+        if (!game) {
+            game = new WargrooveMatchViewer()
+            setGame(game)
+        }
+
+        game.onReady(() => {
+            game.setMatch(match)
+        })
+    }, [match])
+
+    return <Box
+        id="game-board"
+        overflow="hidden"
+    />
 }
 
-export default class GameBoard extends React.Component<{ match: Match }> {
+export default GameBoard
+
+/*export default class GameBoard extends React.Component<{ match: Match }> {
     game: WargrooveMatchViewer
    
     render() {
@@ -53,12 +46,13 @@ export default class GameBoard extends React.Component<{ match: Match }> {
     }
 
     componentDidMount() {
-        this.game = new WargrooveMatchViewer(config)
+        this.game = new WargrooveMatchViewer()
+        this.game.onReady(() => {
+            this.game.setMatch(this.props.match)
+        })
     }
 
     componentDidUpdate(){
-        if(this.props.match){
-            this.game.setMatch(this.props.match)
-        }
+        //this.game.setMatch(this.props.match)
     }
-}
+}*/

@@ -1,7 +1,7 @@
 import React from "react"
 import { Box, List, Text, Avatar, DataTable } from 'grommet'
 
-import { getPlayerColorString, Match, Unit } from "../match"
+import { Match } from "../match"
 
 const PlayerStatus = ({ match }: { match: Match }) => {
     if (!match) return null
@@ -19,9 +19,12 @@ const PlayerStatus = ({ match }: { match: Match }) => {
                 property: 'player',
                 header: <Text>Player</Text>,
                 primary: true,
-                render: player => <Avatar size="small" background={getPlayerColorString(player.id)}>
+                render: player => <Box direction="row">
+                    <Avatar size="small" background={match.getPlayerColorHex(player.id)}>
                     P{player.id + 1}
-                </Avatar>
+                    </Avatar>
+                    <Text margin={{left: "small"}}>{player.username || player.commander}</Text>
+                </Box>
             },
             {
                 property: 'gold',
