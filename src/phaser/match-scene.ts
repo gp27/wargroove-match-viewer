@@ -1,9 +1,8 @@
 import Phaser from'phaser'
-import { Match } from '../match'
+import { Entry, Match } from '../match'
 import { WargrooveBoard } from './wargroove-board'
-import { PalettePlugin } from './palettes'
+import { applyPalette, generatePalette } from '../palettes'
 import 'chart.js'
-import React from 'react'
 
 
 const paletteNames = ['red', 'blue', 'green', 'yellow', 'purple', 'teal', 'pink', 'orange', 'black', 'grey']
@@ -20,17 +19,14 @@ export class MatchScene extends Phaser.Scene {
 
   preload(){
     this.load.image('palette', 'assets/wargroove_palette_small.png')
-    this.plugins.install('palettePlugin', PalettePlugin, true, 'palettePlugin') as PalettePlugin
     this.load.image('units', 'assets/units.png')
     this.load.json('units', 'assets/units.json')
-
-    //this.load.atlas('units-grey', 'assets/units.png', 'assets/units.json')
   }
 
   create(){
-    let palettePlugin = this.plugins.get('palettePlugin') as PalettePlugin
-    palettePlugin.generatePalette('palette', paletteNames)
-    palettePlugin.applyPalette('units', 'palette', 'grey', 'grey')
+
+    generatePalette('wg-palette', this.game.textures.get('palette').getSourceImage() as HTMLImageElement, paletteNames)
+    applyPalette(this.game.textures.get('units').getSourceImage() as HTMLCanvasElement, 'wg-palette', 'grey', 'grey')
 
     this.loaded = true
     this.makeUi()
@@ -66,11 +62,9 @@ export class MatchScene extends Phaser.Scene {
 
   makeAtlas(colorName: string){
     let key = `units-${colorName}`
-    let palettePlugin = this.plugins.get('palettePlugin') as PalettePlugin
-    let image = palettePlugin.applyPalette('units', 'palette', 'grey', colorName)
-
+    let canvas = applyPalette(this.game.textures.get('units').getSourceImage() as HTMLCanvasElement, 'wg-palette', 'grey', colorName)
     let json = this.cache.json.get('units')
-    return this.textures.addAtlas(key, image , json)
+    return  this.textures.addAtlas(key, canvas, json)
   }
 
   getAtlasByColor(colorName: string){
@@ -85,7 +79,8 @@ export class MatchScene extends Phaser.Scene {
 
   getFrames(colorName: string, frameNames: string[]){
     let texture = this.getAtlasByColor(colorName)
-    let frames = texture.getFramesFromTextureSource(0)
+    if(!texture) return
+    let frames = texture.getFramesFromTextureSource(0, false)
     return frames.filter(f => frameNames.includes(f.name))
   }
 
@@ -123,9 +118,15 @@ export class MatchScene extends Phaser.Scene {
     return this.match
   }
 
+  currentEntry: Entry = null
+
   reloadMatchEntry(){
     if(!this.match || !this.loaded) return
-    this.ui.board.loadEntry(this.match.getCurrentEntry())
+    let entry = this.match.getCurrentEntry()
+    if(entry != this.currentEntry){
+      this.currentEntry = entry
+      this.ui.board.loadEntry(entry)
+    }
   }
 
   dragPosition: Phaser.Math.Vector2

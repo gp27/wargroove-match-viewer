@@ -1,3 +1,5 @@
+export type Terrain = keyof typeof terrains
+
 export const terrains = {
   forest:     "F",
   river:      "I",
@@ -13,10 +15,10 @@ export const terrains = {
   sea:        "s"
 }
 
-export const terrainAbbrvs: Record<string, string> = Object.entries(terrains)
+export const terrainAbbrvs: Record<string, Terrain> = Object.entries(terrains)
   .reduce((o, [key, val]) => (o[val] = key, o), {})
 
-export const terrainColors = {
+export const terrainColors: Record<Terrain,number> = {
   forest: 0x277d23,
   river: 0x9ad6d4,
   mountain: 0x5c3600,
@@ -30,6 +32,21 @@ export const terrainColors = {
   road: 0xe0cea4,
   sea: 0x549af0
 }
+
+export const terrainPriorities: Terrain[] = [
+  'cobblestone',
+  'beach',
+  'river',
+  'road',
+  'bridge',
+  'reef',
+  'ocean',
+  'sea',
+  'forest',
+  'plains',
+  'mountain',
+  'wall'
+]
 
 export const playerColors = {
   red: { hex: '#b41c10' },

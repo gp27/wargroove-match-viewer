@@ -1,16 +1,19 @@
-import { Scene } from 'phaser'
 import { Board, Shape, Monopoly } from 'phaser3-rex-plugins/plugins/board-components'
+import  { Label, RoundRectangle } from 'phaser3-rex-plugins/templates/ui/ui-components'
 import { MatchData, Entry, Unit, Match } from '../match'
 import { terrainAbbrvs, terrainColors } from '../match-utils'
 import { MatchScene } from './match-scene'
 
 export class WargrooveBoard extends Board {
 
-    tiles = []
+    //tiles = []
     scene: MatchScene
 
     w: number = 0
     h: number = 0
+
+    tiles: Phaser.GameObjects.Group
+    chessUnits: Phaser.GameObjects.Group
 
     constructor(scene: MatchScene) {
 
@@ -27,9 +30,11 @@ export class WargrooveBoard extends Board {
         })
 
         scene.add.existing(this)
+        this.tiles = this.scene.add.group()
+        this.chessUnits = this.scene.add.group()
     }
 
-    setMap(map: MatchData['map']){
+    setMap(map: Match['map']){
         this.scene.children.removeAll()
 
         let { size: { x, y }, tiles } = map
@@ -37,22 +42,17 @@ export class WargrooveBoard extends Board {
         this.setBoardWidth(x)
         this.setBoardHeight(y)
 
-        let tilesMap = []
-        while(tiles.length){
-            tilesMap.push(tiles.substr(0, x).split(''))
-            tiles = tiles.substr(x)
-        }
-
-        this.tiles = tilesMap
-
         let camera = this.scene.cameras.main
 
         let w = 48*x, h = 48*y
 
-        camera.setViewport(-2*w, -2*h, w*4, h*4)
-        //camera.setBounds(0, 0, 48 * x, 48 * y)
-        this.createTiles(this.tiles)
-        camera.centerOn(0, 0)
+        //camera.setViewport(-w, -h, w*2, h*2)
+        //camera.setSize(w*4, h* 4)
+        this.createTiles(tiles)
+        camera.centerOn(w/2, h/2)
+        //camera.setViewport(-w, -h, w * 2, h * 2)
+        camera.zoom = 0.8
+        //camera.setScroll(2*w, 2*h)
         
 
         this.w = w
@@ -61,16 +61,19 @@ export class WargrooveBoard extends Board {
         return this
     }
 
-    createTiles(tiles){
-        for(let y = 0; y < tiles.length; y++){
-            let line = tiles[y]
-            for (let x = 0; x < line.length; x++) {
-                let tile = line[x]
-                let terrain = terrainAbbrvs[tile]
-                let color = terrainColors[terrain] || 0x000000
+    createTiles(tiles: Match['map']['tiles']){
+        this.tiles.clear(true)
 
-                this.scene.add.existing(new Shape(this, x, y, 0, color)).setStrokeStyle(1, 0xffffff, 1).setData('terrain', terrain)
-            }
+        for(let tile of tiles) {
+            let { terrain, x, y } = tile
+            let color = terrainColors[terrain] || 0x000000
+
+            let tileSprite = new RoundRectangle(this.scene, 0, 0, 48, 48, 0, color)
+            //let shape = new Shape(this, x, y, 0, color)
+            this.tiles.add(tileSprite)
+            this.addChess(tileSprite, x, y, 0)
+
+            this.scene.add.existing(tileSprite).setStrokeStyle(2, 0xffffff, 0.3).setData('terrain', terrain)
         }
         return this
     }
@@ -92,21 +95,26 @@ export class WargrooveBoard extends Board {
             let chess = this.unitsCache[unit.id] = this.unitsCache[unit.id] || new WargrooveChessUnit(this, unit)
             chess.update()
             this.touchedUnits[unit.id] = true
+            this.chessUnits.add(chess)
         }
 
         for (let id in this.touchedUnits) {
             if(!this.touchedUnits[id]){
                 let unit = this.unitsCache[id]
-                unit.removedFromScene()
+                this.scene.children.remove(unit)
                 unit.destroy()
                 delete this.touchedUnits[id]
                 delete this.unitsCache[id]
             }
         }
 
-        this.scene.children.sort('id', (e1, e2) => {
-            return (e2.z < e1.z) || (e2.y < e1.y)
-        })
+        //this.chessUnits.children.entries.sort()
+
+        /*this.scene.children.sort('depth', (e1, e2) => {
+            return (e2.depth < e1.depth) || (e2.y < e1.y)
+        })*/
+
+        //console.log(this.scene.children)
 
         return this
     }
@@ -126,7 +134,6 @@ export class WargrooveSprite extends Phaser.GameObjects.Sprite {
         super(scene, 0, 0, '')
         this.id = unit.id
         this.scene = scene
-        this.setZ(1)
     }
 
     getUnit(){
@@ -139,10 +146,18 @@ export class WargrooveSprite extends Phaser.GameObjects.Sprite {
     }
 
     setUnit(){
+
         let unit = this.getUnit()
 
         let { pos: { x, y, facing },  unitClassId, hadTurn } = unit
         let { color = 'grey', faction = 'cherrystone' } = this.getPlayer() || {}
+
+        if (hadTurn) {
+            this.tint = 0x999999
+        }
+        else {
+            this.tint = 0xffffff
+        }
 
         let frames = this.scene.getFrames(color, [unitClassId + '_' + faction, unitClassId])
 
@@ -152,18 +167,12 @@ export class WargrooveSprite extends Phaser.GameObjects.Sprite {
         if(frame != this.currentFrame){
             this.currentFrame = frame
             //console.log(frame, this.getSprite())
+            this.setTexture(frame.texture.key, frame.name)
         }
         
-
-        this.setTexture(frame.texture.key, frame.name)
         this.setFlipX(facing == 3)
 
-        if (hadTurn) {
-            this.tint = 0x999999
-        }
-        else {
-            this.tint = 0xffffff
-        }
+        
 
         let outOfBoard = (x < 0 || y < 0)
     }
@@ -184,12 +193,49 @@ export class WargrooveSprite extends Phaser.GameObjects.Sprite {
 export class WargrooveChessUnit extends WargrooveSprite {
     monopoly: Monopoly
     board: WargrooveBoard
+    info: any
 
     constructor(board: WargrooveBoard, unit: Unit){
         super(board.scene, unit)
         this.board = board
+        this.setDepth(1)
+
+        let background = new RoundRectangle(board.scene, 0, 0, 0, 0, 5, 0x888888)
+
+        let text = new Phaser.GameObjects.Text(board.scene, 0, 0, "", {
+            fontSize: '12px',
+            strokeThickness: 1.1,
+            resolution: 4,
+        })
+
+
+        this.info = new Label(board.scene, {
+            width: 18,
+            height: 18,
+            background,
+            text,
+            align: 'center',
+            space: {
+                text: 0,
+                bottom: 0,
+                right: 0
+            }
+        })
+
+        background.setFillStyle(0x333333, 0.9)
+
+        this.info.setOrigin(-0.2, -0.2)
+        
+        this.info.setDepth(3); 
+        background.setDepth(3)
+        text.setDepth(4)
 
         board.scene.add.existing(this)
+        board.scene.add.existing(this.info)
+        this.scene.add.existing(background)
+        this.scene.add.existing(text)
+
+        this.info.layout()
 
         //this.monopoly = new Monopoly(this, { face: 0, pathTileZ: 0, })
         //board.scene.add.existing(this.monopoly)
@@ -198,17 +244,27 @@ export class WargrooveChessUnit extends WargrooveSprite {
     setUnit(){
         super.setUnit()
         let unit = this.getUnit()
-        let { pos: { x, y }, unitClass: { isStructure } } = unit
+        let { pos: { x, y }, unitClass: { isStructure }, health } = unit
 
-        this.displayOriginY = this.currentFrame.height - 16 - (isStructure ? 12 : 0)
-        this.board.addChess(this, x, y, 1, true)
+        if(this.currentFrame){
+            this.displayOriginY = this.currentFrame.height - 16 - (isStructure ? 12 : 0)
+        }
+        this.board.addChess(this, x, y, 1)
 
-        let outOfBoard = (x < 0 || y < 0)
+        this.info.setText(health).layout()
+        this.info.visible = health == 100 ? false : true
+        this.board.addChess(this.info, x, y, 3)
+
+        //let outOfBoard = (x < 0 || y < 0)
     }
 
     update(){
         this.setUnit()
     }
 
+    destroy(){
+        this.info?.destroy()
+        super.destroy()
+    }
 
 }

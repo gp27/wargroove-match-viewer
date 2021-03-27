@@ -1,7 +1,7 @@
 import React from "react"
-import { Box, List, Text, Avatar } from 'grommet'
+import { Box, List, Text } from 'grommet'
 
-import { Match, Player, Unit } from "../match"
+import { Match, Unit } from "../match"
 import { MatchViewerContext } from "./GameBoard"
 
 const UnitList = ({ match, playerId }: { match: Match, playerId?: number }) => {

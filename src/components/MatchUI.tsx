@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Grommet, ThemeType, Box, Sidebar, Main, Text, Button } from 'grommet'
+import { Grommet, ThemeType, Box, Main, Text, Button } from 'grommet'
 
 import GameBoard from './GameBoard'
 import MoveList from './MoveList'
@@ -15,18 +15,18 @@ const MatchUI = ({ match }: { match: Match }) => {
     }
 
     return <Box direction='row' flex pad="small">
-        <Sidebar
+        <Box
             background="light-2"
             round="small"
             margin="small"
             overflow="auto"
         >
             <MoveList match={match} onSelected={update} />
-        </Sidebar>
+        </Box>
 
-        <Main flex align='center' justify='center' margin="small">
+        <Box flex align='center' justify='center' margin="small" round="small" overflow="hidden">
             <GameBoard match={match} />
-        </Main>
+        </Box>
 
         <Box direction="column">
             <Box background="light-2"
@@ -37,15 +37,16 @@ const MatchUI = ({ match }: { match: Match }) => {
             </Box>
             <Box flex direction="row">
                 {match.getPlayers().map(({ id }) => (
-                    <Sidebar
+                    <Box
                         key={id}
+                        flex
                         background="light-2"
                         round="small"
                         margin="small"
                         overflow="auto"
                     >
                         <UnitList match={match} playerId={id} />
-                    </Sidebar>
+                    </Box>
                 ))}
             </Box>
         </Box>

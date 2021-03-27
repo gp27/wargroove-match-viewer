@@ -1,13 +1,14 @@
 import * as jsondiffpatch from 'jsondiffpatch'
 import 'chart.js'
 import { ChartConfiguration, ChartData, ChartDataSets } from 'chart.js'
-import { getCommanderMeta, PlayerColor, playerColors } from './match-utils'
+import { getCommanderMeta, PlayerColor, playerColors, Terrain, terrainAbbrvs, terrainPriorities } from './match-utils'
 
 const diffpatcher = jsondiffpatch.create()
 
 type LuaArray<T> = T[] | Record<number, T>
 
 export type MatchData = {
+  match_id: string
   map: {
     size: Pos,
     tiles: string
@@ -125,15 +126,28 @@ export class Match {
   private entries: Entry[]
   private turns: PlayerTurn[]
   private players: Player[]
+  private map: {
+    size: {
+      x: number
+      y: number
+    }
+    tiles: {
+      terrain: Terrain,
+      corners: boolean[],
+      x: number
+      y: number
+    }[]
+  }
 
   currentTurn: PlayerTurn | null = null
   currentEntry: Entry | null = null
 
-  static load(id?: string){
+  /*static load(id?: string){
     return loadMatchData(id).then(matchData => {
+      if(!matchData) return
       return new Match(matchData)
     })
-  }
+  }*/
 
   constructor(private matchData: MatchData){
     let states = generateStates(matchData)
@@ -146,6 +160,7 @@ export class Match {
 
     this.players = generatePlayers(this.entries, this.matchData)
     this.turns = generatePlayerTurns(this.entries, this.getPlayers().length)
+    this.map = generateMap(matchData)
 
     this.selectEntry(this.getWinners().length ? 0 : this.entries.length - 1)
 
@@ -175,7 +190,7 @@ export class Match {
   }
 
   getMap(){
-    return this.matchData.map
+    return this.map
   }
 
   getWinners(){
@@ -187,8 +202,15 @@ export class Match {
   }
 
   getPlayerColorHex(playerId){
-    let color =  this.players[playerId].color || 'grey'
+    let color = this.players[playerId].color || 'grey'
     return playerColors[color].hex
+  }
+
+  changePlayerColor(playerId: number, color: PlayerColor){
+    let p = this.players[playerId]
+    if(p &&  color in playerColors && !this.players.find(p => p.color == color)){
+      p.color = color
+    }
   }
 
   getCurrentCombatUnits(playerId?: number){
@@ -292,22 +314,6 @@ export class Match {
   }
 }
 
-export async function loadMatchData(id?: string): Promise<MatchData|null>{
-  let url = new URL(location.href)
-  if(id){
-    url.searchParams.set('match_id', id)
-    history?.replaceState(null, null, url.href)
-  }
-  let match_id = url.searchParams.get('match_id')
-
-  let matchUrl = new URL('https://wargroove-match-worker.gp27.workers.dev')
-  matchUrl.searchParams.set('match_id', match_id)
-
-  return fetch(matchUrl.href).then(res => {
-    return res.json().catch(err => null)
-  })
-}
-
 function generateStates({ state, deltas }: MatchData){
   let states: State[] = [
     diffpatcher.clone(state)
@@ -364,9 +370,16 @@ function generatePlayers(entries: Entry[], { players }: MatchData){
 
   let comm: Record<number,{ commander: string, faction: string, color: PlayerColor }> = {}
 
+  let takenColors: Partial<Record<PlayerColor,boolean>> = {}
+
   for(let c of commanderUnits){
     let commander = c.unitClassId.replace(/commander_/, '')
     let { color, faction } = getCommanderMeta(commander)
+    
+    if(takenColors[color]){
+      color = (Object.keys(playerColors) as PlayerColor[]).find(c => !takenColors[c])
+    }
+    takenColors[color] = true
 
     comm[c.playerId] = {
       commander,
@@ -374,6 +387,7 @@ function generatePlayers(entries: Entry[], { players }: MatchData){
       faction
     }
   }
+  
 
   return Object.values(players).map(p => Object.assign({}, p, comm[p.id]))
 }
@@ -402,33 +416,46 @@ function generatePlayerTurns(entries: Entry[], n: number){
   return turns
 }
 
-
-/*export function getPlayerColor(playerId: number){
-  return ({
-    '-1': 0xaaaaaa,
-    '0': 0xff0000,
-    '1': 0x0000ff
-  })[playerId] || 0xffffff
-}
-
-export function getPlayerColorHex(playerId: number) {
-  return VBColorToHEX(getPlayerColor(playerId))
-}
-
-function hexToRGB(hex, alpha) {
-  var r = parseInt(hex.slice(1, 3), 16),
-    g = parseInt(hex.slice(3, 5), 16),
-    b = parseInt(hex.slice(5, 7), 16);
-
-  if (alpha) {
-    return "rgba(" + [r, g, b, alpha].join(',') + ")";
-  } else {
-    return "rgb(" + [r, g, b].join(',') + ")";
+function generateMap(matchData: MatchData) {
+  let { size: { x, y }, tiles: strData } = matchData.map
+  let linearData = strData.split('')
+  let matrixData: string[][] = []
+  while (linearData.length) {
+    matrixData.push(linearData.splice(0, x))
   }
-}
 
-function VBColorToHEX(i) {
-  var bbggrr = ("000000" + i.toString(16)).slice(-6);
-  var rrggbb = bbggrr.substr(4, 2) + bbggrr.substr(2, 2) + bbggrr.substr(0, 2);
-  return "#" + bbggrr;
-}*/
+  let tiles: Match['map']['tiles'] = []
+
+  matrixData.forEach((row, y, rows) => {
+    row.forEach((v, x, cRow) => {
+      let pRow = rows[y - 1] || []
+      let nRow = rows[y + 1] || []
+
+      let corners = [
+        v == pRow[x - 1],
+        v == pRow[x],
+        v == pRow[x + 1],
+        v == cRow[x - 1],
+        v == cRow[x + 1],
+        v == nRow[x - 1],
+        v == nRow[x],
+        v == nRow[x + 1]
+      ]
+
+      tiles.push({
+        x, y,
+        terrain: terrainAbbrvs[v],
+        corners
+      })
+    })
+  })
+
+  tiles.sort((a, b) => {
+    return terrainPriorities.indexOf(a.terrain) - terrainPriorities.indexOf(b.terrain)
+  })
+
+  return {
+    size: {x, y},
+    tiles
+  } as Match['map']
+}

@@ -6,8 +6,12 @@ import { Match } from "../match";
 
 const config: Phaser.Types.Core.GameConfig = {
     title: "Wargroove Match Viewer",
+    type:  Phaser.WEBGL,
+    render: {
+        pixelArt: true
+    },
     parent: "game-board",
-    backgroundColor: "#888",
+    backgroundColor: '#fff',//"#e7dab0",
     scene: [MatchScene],
     scale: {
         mode: Phaser.Scale.RESIZE,
@@ -45,6 +49,18 @@ export class WargrooveMatchViewer extends Phaser.Game {
         }
         else {
             this.events.on('ready', cb)
+        }
+    }
+
+    onSceneReady(cb: Function){
+        let scene = this.scene.getScene('MatchScene') as MatchScene
+        if (scene.loaded) {
+            cb()
+        }
+        else {
+            scene.events.once('create', () => {
+                setTimeout(cb)
+            })
         }
     }
 

@@ -7,8 +7,11 @@ const PlayerStatus = ({ match }: { match: Match }) => {
     if (!match) return null
 
     let players = match.getPlayers()
+    let entries = match.getEntries()
     let entry = match.getCurrentEntry()
 
+    let isLastEntry = entry == entries[entries.length - 1]
+    let victoriusPlayers = players.filter(p => p.is_victorious)
 
     return <DataTable
         pad="small"
@@ -23,7 +26,7 @@ const PlayerStatus = ({ match }: { match: Match }) => {
                     <Avatar size="small" background={match.getPlayerColorHex(player.id)}>
                     P{player.id + 1}
                     </Avatar>
-                    <Text margin={{left: "small"}}>{player.username || player.commander}</Text>
+                    <Text margin={{ left: "small" }}>{player.username || player.commander} {isLastEntry ? victoriusPlayers.includes(player) ? '(W)' : '(L)' : ''}</Text>
                 </Box>
             },
             {

@@ -23,7 +23,7 @@ const MoveList = ({ match, onSelected }: { match: Match, onSelected: Function })
         </Box>)}
         onClickItem={event => {
             match.selectEntry(event.item.id)
-            setSelected(selected === event.index ? undefined : event.index)
+            setSelected(event.index)
             onSelected()
         }}
     />

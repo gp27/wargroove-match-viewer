@@ -4,24 +4,27 @@ import { Match } from "../match";
 
 import { WargrooveMatchViewer } from '../phaser/macth-viewer'
 
-let game: WargrooveMatchViewer = null
-export const MatchViewerContext = React.createContext({
-    get game(){ return game },
-    setGame: (v: WargrooveMatchViewer) => { game = v }
+export const MatchViewerContext = React.createContext<{ game: WargrooveMatchViewer, setGame: (v: WargrooveMatchViewer) => void }>({
+    game: null,
+    setGame: () => { }
 })
 
 const GameBoard = ({ match }: { match: Match }) => {
     let { game, setGame } = useContext(MatchViewerContext)
     //let [game, setGame] = useState<WargrooveMatchViewer>(null)
 
+
+
     useEffect(() => {
         if (!game) {
             game = new WargrooveMatchViewer()
-            setGame(game)
         }
 
         game.onReady(() => {
             game.setMatch(match)
+            game.onSceneReady(() => {
+                setGame(game)
+            })
         })
     }, [match])
 

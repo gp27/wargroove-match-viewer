@@ -10,12 +10,15 @@ const StatusGraphs = ({ match }: { match: Match }) => {
     let [show, setShow] = React.useState<boolean>();
 
     let charts = match.getCharts()
-    console.log(charts)
+    //console.log(charts)
 
     return <Box>
-        <Button label="Graphs" onClick={() => setShow(true)} />
-        {show && (<Layer onEsc={() => setShow(false)} full="horizontal" margin="medium">
-            <Button label="Close" onClick={() => setShow(false)} />
+        <Button color="focus" label="Graphs" onClick={() => setShow(true)} />
+        {show && (<Layer onEsc={() => setShow(false)} full="horizontal" margin="medium" background="light-1">
+            <Box align="center" pad="medium">
+                <Button color="focus" primary label="Close" onClick={() => setShow(false)} />
+            </Box>
+            
 
             <Box overflow="auto" direction="column" wrap={true} alignContent="center">
                 {charts.map((chart, index) => <div key={index} style={{maxWidth: '800px', minWidth: '40%'}}><Line data={chart.data} options={chart.options}/></div>)}
