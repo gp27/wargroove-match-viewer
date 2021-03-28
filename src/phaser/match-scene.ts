@@ -138,8 +138,8 @@ export class MatchScene extends Phaser.Scene {
       let camera = this.cameras.main
       let { x, y } = this.game.input.mousePointer
       if(this.dragPosition){
-        camera.x += x - this.dragPosition.x
-        camera.y += y - this.dragPosition.y
+        camera.scrollX -= (x - this.dragPosition.x) / camera.zoom
+        camera.scrollY -= (y - this.dragPosition.y) / camera.zoom
       }
       this.dragPosition = this.game.input.mousePointer.position.clone()
     }

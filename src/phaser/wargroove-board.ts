@@ -46,13 +46,9 @@ export class WargrooveBoard extends Board {
 
         let w = 48*x, h = 48*y
 
-        //camera.setViewport(-w, -h, w*2, h*2)
-        //camera.setSize(w*4, h* 4)
         this.createTiles(tiles)
         camera.centerOn(w/2, h/2)
-        //camera.setViewport(-w, -h, w * 2, h * 2)
         camera.zoom = 0.8
-        //camera.setScroll(2*w, 2*h)
         
 
         this.w = w
@@ -71,7 +67,7 @@ export class WargrooveBoard extends Board {
             let tileSprite = new RoundRectangle(this.scene, 0, 0, 48, 48, 0, color)
             //let shape = new Shape(this, x, y, 0, color)
             this.tiles.add(tileSprite)
-            this.addChess(tileSprite, x, y, 0)
+            this.addChess(tileSprite, x, y, getDepth('tile'))
 
             this.scene.add.existing(tileSprite).setStrokeStyle(2, 0xffffff, 0.3).setData('terrain', terrain)
         }
@@ -198,7 +194,7 @@ export class WargrooveChessUnit extends WargrooveSprite {
     constructor(board: WargrooveBoard, unit: Unit){
         super(board.scene, unit)
         this.board = board
-        this.setDepth(1)
+        this.setDepth(getDepth('unit', 0))
 
         let background = new RoundRectangle(board.scene, 0, 0, 0, 0, 5, 0x888888)
 
@@ -225,10 +221,12 @@ export class WargrooveChessUnit extends WargrooveSprite {
         background.setFillStyle(0x333333, 0.9)
 
         this.info.setOrigin(-0.2, -0.2)
+
+        let uiDepth = getDepth('ui')
         
-        this.info.setDepth(3); 
-        background.setDepth(3)
-        text.setDepth(4)
+        this.info.setDepth(uiDepth);
+        background.setDepth(uiDepth)
+        text.setDepth(uiDepth)
 
         board.scene.add.existing(this)
         board.scene.add.existing(this.info)
@@ -249,11 +247,13 @@ export class WargrooveChessUnit extends WargrooveSprite {
         if(this.currentFrame){
             this.displayOriginY = this.currentFrame.height - 16 - (isStructure ? 12 : 0)
         }
-        this.board.addChess(this, x, y, 1)
+        let depth = getDepth('unit', y)
+        this.board.addChess(this, x, y, depth)
+        this.setDepth(depth)
 
         this.info.setText(health).layout()
         this.info.visible = health == 100 ? false : true
-        this.board.addChess(this.info, x, y, 3)
+        this.board.addChess(this.info, x, y, getDepth('ui'))
 
         //let outOfBoard = (x < 0 || y < 0)
     }
@@ -267,4 +267,14 @@ export class WargrooveChessUnit extends WargrooveSprite {
         super.destroy()
     }
 
+}
+
+function getDepth(type: string, y: number = 0){
+    let depth = {
+        'tile': 0,
+        'unit': 100,
+        'ui': 200
+    }[type] || 0
+
+    return (depth + y)
 }

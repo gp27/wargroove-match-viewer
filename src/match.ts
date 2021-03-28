@@ -57,7 +57,7 @@ export interface Unit {
   killedByLosing: boolean,
   recruits: LuaArray<string>,
   startPos: Pos,
-  unitClass: UnitClass
+  unitClass?: UnitClass
 }
 
 export interface UnitClass {
@@ -95,6 +95,7 @@ export interface State {
   turnNumber: number
   gold: Record<number,number>
   units: LuaArray<Unit>
+  unitClasses?: Record<string,UnitClass>
 }
 
 export type Status = Record<number,{
@@ -148,6 +149,10 @@ export class Match {
       return new Match(matchData)
     })
   }*/
+
+  static isValid({ match_id, map, players, state, deltas }: any = {}){
+    return match_id && map && players && state && deltas
+  }
 
   constructor(private matchData: MatchData){
     let states = generateStates(matchData)
@@ -323,6 +328,14 @@ function generateStates({ state, deltas }: MatchData){
     let prev = diffpatcher.clone(states[0])
     states.unshift(diffpatcher.unpatch(prev, delta))
   }
+
+  states.forEach(({ units = {}, unitClasses = {} }) => {
+    Object.values(units).forEach(unit => {
+      if(!unit.unitClass){
+        unit.unitClass = unitClasses[unit.unitClassId]
+      }
+    })
+  })
 
   return states
 }

@@ -48,11 +48,13 @@ const App = () => {
 
     function back(){
         setMatch(null)
-        game.destroy(true)
+        game?.destroy(true)
         setGame(null)
         let url = new URL(location.origin)
-        history?.pushState(null,null, url.href)
+        history?.replaceState(null, null, url.href)
     }
+
+    window.addEventListener('popstate', back)
 
     return <Grommet theme={theme} full>
         <MatchContext.Provider value={{ match, setMatch }}>
