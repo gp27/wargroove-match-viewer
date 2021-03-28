@@ -168,9 +168,8 @@ export class WargrooveSprite extends Phaser.GameObjects.Sprite {
         
         this.setFlipX(facing == 3)
 
-        
-
         let outOfBoard = (x < 0 || y < 0)
+        this.visible = !outOfBoard
     }
 
     getSprite(){
@@ -254,8 +253,6 @@ export class WargrooveChessUnit extends WargrooveSprite {
         this.info.setText(health).layout()
         this.info.visible = health == 100 ? false : true
         this.board.addChess(this.info, x, y, getDepth('ui'))
-
-        //let outOfBoard = (x < 0 || y < 0)
     }
 
     update(){
