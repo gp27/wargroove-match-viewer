@@ -354,7 +354,7 @@ function generateStateStatus({ units }: State){
 
     if(!playerMeta){
       playerMeta = meta[playerId] = {
-        income: 100,
+        income: 0,
         armyValue: 0,
         unitCount: 0,
         combatUnitCount: 0

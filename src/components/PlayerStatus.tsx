@@ -26,7 +26,7 @@ const PlayerStatus = ({ match }: { match: Match }) => {
                     <Avatar size="small" background={match.getPlayerColorHex(player.id)}>
                     P{player.id + 1}
                     </Avatar>
-                    <Text margin={{ left: "small" }}>{player.username || player.commander} {isLastEntry ? victoriusPlayers.includes(player) ? '(W)' : '(L)' : ''}</Text>
+                    <Text margin={{ left: "small" }}>{player.username || player.commander} {isLastEntry && victoriusPlayers.length ? victoriusPlayers.includes(player) ? '(W)' : '(L)' : ''}</Text>
                 </Box>
             },
             {
