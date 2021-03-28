@@ -41,11 +41,11 @@ db.on("populate", () => {
 function loadFiles(files: FileList){
     let promises = Array.from(files).map(file => readAsText(file).then(JSON.parse).catch(e=>null))
     return Promise.all(promises).then(results => results.filter(a => a?.match_id)).then((matches: MatchData[]) => {
-        for(let match of matches){
-            if(Match.isValid(match)){
-                updateMatch(match, false)
+        return Promise.all(matches.map(match => {
+            if (Match.isValid(match)) {
+                return updateMatch(match, false)
             }
-        }
+        }))
     })
 }
 
@@ -74,7 +74,7 @@ async function loadMatchData(id?: string, { setUrl = false } = {}): Promise<Matc
 }
 
 async function updateMatch(matchData: MatchData, isOnline = true){
-    let { name } = await db.matches.get(matchData.match_id)
+    let { name } = (await db.matches.get(matchData.match_id)) || {}
     return db.matches.put({ id: matchData.match_id, updated_date: new Date, online: isOnline, name, data: matchData })
 }
 
@@ -112,7 +112,7 @@ export const MatchLoader = () => {
                     <CardBody justify="stretch" align="stretch" alignContent="stretch" direction="row" style={{textAlign: 'center'}}>
                         <FileInput
                             messages={{ dropPromptMultiple: 'Drop matches file here or'}}
-                            multiple={{aggregateThreshold: 0}}
+                            multiple={{aggregateThreshold: 1}}
                             className="grow"
                             onChange={({ target }) => {
                                 let files = target.files
