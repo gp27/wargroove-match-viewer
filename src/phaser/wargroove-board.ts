@@ -1,7 +1,7 @@
 import { Board, Shape, Monopoly } from 'phaser3-rex-plugins/plugins/board-components'
 import  { Label, RoundRectangle } from 'phaser3-rex-plugins/templates/ui/ui-components'
 import { MatchData, Entry, Unit, Match } from '../match'
-import { terrainAbbrvs, terrainColors } from '../match-utils'
+import { getUnitFrameNames, terrainAbbrvs, terrainColors } from '../match-utils'
 import { MatchScene } from './match-scene'
 
 export class WargrooveBoard extends Board {
@@ -155,7 +155,9 @@ export class WargrooveSprite extends Phaser.GameObjects.Sprite {
             this.tint = 0xffffff
         }
 
-        let frames = this.scene.getFrames(color, [unitClassId + '_' + faction, unitClassId])
+        let frameNames = getUnitFrameNames(unitClassId, faction)
+
+        let frames = this.scene.getFrames(color, frameNames)
 
         if (!frames.length) return
         let frame = frames[0]

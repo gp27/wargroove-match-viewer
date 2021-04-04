@@ -93,12 +93,13 @@ export interface Weapon {
 export interface State {
   playerId: number
   turnNumber: number
-  gold: Record<number,number>
+  gold: Record<string,number>
   units: LuaArray<Unit>
   unitClasses?: Record<string,UnitClass>
 }
 
 export type Status = Record<number,{
+  gold: number,
   income: number
   armyValue: number
   unitCount: number // hq does not count
@@ -326,7 +327,13 @@ function generateStates({ state, deltas }: MatchData){
 
   for(let delta of Object.values(deltas).reverse()){
     let prev = diffpatcher.clone(states[0])
-    states.unshift(diffpatcher.unpatch(prev, delta))
+    try {
+      states.unshift(diffpatcher.unpatch(prev, delta))
+    } catch(e){
+      console.error(e)
+      console.warn('Error while unpatching delta-state', delta, prev)
+      break
+    }
   }
 
   states.forEach(({ units = {}, unitClasses = {} }) => {
@@ -340,7 +347,7 @@ function generateStates({ state, deltas }: MatchData){
   return states
 }
 
-function generateStateStatus({ units }: State){
+function generateStateStatus({ units, gold }: State){
   let meta: Status = {}
 
   for(let i in units){
@@ -352,8 +359,11 @@ function generateStateStatus({ units }: State){
 
     let playerMeta = meta[playerId]
 
+    let goldValue = gold['p_'+playerId] || gold[playerId]
+
     if(!playerMeta){
       playerMeta = meta[playerId] = {
+        gold: goldValue,
         income: 0,
         armyValue: 0,
         unitCount: 0,

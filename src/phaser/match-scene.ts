@@ -81,7 +81,7 @@ export class MatchScene extends Phaser.Scene {
     let texture = this.getAtlasByColor(colorName)
     if(!texture) return
     let frames = texture.getFramesFromTextureSource(0, false)
-    return frames.filter(f => frameNames.includes(f.name))
+    return frames.filter(f => frameNames.includes(f.name)).sort((a,b) => frameNames.indexOf(a.name) - frameNames.indexOf(b.name))
   }
 
   getFrameCanvas(colorName: string, frameNames: string[]){

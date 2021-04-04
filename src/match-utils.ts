@@ -1,3 +1,5 @@
+import { Unit } from "./match"
+
 export type Terrain = keyof typeof terrains
 
 export const terrains = {
@@ -101,3 +103,15 @@ export function getCommanderMeta(commander: string){
   return commandersMeta[commander]
 }
 
+export function getUnitFrameNames(unitClassId: string, faction: string){
+  let names = [
+    unitClassId + '_' + faction,
+    unitClassId
+  ]
+
+  if(faction != 'cherrystone'){
+    names.push(unitClassId + '_cherrystone')
+  }
+
+  return names
+}

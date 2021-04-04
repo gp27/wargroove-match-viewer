@@ -3,16 +3,17 @@ import { Box, List, Text } from 'grommet'
 
 import { Match, Unit } from "../match"
 import { MatchViewerContext } from "./GameBoard"
+import { getUnitFrameNames } from "../match-utils"
 
 const UnitList = ({ match, playerId }: { match: Match, playerId?: number }) => {
     if (!match) return null
 
     let units = match.getCurrentCombatUnits(playerId)
-    
 
     function getFrame(game, unitClassId, playerId){
         let { faction = 'cherrystone', color = 'grey' } = match.getPlayers()[playerId] || {}
-        return game?.getFrameCanvas(color, [unitClassId + '_' + faction, unitClassId])
+        let frameNames = getUnitFrameNames(unitClassId, faction)
+        return game?.getFrameCanvas(color, frameNames)
     }
     
     return <MatchViewerContext.Consumer>

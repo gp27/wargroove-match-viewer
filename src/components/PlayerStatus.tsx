@@ -32,7 +32,7 @@ const PlayerStatus = ({ match }: { match: Match }) => {
             {
                 property: 'gold',
                 header: <Text>Gold</Text>,
-                render: player => <Text>{entry.state.gold[player.id]}</Text>
+                render: player => <Text>{entry.status[player.id].gold}</Text>
             },
             {
                 property: 'income',
