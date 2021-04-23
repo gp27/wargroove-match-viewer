@@ -93,7 +93,11 @@ export const MatchLoader = () => {
         loadMatchDataFromUrl().then(matchData => {
             if(matchData){
                 updateMatch(matchData)
-                setMatch(new Match(matchData))
+                try {
+                    setMatch(new Match(matchData))
+                } catch(e){
+                    console.error(e)
+                }
             }
             else {
                 getImatches()
@@ -144,7 +148,11 @@ export const IMatchCard = ({ imatch, update }: { imatch: IMatch, update?: Functi
     }
 
     if (!match && data) {
-        match = new Match(data)
+        try {
+            match = new Match(data)
+        } catch(e){
+            console.error(e)
+        }
         imatch.match = match
     }
 
@@ -153,7 +161,11 @@ export const IMatchCard = ({ imatch, update }: { imatch: IMatch, update?: Functi
             data = await loadMatchData(id, { setUrl: true })
             if (data) {
                 updateMatch(data)
-                match = new Match(data)
+                try {
+                    match = new Match(data)
+                } catch (e) {
+                    console.error(e)
+                }
             }
         }
 

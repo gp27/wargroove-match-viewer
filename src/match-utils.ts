@@ -82,7 +82,7 @@ const commandersMeta: Record<string,{color: PlayerColor, faction: string}> = {
   mercia: { color: 'red', faction: 'cherrystone' },
   caesar: { color: 'red', faction: 'cherrystone' },
   mercival: { color: 'red', faction: 'cherrystone' },
-  emric: { color: 'red', faction: 'cherrystone' },
+  emeric: { color: 'red', faction: 'cherrystone' },
   valder: { color: 'blue', faction: 'felheim' },
   ragna: { color: 'blue', faction: 'felheim' },
   sigrid: { color: 'blue', faction: 'felheim' },
