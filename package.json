@@ -28,7 +28,7 @@
     "grommet": "^2.17.0",
     "grommet-icons": "^4.5.0",
     "jsondiffpatch": "^0.4.1",
-    "phaser": "^3.52.0",
+    "phaser": "^3.53.0",
     "phaser3-rex-plugins": "^1.1.39",
     "promise-file-reader": "^1.0.3",
     "react": "^17.0.1",

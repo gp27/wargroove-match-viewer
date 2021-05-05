@@ -1,7 +1,7 @@
 import { Board, Shape, Monopoly } from 'phaser3-rex-plugins/plugins/board-components'
 import  { Label, RoundRectangle } from 'phaser3-rex-plugins/templates/ui/ui-components'
 import { MatchData, Entry, Unit, Match } from '../match'
-import { getUnitFrameNames, terrainAbbrvs, terrainColors } from '../match-utils'
+import { getUnitFrameNames, terrainColors } from '../match-utils'
 import { MatchScene } from './match-scene'
 
 export class WargrooveBoard extends Board {
@@ -37,7 +37,7 @@ export class WargrooveBoard extends Board {
     setMap(map: Match['map']){
         this.scene.children.removeAll()
 
-        let { size: { x, y }, tiles } = map
+        let {  w: x, h: y, tiles } = map
 
         this.setBoardWidth(x)
         this.setBoardHeight(y)
@@ -46,7 +46,7 @@ export class WargrooveBoard extends Board {
 
         let w = 48*x, h = 48*y
 
-        this.createTiles(tiles)
+        //this.createTiles(tiles)
         camera.centerOn(w/2, h/2)
         camera.zoom = 0.8
         
@@ -57,10 +57,10 @@ export class WargrooveBoard extends Board {
         return this
     }
 
-    createTiles(tiles: Match['map']['tiles']){
+    /*createTiles(tiles: Match['map']['tiles']){
         this.tiles.clear(true)
 
-        for(let tile of tiles) {
+        for(let terrain of tiles) {
             let { terrain, x, y } = tile
             let color = terrainColors[terrain] || 0x000000
 
@@ -72,7 +72,7 @@ export class WargrooveBoard extends Board {
             this.scene.add.existing(tileSprite).setStrokeStyle(2, 0xffffff, 0.3).setData('terrain', terrain)
         }
         return this
-    }
+    }*/
 
     unitsCache: Record<number,WargrooveChessUnit> = {}
     touchedUnits: Record<number,boolean> = {}
@@ -272,7 +272,8 @@ function getDepth(type: string, y: number = 0){
     let depth = {
         'tile': 0,
         'unit': 100,
-        'ui': 200
+        'overlay': 200,
+        'ui': 300
     }[type] || 0
 
     return (depth + y)

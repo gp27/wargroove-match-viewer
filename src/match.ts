@@ -1,7 +1,8 @@
 import * as jsondiffpatch from 'jsondiffpatch'
 import 'chart.js'
 import { ChartConfiguration, ChartData, ChartDataSets } from 'chart.js'
-import { getCommanderMeta, PlayerColor, playerColors, Terrain, terrainAbbrvs, terrainPriorities } from './match-utils'
+import { getCommanderMeta, PlayerColor, playerColors } from './match-utils'
+import { Terrain, terrains, tilesFromLinear } from './tile'
 
 const diffpatcher = jsondiffpatch.create()
 
@@ -129,16 +130,9 @@ export class Match {
   private turns: PlayerTurn[]
   private players: Player[]
   private map: {
-    size: {
-      x: number
-      y: number
-    }
-    tiles: {
-      terrain: Terrain,
-      corners: boolean[],
-      x: number
-      y: number
-    }[]
+    w: number
+    h: number
+    tiles: Terrain[][]
   }
 
   currentTurn: PlayerTurn | null = null
@@ -439,46 +433,22 @@ function generatePlayerTurns(entries: Entry[], n: number){
   return turns
 }
 
+const terrainAbbrvs: Record<string, Terrain> = Object.entries(terrains)
+  .reduce((o, [key, val]) => (o[val] = key, o), {})
+
+function getTerrainFromAbbr(code: string): Terrain {
+  return terrainAbbrvs[code] || 'plains'
+}
+
 function generateMap(matchData: MatchData) {
   let { size: { x, y }, tiles: strData } = matchData.map
   let linearData = strData.split('')
-  let matrixData: string[][] = []
-  while (linearData.length) {
-    matrixData.push(linearData.splice(0, x))
-  }
 
-  let tiles: Match['map']['tiles'] = []
-
-  matrixData.forEach((row, y, rows) => {
-    row.forEach((v, x, cRow) => {
-      let pRow = rows[y - 1] || []
-      let nRow = rows[y + 1] || []
-
-      let corners = [
-        v == pRow[x - 1],
-        v == pRow[x],
-        v == pRow[x + 1],
-        v == cRow[x - 1],
-        v == cRow[x + 1],
-        v == nRow[x - 1],
-        v == nRow[x],
-        v == nRow[x + 1]
-      ]
-
-      tiles.push({
-        x, y,
-        terrain: terrainAbbrvs[v],
-        corners
-      })
-    })
-  })
-
-  tiles.sort((a, b) => {
-    return terrainPriorities.indexOf(a.terrain) - terrainPriorities.indexOf(b.terrain)
-  })
+  let tiles = tilesFromLinear({ tiles: linearData.map(getTerrainFromAbbr), width: x })
 
   return {
-    size: {x, y},
+    w: x,
+    h: y,
     tiles
   } as Match['map']
 }

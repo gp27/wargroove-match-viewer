@@ -3,6 +3,7 @@ import { Entry, Match } from '../match'
 import { WargrooveBoard } from './wargroove-board'
 import { applyPalette, generatePalette } from '../palettes'
 import 'chart.js'
+import { WargrooveMap } from '../tile'
 
 
 const paletteNames = ['red', 'blue', 'green', 'yellow', 'purple', 'teal', 'pink', 'orange', 'black', 'grey']
@@ -20,12 +21,13 @@ export class MatchScene extends Phaser.Scene {
   preload(){
     this.load.image('palette', 'assets/wargroove_palette_small.png')
     this.load.image('units', 'assets/units.png')
+    this.load.image('wg_tilsets', 'assets/tilesets_clean.png')
     this.load.json('units', 'assets/units.json')
+    this.load.tilemapTiledJSON('map','assets/map.json')
   }
 
   create(){
-
-    generatePalette('wg-palette', this.game.textures.get('palette').getSourceImage() as HTMLImageElement, paletteNames)
+        generatePalette('wg-palette', this.game.textures.get('palette').getSourceImage() as HTMLImageElement, paletteNames)
     applyPalette(this.game.textures.get('units').getSourceImage() as HTMLCanvasElement, 'wg-palette', 'grey', 'grey')
 
     this.loaded = true
@@ -97,9 +99,15 @@ export class MatchScene extends Phaser.Scene {
   }
 
   makeUi(){
+    const map = this.make.tilemap({ key: 'map' })
+    const tileset = map.addTilesetImage('wg_tilsets')
+
+    let wgMap = this.ui.wgMap = new WargrooveMap(map, tileset)
+    console.log(wgMap)
     let board = this.ui.board = new WargrooveBoard(this)
     if(this.match){
       board.setMap(this.match.getMap())
+      wgMap.setTiles(this.match.getMap().tiles)
       this.reloadMatchEntry()
     }
   }
@@ -110,6 +118,7 @@ export class MatchScene extends Phaser.Scene {
     
     if(this.loaded){
       board.setMap(match.getMap())
+      this.ui.wgMap.setTiles(this.match.getMap().tiles)
       this.reloadMatchEntry()
     }
   }
@@ -149,4 +158,31 @@ export class MatchScene extends Phaser.Scene {
 
     
   }
+}
+
+function generateTilesetIndex(tileset: Phaser.Tilemaps.Tileset){
+  const index: any = {}
+
+  const pows = [1, 2, 4, 8, 16, 32, 64, 128]
+
+  for(let id in tileset.tileProperties){
+    const { biome = "default", terrain } = tileset.tileProperties[id]
+    const corners = tileset.tileData[id]?.wangid?.global || [] as (string|undefined)[]
+    if(!terrain) continue
+
+    index[terrain] = index[terrain] || {}
+    index[terrain][biome] = index[terrain][biome] || {}
+
+    let sums = { p: 0, s: 0, t: 0 }
+    corners.forEach((c, i) => {
+      if(c in sums){
+        sums[c] += pows[i]
+      }
+    })
+
+    const wangId = `${sums.p}-${sums.s}-${sums.t}`
+    ;(index[terrain][biome][wangId] = index[terrain][biome][wangId] || []).push(+id)
+  }
+
+  return index
 }

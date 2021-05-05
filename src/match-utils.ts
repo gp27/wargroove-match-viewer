@@ -1,24 +1,4 @@
-import { Unit } from "./match"
-
-export type Terrain = keyof typeof terrains
-
-export const terrains = {
-  forest:     "F",
-  river:      "I",
-  mountain:   "M",
-  reef:       "R",
-  wall:       "W",
-  bridge:     "b",
-  ocean:      "o",
-  beach:      "e",
-  cobblestone:"f",
-  plains:     "p",
-  road:       "r",
-  sea:        "s"
-}
-
-export const terrainAbbrvs: Record<string, Terrain> = Object.entries(terrains)
-  .reduce((o, [key, val]) => (o[val] = key, o), {})
+import { Terrain } from "./tile"
 
 export const terrainColors: Record<Terrain,number> = {
   forest: 0x277d23,
@@ -32,23 +12,9 @@ export const terrainColors: Record<Terrain,number> = {
   cobblestone: 0x9c9c9c,
   plains: 0xadd49f,
   road: 0xe0cea4,
-  sea: 0x549af0
+  sea: 0x549af0,
+  carpet: 0xcc3333
 }
-
-export const terrainPriorities: Terrain[] = [
-  'cobblestone',
-  'beach',
-  'river',
-  'road',
-  'bridge',
-  'reef',
-  'ocean',
-  'sea',
-  'forest',
-  'plains',
-  'mountain',
-  'wall'
-]
 
 export const playerColors = {
   red: { hex: '#b41c10' },
