@@ -152,8 +152,8 @@ const terrainLayersOrder: Terrain[] = [
 const terrainConnections: {
   [key in Terrain]: [Terrain[], Terrain[]?, Terrain[]?]
 } = {
-  beach: [['plains', 'mountain', 'forest', 'road', 'river', 'wall', 'cobblestone', 'carpet'], ['beach'], [undefined, 'sea', 'ocean', 'reef', 'bridge']],
-  bridge: [[undefined, 'bridge'], ['plains', 'forest', 'mountain', 'road', 'wall', 'cobblestone', 'carpet']],
+  beach: [['plains', 'mountain', 'forest', 'road', 'river', 'wall', 'cobblestone', 'carpet'], ['beach'], ['sea', 'ocean', 'reef', 'bridge']],
+  bridge: [['bridge'], ['plains', 'forest', 'mountain', 'road', 'wall', 'cobblestone', 'carpet']],
   carpet: [[undefined, 'carpet']],
   cobblestone: [[undefined, 'cobblestone']],
   forest: [[]],
@@ -229,6 +229,7 @@ export class WargrooveMap {
   constructor(
     private tilemap: Phaser.Tilemaps.Tilemap,
     private tileset: Phaser.Tilemaps.Tileset,
+    private biome: Biome = 'grass',
     private board: WargrooveBoard,
     tiles?: TilesInput
     ){
@@ -241,7 +242,7 @@ export class WargrooveMap {
 
   setTiles(tiles: TilesInput){
     this.tilemap.removeAllLayers()
-    this.generateLayers(tiles)
+    this.generateLayers(tiles, this.biome)
   }
 
   private parseTileset(tileset: Phaser.Tilemaps.Tileset, index: WargrooveMap['tilesetData'] = {}) {
@@ -277,7 +278,7 @@ export class WargrooveMap {
     return index
   }
 
-  private generateLayers(tiles: TilesInput, biome: Biome = 'grass'){
+  private generateLayers(tiles: TilesInput, biome: Biome){
     terrainLayersOrder.forEach(terrain => {
       this.generateTerrainLayer(terrain, tiles, biome)
     })
@@ -384,12 +385,24 @@ export class WargrooveMap {
           pRow[x - 1]
         ]
 
+        /*if(terrain == 'beach'){
+          const rotatedConnections = connections.slice(4, 4).concat(connections.slice(0,4))
+
+          connections.forEach((terr, i) => {
+            if (i % 2 != 0) return
+            if(terr !== undefined) return
+            let opTerr = rotatedConnections[i]
+            let newTerr: Terrain = p.includes(opTerr) ? 'sea' : t.includes(opTerr) ? 'plains' : 'sea'
+            //connections[i] = newTerr
+          })
+        }*/
+
         if (isWaterUnderBridge) {
           let seaPoints = 0
           let riverPoints = 0
 
           connections.forEach((terr, i) => {
-            let point = (i % 2 != 0) ? 1 : 0.1
+            let point = (i % 2 == 0) ? 1 : 0.1
             if (terr == 'river') riverPoints += point
             if (['sea', 'ocean', 'beach', 'reef'].includes(terr)) seaPoints += point
           })
@@ -399,7 +412,7 @@ export class WargrooveMap {
         }
 
         const connId = connections.map(terr => {
-          return p.includes(terr) ? 'p' : s.includes(terr) ? 's' : t.includes(terr) ? 't' : '-'
+          return p.includes(terr) ? 'p' : s.includes(terr) ? 's' : t.includes(terr) ? 't' : terr != undefined ? '-' : 'b'
         }).join('')
 
         let bestScore = -1
@@ -408,7 +421,7 @@ export class WargrooveMap {
         Object.entries(connectionTiles).forEach(([id, cs]) => {
           let score = 0
           for (let i = 0; i < id.length; i++) {
-            if (id[i] == connId[i]) {
+            if (id[i] == connId[i] || connId[i] == 'b') {
               score += 1 + (id[i] == 'p' ? 0.02 : id[i] == 's' ? 0.01 : 0)
             }
             else if (id[i] != '.') return

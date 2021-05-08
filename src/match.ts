@@ -2,7 +2,7 @@ import * as jsondiffpatch from 'jsondiffpatch'
 import 'chart.js'
 import { ChartConfiguration, ChartData, ChartDataSets } from 'chart.js'
 import { getCommanderMeta, PlayerColor, playerColors } from './match-utils'
-import { Terrain, terrains, tilesFromLinear } from './tile'
+import { Biome, Terrain, terrains, tilesFromLinear } from './tile'
 
 const diffpatcher = jsondiffpatch.create()
 
@@ -12,7 +12,8 @@ export type MatchData = {
   match_id: string
   map: {
     size: Pos,
-    tiles: string
+    tiles: string,
+    biome?: Biome
   },
 
   players: LuaArray<Player>
@@ -132,7 +133,8 @@ export class Match {
   private map: {
     w: number
     h: number
-    tiles: Terrain[][]
+    tiles: Terrain[][],
+    biome?: Biome
   }
 
   currentTurn: PlayerTurn | null = null
@@ -441,7 +443,7 @@ function getTerrainFromAbbr(code: string): Terrain {
 }
 
 function generateMap(matchData: MatchData) {
-  let { size: { x, y }, tiles: strData } = matchData.map
+  let { size: { x, y }, tiles: strData, biome } = matchData.map
   let linearData = strData.split('')
 
   let tiles = tilesFromLinear({ tiles: linearData.map(getTerrainFromAbbr), width: x })
@@ -449,6 +451,7 @@ function generateMap(matchData: MatchData) {
   return {
     w: x,
     h: y,
-    tiles
+    tiles,
+    biome
   } as Match['map']
 }

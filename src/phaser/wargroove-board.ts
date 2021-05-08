@@ -46,7 +46,7 @@ export class WargrooveBoard extends Board {
     setMap(map: Match['map']){
         //this.scene.children.removeAll()
 
-        let {  w: x, h: y, tiles } = map
+        let {  w: x, h: y, tiles, biome } = map
 
         this.setBoardWidth(x)
         this.setBoardHeight(y)
@@ -64,7 +64,7 @@ export class WargrooveBoard extends Board {
 
         const tilemap = this.scene.make.tilemap({ key: 'map' })
         const tileset = tilemap.addTilesetImage('wg_tilsets')
-        this.map = new WargrooveMap(tilemap, tileset, this)
+        this.map = new WargrooveMap(tilemap, tileset, biome, this)
         this.map.setTiles(tiles)
         console.log(this.map)
         //this.addElement('villager_cherrystone', 10, 10, 0.5, 0.3)
