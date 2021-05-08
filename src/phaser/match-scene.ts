@@ -1,9 +1,8 @@
-import Phaser from'phaser'
+import Phaser from 'phaser'
 import { Entry, Match } from '../match'
 import { WargrooveBoard } from './wargroove-board'
 import { applyPalette, generatePalette } from '../palettes'
 import 'chart.js'
-import { WargrooveMap } from '../tile'
 
 
 const paletteNames = ['red', 'blue', 'green', 'yellow', 'purple', 'teal', 'pink', 'orange', 'black', 'grey']
@@ -11,23 +10,24 @@ const paletteNames = ['red', 'blue', 'green', 'yellow', 'purple', 'teal', 'pink'
 export class MatchScene extends Phaser.Scene {
   match: Match
 
-  ui: Record<string,any> = {}
+  ui: Record<string, any> = {}
   loaded = false
 
   constructor() {
-    super({key: 'MatchScene'})
+    super({ key: 'MatchScene' })
   }
 
-  preload(){
+  preload() {
     this.load.image('palette', 'assets/wargroove_palette_small.png')
     this.load.image('units', 'assets/units.png')
     this.load.image('wg_tilsets', 'assets/tilesets_clean.png')
     this.load.json('units', 'assets/units.json')
-    this.load.tilemapTiledJSON('map','assets/map.json')
+    this.load.atlas('trees', 'assets/trees.png', 'assets/trees.json')
+    this.load.tilemapTiledJSON('map', 'assets/map.json')
   }
 
-  create(){
-        generatePalette('wg-palette', this.game.textures.get('palette').getSourceImage() as HTMLImageElement, paletteNames)
+  create() {
+    generatePalette('wg-palette', this.game.textures.get('palette').getSourceImage() as HTMLImageElement, paletteNames)
     applyPalette(this.game.textures.get('units').getSourceImage() as HTMLCanvasElement, 'wg-palette', 'grey', 'grey')
 
     this.loaded = true
@@ -38,16 +38,16 @@ export class MatchScene extends Phaser.Scene {
 
       let { centerX, centerY, zoom } = camera
 
-      if(dY > 0) {
+      if (dY > 0) {
         camera.zoom /= 1.1
-        if(camera.zoom < 0.2){
+        if (camera.zoom < 0.2) {
           camera.zoom = 0.2
         }
       }
 
-      if(dY < 0) {
+      if (dY < 0) {
         camera.zoom *= 1.1
-        if (camera.zoom > 2){
+        if (camera.zoom > 2) {
           camera.zoom = 2
         }
       }
@@ -62,33 +62,33 @@ export class MatchScene extends Phaser.Scene {
     })
   }
 
-  makeAtlas(colorName: string){
+  makeAtlas(colorName: string) {
     let key = `units-${colorName}`
     let canvas = applyPalette(this.game.textures.get('units').getSourceImage() as HTMLCanvasElement, 'wg-palette', 'grey', colorName)
     let json = this.cache.json.get('units')
-    return  this.textures.addAtlas(key, canvas, json)
+    return this.textures.addAtlas(key, canvas, json)
   }
 
-  getAtlasByColor(colorName: string){
+  getAtlasByColor(colorName: string) {
     let key = `units-${colorName}`
     let texture = this.textures.get(key)
-    if (texture.key == '__MISSING'){
+    if (texture.key == '__MISSING') {
       texture = this.makeAtlas(colorName)
     }
-    
+
     return texture
   }
 
-  getFrames(colorName: string, frameNames: string[]){
+  getFrames(colorName: string, frameNames: string[]) {
     let texture = this.getAtlasByColor(colorName)
-    if(!texture) return
+    if (!texture) return
     let frames = texture.getFramesFromTextureSource(0, false)
-    return frames.filter(f => frameNames.includes(f.name)).sort((a,b) => frameNames.indexOf(a.name) - frameNames.indexOf(b.name))
+    return frames.filter(f => frameNames.includes(f.name)).sort((a, b) => frameNames.indexOf(a.name) - frameNames.indexOf(b.name))
   }
 
-  getFrameCanvas(colorName: string, frameNames: string[]){
+  getFrameCanvas(colorName: string, frameNames: string[]) {
     let frames = this.getFrames(colorName, frameNames)
-    if(!frames.length) return
+    if (!frames.length) return
     let { cutHeight: height, cutWidth: width, cutX: x, cutY: y, texture } = frames[0]
 
     let c = document.createElement('canvas')
@@ -98,41 +98,34 @@ export class MatchScene extends Phaser.Scene {
     return c
   }
 
-  makeUi(){
-    const map = this.make.tilemap({ key: 'map' })
-    const tileset = map.addTilesetImage('wg_tilsets')
-
-    let wgMap = this.ui.wgMap = new WargrooveMap(map, tileset)
-    console.log(wgMap)
+  makeUi() {
     let board = this.ui.board = new WargrooveBoard(this)
-    if(this.match){
+    if (this.match) {
       board.setMap(this.match.getMap())
-      wgMap.setTiles(this.match.getMap().tiles)
       this.reloadMatchEntry()
     }
   }
 
-  loadMatch(match: Match){
+  loadMatch(match: Match) {
     this.match = match
     let { board } = this.ui
-    
-    if(this.loaded){
+
+    if (this.loaded) {
       board.setMap(match.getMap())
-      this.ui.wgMap.setTiles(this.match.getMap().tiles)
       this.reloadMatchEntry()
     }
   }
 
-  getMatch(){
+  getMatch() {
     return this.match
   }
 
   currentEntry: Entry = null
 
-  reloadMatchEntry(){
-    if(!this.match || !this.loaded) return
+  reloadMatchEntry() {
+    if (!this.match || !this.loaded) return
     let entry = this.match.getCurrentEntry()
-    if(entry != this.currentEntry){
+    if (entry != this.currentEntry) {
       this.currentEntry = entry
       this.ui.board.loadEntry(entry)
     }
@@ -140,13 +133,16 @@ export class MatchScene extends Phaser.Scene {
 
   dragPosition: Phaser.Math.Vector2
 
-  update(){
+  update() {
     this.reloadMatchEntry()
+    this.updateDrag()
+  }
 
+  updateDrag() {
     if (this.game.input.activePointer.isDown) {
       let camera = this.cameras.main
       let { x, y } = this.game.input.mousePointer
-      if(this.dragPosition){
+      if (this.dragPosition) {
         camera.scrollX -= (x - this.dragPosition.x) / camera.zoom
         camera.scrollY -= (y - this.dragPosition.y) / camera.zoom
       }
@@ -155,34 +151,5 @@ export class MatchScene extends Phaser.Scene {
     else {
       this.dragPosition = null
     }
-
-    
   }
-}
-
-function generateTilesetIndex(tileset: Phaser.Tilemaps.Tileset){
-  const index: any = {}
-
-  const pows = [1, 2, 4, 8, 16, 32, 64, 128]
-
-  for(let id in tileset.tileProperties){
-    const { biome = "default", terrain } = tileset.tileProperties[id]
-    const corners = tileset.tileData[id]?.wangid?.global || [] as (string|undefined)[]
-    if(!terrain) continue
-
-    index[terrain] = index[terrain] || {}
-    index[terrain][biome] = index[terrain][biome] || {}
-
-    let sums = { p: 0, s: 0, t: 0 }
-    corners.forEach((c, i) => {
-      if(c in sums){
-        sums[c] += pows[i]
-      }
-    })
-
-    const wangId = `${sums.p}-${sums.s}-${sums.t}`
-    ;(index[terrain][biome][wangId] = index[terrain][biome][wangId] || []).push(+id)
-  }
-
-  return index
 }

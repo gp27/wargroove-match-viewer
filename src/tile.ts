@@ -1,3 +1,5 @@
+import { WargrooveBoard } from "./phaser/wargroove-board"
+
 export type Terrain = keyof typeof terrains
 export type Biome = 'grass' | 'ice' | 'desert' | 'volcano' | 'default'
 
@@ -165,6 +167,48 @@ const terrainConnections: {
   wall: [[undefined, 'wall']]
 }
 
+const terrainElements: {
+  [key in Terrain]?: {
+    [key in Biome]?: [min: number, max: number, atlas: string, names: string[]]
+  }
+} = {
+  forest: {
+    grass: [2, 4, 'trees', [
+      "trees_grass_cone_big",
+      "trees_grass_cone_medium",
+      "trees_grass_cone_small",
+      "trees_grass_round_big",
+      "trees_grass_round_medium",
+      "trees_grass_round_small"
+    ]],
+    desert: [2, 3, 'trees', [
+      "trees_desert_cactus_big",
+      "trees_desert_cactus_medium",
+      "trees_desert_cactus_small",
+      "trees_desert_palm_big",
+      "trees_desert_palm_medium",
+      "trees_desert_palm_small",
+      "trees_desert_shrub_medium"
+    ]],
+    ice: [2, 3, 'trees', [
+      "trees_ice_dry_big",
+      "trees_ice_dry_medium",
+      "trees_ice_dry_small",
+      "trees_ice_snowcone_big",
+      "trees_ice_snowcone_medium",
+      "trees_ice_snowcone_small",
+      "trees_ice_snowround_big",
+      "trees_ice_snowround_medium",
+      "trees_ice_snowround_small"
+    ]],
+    volcano: [2, 3, 'trees', [
+      "trees_volcano_dry_big",
+      "trees_volcano_dry_medium",
+      "trees_volcano_dry_small"
+    ]]
+  }
+}
+
 type TileGroup = [x: number, y: number, tile: number][]
 type TerrainData = {
   connections: {
@@ -185,6 +229,7 @@ export class WargrooveMap {
   constructor(
     private tilemap: Phaser.Tilemaps.Tilemap,
     private tileset: Phaser.Tilemaps.Tileset,
+    private board: WargrooveBoard,
     tiles?: TilesInput
     ){
     this.tilesetData = this.parseTileset(this.tileset)
@@ -238,51 +283,86 @@ export class WargrooveMap {
     })
   }
 
-  private generateTerrainLayer(terrain: Terrain, tiles: TilesInput, biome: Biome){
-    const terrainDataRoot = this.tilesetData[terrain]
-    if(!terrainDataRoot) return
-
-    this.generateTerrainExtraLayerMask('bg', terrain, tiles, biome)
-    
-    const layer = this.tilemap.createBlankLayer(terrain, this.tileset, 0, 0, tiles[0].length, tiles.length)
+  private makeTilesLayer(name: string, tileIds: number[][]){
+    if(!tileIds.length) return
+    const layer = this.tilemap.createBlankLayer(name, this.tileset, 0, 0, tileIds[0].length, tileIds.length)
+    if(!layer) return
+    console.log(name)
     layer.setScale(2)
 
-    const terrainData = terrainDataRoot[biome] || terrainDataRoot.default
+    tileIds.forEach((row, y) => {
+      row.forEach((tileId, x) => {
+        layer.putTileAt(tileId + 1, x, y)
+      })
+    })
+  }
 
-    if(Object.values(terrainData.groups).length) {
-      this.generateTerrainGroups(layer, terrain, tiles, terrainData)
+  private getTerrainData(terrain: Terrain, biome: Biome, extra: string = ''){
+    const terrainDataRoot = this.tilesetData[terrain+extra]
+    if (!terrainDataRoot) return
+    return terrainDataRoot[biome] || terrainDataRoot.default
+  }
+
+  private generateTerrainLayer(terrain: Terrain, tiles: TilesInput, biome: Biome) {
+    if(terrain == 'forest') {
+      this.makeRandomElementsLayer(terrain, biome, tiles)
+    }
+    else if(terrain == 'mountain') {
+      this.makeGroupsLayer(terrain, biome, tiles)
     }
     else {
-      this.generateTerrainConnections(layer, terrain, tiles, terrainData)
+      this.makeConnectedLayer(terrain, biome, tiles, '_bg')
+      this.makeConnectedLayer(terrain, biome, tiles)
+      this.makeConnectedLayer(terrain, biome, tiles, '_mask')
     }
-
-    this.generateTerrainExtraLayerMask('mask', terrain, tiles, biome)
-    this.generateTerrainExtraLayerMask('overlay', terrain, tiles, biome)?.setDepth(200)
-
-    return layer
+    
+    this.makeOverlayLayer(terrain, biome, tiles)
   }
 
-  private generateTerrainExtraLayerMask(extraName: string, terrain: Terrain, tiles: TilesInput, biome: Biome) {
-    const terrainExtraName = terrain + '_' + extraName
-    const terrainDataRoot = this.tilesetData[terrainExtraName]
-    if (!terrainDataRoot) return
-
-    const layer = this.tilemap.createBlankLayer(terrainExtraName, this.tileset, 0, 0, tiles[0].length, tiles.length)
-    layer.setScale(2)
-
-    const terrainData = terrainDataRoot[biome] || terrainDataRoot.default
-
-    this.generateTerrainConnections(layer, terrain, tiles, terrainData)
-
-    return layer
+  private makeConnectedLayer(terrain: Terrain, biome: Biome, tiles: TilesInput, extra: string = ""){
+    let name = `${terrain}${extra}`
+    let terrainData = this.getTerrainData(terrain, biome, extra)
+    if(!terrainData?.connections) return
+    let tileIds = this.generateTerrainConnections(terrain, tiles, terrainData)
+    this.makeTilesLayer(name, tileIds)
   }
 
-  private generateTerrainConnections(layer: Phaser.Tilemaps.TilemapLayer, terrain: Terrain, tiles: TilesInput, terrainData: TerrainData) {
+  private makeGroupsLayer(terrain: Terrain, biome: Biome, tiles: TilesInput) {
+    let terrainData = this.getTerrainData(terrain, biome)
+    if (!terrainData?.groups) return
+    let tileIds = this.generateTerrainGroups(terrain, tiles, terrainData)
+    this.makeTilesLayer(terrain, tileIds)
+  }
+
+  private makeOverlayLayer(terrain: Terrain, biome: Biome, tiles: TilesInput) {
+    let terrainData = this.getTerrainData(terrain, biome, '_overlay')
+    if (!terrainData?.connections) return
+    let tileIds = this.generateTerrainConnections(terrain, tiles, terrainData)
+    tileIds.forEach((row, y) => {
+      row.forEach((tileId, x) => {
+        if(!tileId) return
+        let frame = this.getFrameFromTileId(tileId)
+        if(frame) {
+          this.board.addElement(frame, x, y)
+        }
+      })
+    })
+  }
+
+  private makeRandomElementsLayer(terrain: Terrain, biome: Biome, tiles: TilesInput){
+    const elementsRoot = terrainElements[terrain]
+    if(!elementsRoot) return
+    const elements = elementsRoot[biome] || elementsRoot['default']
+    if(!elements) return
+    this.generateRandomElements(terrain, tiles, elements)
+  }
+
+  private generateTerrainConnections(terrain: Terrain, tiles: TilesInput, terrainData: TerrainData) {
     const connectionTiles = terrainData.connections
     const [p, s = [], t = []] = terrainConnections[terrain]
 
-    tiles.forEach((row, y, rows) => {
-      row.forEach((v, x, cRow) => {
+    return tiles.map((row, y, rows) => {
+      return row.map((v, x, cRow) => {
         let isLayerTerrain = v == terrain
         let isPlains = terrain == 'plains'
         let isWaterUnderBridge = (v == 'bridge' && ['sea', 'river'].includes(terrain))
@@ -345,17 +425,18 @@ export class WargrooveMap {
 
         if (!conns) return
 
-        const tileId = conns[Math.floor(Math.random() * conns.length)] + 1
-
-        layer.putTileAt(tileId, x, y)
+        const tileId = conns[Math.floor(Math.random() * conns.length)]
+        return tileId
       })
     })
   }
 
-  private generateTerrainGroups(layer: Phaser.Tilemaps.TilemapLayer, terrain: Terrain, tiles: TilesInput, terrainData: TerrainData) {
+  private generateTerrainGroups(terrain: Terrain, tiles: TilesInput, terrainData: TerrainData) {
     const groups = Object.values(terrainData.groups).sort((a, b) => b.length - a.length).map(this.normalizeGroup)
 
     let ts = tiles.map(row => row.map(t => t == terrain))
+
+    let tileIds: number[][] = []
 
     groups.forEach(g => {
       for (let y = 0; y < ts.length; y++) {
@@ -369,11 +450,16 @@ export class WargrooveMap {
 
           g.forEach(([dx, dy, tileId]) => {
             ts[y + dy][x + dx] = false
-            layer.putTileAt(tileId + 1, x + dx, y + dy)
+            //layer.putTileAt(tileId + 1, x + dx, y + dy)
+            
+            let r = tileIds[y + dy] = tileIds[y + dy]  || Array(row.length)
+            r[x + dx] = tileId
           })
         }
       }
     })
+
+    return tileIds
 
     /*for (let y = 0; y < ts.length; y++) {
       let row = ts[y]
@@ -400,6 +486,39 @@ export class WargrooveMap {
     g = Array.from(g).sort(([ax, ay], [bx, by]) => (ay - by) || (ax - bx))
     let [dx0, dy0] = g[0]
     return g.map(([dx, dy, t]) => [dx - dx0, dy - dy0, t])
+  }
+
+  private generateRandomElements(terrain: Terrain, tiles: TilesInput, elements: typeof terrainElements[Terrain][Biome]){
+    const deltas = [[0, 0], [.5, .5], [.5, 0], [0, .5]]
+    let [min, max, atlas, names] = elements
+
+    tiles.forEach((row, y) => {
+      row.forEach((t, x) => {
+        if(t != terrain) return
+        
+        const len = Math.floor(Math.random() * (max - min)) + min
+        Array(len).fill(0).forEach((_, i) => {
+          const name = names[Math.floor(Math.random() * names.length)]
+          let ox = Math.random(), oy = Math.random()
+          if(ox > .5) ox -= .5
+          if(oy > .5) oy -= .5
+
+          let [dox, doy] = deltas[i]
+          let frame = this.board.scene.textures.getFrame(atlas, name)
+          if(frame){
+            this.board.addElement(frame, x, y, ox + dox, oy + doy + 0.3, true)
+          }
+        })
+
+
+      })
+    })
+  }
+
+  private getFrameFromTileId(tileId: number) {
+    let { tileWidth, tileHeight, texCoordinates: { [tileId]: { x = 0, y = 0 } = {} as any } } = this.tileset
+    this.tileset.image.add(tileId, 0, x, y, tileWidth, tileHeight)
+    return this.tileset.image.get(tileId)
   }
 
 }

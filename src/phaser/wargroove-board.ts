@@ -2,18 +2,22 @@ import { Board, Shape, Monopoly } from 'phaser3-rex-plugins/plugins/board-compon
 import  { Label, RoundRectangle } from 'phaser3-rex-plugins/templates/ui/ui-components'
 import { MatchData, Entry, Unit, Match } from '../match'
 import { getUnitFrameNames, terrainColors } from '../match-utils'
+import { WargrooveMap } from '../tile'
 import { MatchScene } from './match-scene'
+
+const cellSize = 48
 
 export class WargrooveBoard extends Board {
 
-    //tiles = []
     scene: MatchScene
 
     w: number = 0
     h: number = 0
 
-    tiles: Phaser.GameObjects.Group
+    map: WargrooveMap
     chessUnits: Phaser.GameObjects.Group
+    elements: Phaser.GameObjects.Group
+    gridOverlay: Phaser.GameObjects.Grid
 
     constructor(scene: MatchScene) {
 
@@ -24,18 +28,23 @@ export class WargrooveBoard extends Board {
                 gridType: 'quadGrid',
                 type: 'orthogonal',
                 dir: 4,
-                cellWidth: 48,
-                cellHeight: 48
+                cellWidth: cellSize,
+                cellHeight: cellSize
             }
         })
 
         scene.add.existing(this)
-        this.tiles = this.scene.add.group()
         this.chessUnits = this.scene.add.group()
+        this.elements = this.scene.add.group()
+        this.gridOverlay = new Phaser.GameObjects.Grid(scene, 0, 0, 0, 0, cellSize, cellSize)
+        this.gridOverlay.setDepth(getDepth('ui'))
+        this.gridOverlay.setOutlineStyle(0x000000, 0.1)
+        this.scene.add.existing(this.gridOverlay)
+        console.log(this.gridOverlay)
     }
 
     setMap(map: Match['map']){
-        this.scene.children.removeAll()
+        //this.scene.children.removeAll()
 
         let {  w: x, h: y, tiles } = map
 
@@ -44,15 +53,21 @@ export class WargrooveBoard extends Board {
 
         let camera = this.scene.cameras.main
 
-        let w = 48*x, h = 48*y
+        let w = cellSize * x, h = cellSize * y
 
-        //this.createTiles(tiles)
         camera.centerOn(w/2, h/2)
         camera.zoom = 0.8
         
 
-        this.w = w
-        this.h = h
+        this.w = this.gridOverlay.width = w
+        this.h = this.gridOverlay.height = h
+
+        const tilemap = this.scene.make.tilemap({ key: 'map' })
+        const tileset = tilemap.addTilesetImage('wg_tilsets')
+        this.map = new WargrooveMap(tilemap, tileset, this)
+        this.map.setTiles(tiles)
+        console.log(this.map)
+        //this.addElement('villager_cherrystone', 10, 10, 0.5, 0.3)
 
         return this
     }
@@ -74,7 +89,7 @@ export class WargrooveBoard extends Board {
         return this
     }*/
 
-    unitsCache: Record<number,WargrooveChessUnit> = {}
+    unitsCache: Record<number,WargrooveUnit> = {}
     touchedUnits: Record<number,boolean> = {}
 
     loadEntry(entry: Entry){
@@ -88,7 +103,7 @@ export class WargrooveBoard extends Board {
         let units = Object.values(u)
 
         for(let unit of units){
-            let chess = this.unitsCache[unit.id] = this.unitsCache[unit.id] || new WargrooveChessUnit(this, unit)
+            let chess = this.unitsCache[unit.id] = this.unitsCache[unit.id] || new WargrooveUnit(this, unit)
             chess.update()
             this.touchedUnits[unit.id] = true
             this.chessUnits.add(chess)
@@ -118,18 +133,87 @@ export class WargrooveBoard extends Board {
     getUnit(id: number){
         return this.unitsCache[id]
     }
+
+    addElement(frame: string | Phaser.Textures.Frame , x: number, y: number, originX?: number, originY?: number, withShadow = false) {
+        if(typeof frame == 'string'){
+            frame = this.scene.getFrames('grey', [frame])[0]
+        }
+        if(!frame) return
+
+        const ele = new WargrooveBoardElement(this)
+        ele.setCurrentFrame(frame)
+        ele.setOrigin(originX, originY)
+        ele.setBoardPosition(x, y)
+        ele.setScale(2)
+        this.elements.add(ele)
+
+        if(withShadow){
+            this.addShadow(x, y, ele.width, ele.height, originX, originY)
+        }
+
+        return ele
+    }
+
+    addShadow(x: number, y: number, width: number, height: number, originX?: number, originY?: number) {
+        let shadow = new Phaser.GameObjects.Ellipse(this.scene, 0, 0, width, 5, 0x000000, 0.4)
+        shadow.setOrigin(originX, originY - 0.8)
+        shadow.setScale(2)
+        this.addChess(shadow, x, y, getDepth('unit'))
+        this.scene.add.existing(shadow)
+    }
 }
 
 export class WargrooveSprite extends Phaser.GameObjects.Sprite {
-    public readonly id: number
-    scene: MatchScene
+    protected currentFrame: Phaser.Textures.Frame | null = null
 
-    currentFrame: Phaser.Textures.Frame | null = null
-
-    constructor(scene: MatchScene, unit: Unit){
+    constructor(readonly scene: MatchScene) {
         super(scene, 0, 0, '')
+    }
+
+    getSpriteImage() {
+        let { x, y, width, height } = this.currentFrame.canvasData as Record<string, number>
+        let source = this.currentFrame.texture.getSourceImage() as HTMLCanvasElement
+        let dest = document.createElement('canvas')
+        dest.width = width
+        dest.height = height
+        dest.getContext('2d').drawImage(source, x, y, width, height, 0, 0, width, height)
+        let img = new Image()
+        img.src = dest.toDataURL()
+        return img
+    }
+
+    setCurrentFrame(frame: Phaser.Textures.Frame | null){
+        this.currentFrame = frame
+        if (this.frame != frame) {
+            this.setTexture(frame.texture.key, frame.name)
+        }
+    }
+}
+
+export class WargrooveBoardElement extends WargrooveSprite {
+    constructor(protected board: WargrooveBoard) {
+        super(board.scene)
+        this.setDepth(getDepth('unit', 0))
+        board.scene.add.existing(this)
+
+    }
+
+    setBoardPosition(x: number, y: number) {
+        const depth = getDepth('unit', (y - this.originY) * cellSize)
+        this.board.addChess(this, x, y, depth)
+        this.setDepth(depth)
+    }
+}
+
+export class WargrooveUnit extends WargrooveBoardElement {
+    public readonly id: number
+    info: any
+
+    constructor(board: WargrooveBoard, unit: Unit){
+        super(board)
         this.id = unit.id
-        this.scene = scene
+        this.info = makeLabel(board.scene)
+        this.info.setOrigin(-0.2, -0.2)
     }
 
     getUnit(){
@@ -145,7 +229,7 @@ export class WargrooveSprite extends Phaser.GameObjects.Sprite {
 
         let unit = this.getUnit()
 
-        let { pos: { x, y, facing },  unitClassId, hadTurn } = unit
+        let { pos: { x, y, facing }, unitClassId, unitClass: { isStructure }, hadTurn, health } = unit
         let { color = 'grey', faction = 'cherrystone' } = this.getPlayer() || {}
 
         if (hadTurn) {
@@ -162,119 +246,83 @@ export class WargrooveSprite extends Phaser.GameObjects.Sprite {
         if (!frames.length) return
         let frame = frames[0]
 
-        if(frame != this.currentFrame){
-            this.currentFrame = frame
-            //console.log(frame, this.getSprite())
-            this.setTexture(frame.texture.key, frame.name)
-        }
+        this.setCurrentFrame(frame)
         
         this.setFlipX(facing == 3)
 
         let outOfBoard = (x < 0 || y < 0)
         this.visible = !outOfBoard
+
+        if (this.currentFrame) {
+            this.displayOriginY = this.currentFrame.height - 16 - (isStructure ? 12 : 0)
+        }
+
+        this.info.setText(health).layout()
+        this.board.addChess(this.info, x, y, getDepth('ui'))
+        this.info.visible = health == 100 ? false : true
+
+        this.setBoardPosition(x, y)
     }
 
     getSprite(){
-        let { x, y, width, height} = this.currentFrame.canvasData as Record<string,number>
-        let source = this.currentFrame.texture.getSourceImage() as HTMLCanvasElement
-        let dest = document.createElement('canvas')
-        dest.width = width
-        dest.height = height
-        dest.getContext('2d').drawImage(source, x, y, width, height, 0, 0, width, height)
-        let img = new Image()
-        img.src = dest.toDataURL()
-        return img
-    }
-}
-
-export class WargrooveChessUnit extends WargrooveSprite {
-    monopoly: Monopoly
-    board: WargrooveBoard
-    info: any
-
-    constructor(board: WargrooveBoard, unit: Unit){
-        super(board.scene, unit)
-        this.board = board
-        this.setDepth(getDepth('unit', 0))
-
-        let background = new RoundRectangle(board.scene, 0, 0, 0, 0, 5, 0x888888)
-
-        let text = new Phaser.GameObjects.Text(board.scene, 0, 0, "", {
-            fontSize: '12px',
-            strokeThickness: 1.1,
-            resolution: 4,
-        })
-
-
-        this.info = new Label(board.scene, {
-            width: 18,
-            height: 18,
-            background,
-            text,
-            align: 'center',
-            space: {
-                text: 0,
-                bottom: 0,
-                right: 0
-            }
-        })
-
-        background.setFillStyle(0x333333, 0.9)
-
-        this.info.setOrigin(-0.2, -0.2)
-
-        let uiDepth = getDepth('ui')
-        
-        this.info.setDepth(uiDepth);
-        background.setDepth(uiDepth)
-        text.setDepth(uiDepth)
-
-        board.scene.add.existing(this)
-        board.scene.add.existing(this.info)
-        this.scene.add.existing(background)
-        this.scene.add.existing(text)
-
-        this.info.layout()
-
-        //this.monopoly = new Monopoly(this, { face: 0, pathTileZ: 0, })
-        //board.scene.add.existing(this.monopoly)
-    }
-
-    setUnit(){
-        super.setUnit()
-        let unit = this.getUnit()
-        let { pos: { x, y }, unitClass: { isStructure }, health } = unit
-
-        if(this.currentFrame){
-            this.displayOriginY = this.currentFrame.height - 16 - (isStructure ? 12 : 0)
-        }
-        let depth = getDepth('unit', y)
-        this.board.addChess(this, x, y, depth)
-        this.setDepth(depth)
-
-        this.info.setText(health).layout()
-        this.info.visible = health == 100 ? false : true
-        this.board.addChess(this.info, x, y, getDepth('ui'))
+        return this.getSpriteImage()
     }
 
     update(){
         this.setUnit()
     }
 
-    destroy(){
+    destroy() {
         this.info?.destroy()
         super.destroy()
     }
-
 }
 
 function getDepth(type: string, y: number = 0){
     let depth = {
         'tile': 0,
         'unit': 100,
-        'overlay': 200,
-        'ui': 300
+        'overlay': 200 * cellSize,
+        'ui': 300 * cellSize
     }[type] || 0
 
     return (depth + y)
+}
+
+export function makeLabel(scene: Phaser.Scene) {
+    let background = new RoundRectangle(scene, 0, 0, 0, 0, 5, 0x888888)
+    background.setFillStyle(0x333333, 0.9)
+
+    let text = new Phaser.GameObjects.Text(scene, 0, 0, "", {
+        fontSize: '12px',
+        strokeThickness: 1.1,
+        resolution: 4,
+    })
+
+    const label = new Label(scene, {
+        width: 18,
+        height: 18,
+        background,
+        text,
+        align: 'center',
+        space: {
+            text: 0,
+            bottom: 0,
+            right: 0
+        }
+    })
+
+    let uiDepth = getDepth('ui')
+
+    label.setDepth(uiDepth)
+    background.setDepth(uiDepth)
+    text.setDepth(uiDepth)
+
+    scene.add.existing(label)
+    scene.add.existing(background)
+    scene.add.existing(text)
+
+    label.layout()
+
+    return label
 }
