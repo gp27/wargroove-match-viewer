@@ -311,7 +311,7 @@ export class WargrooveMap {
       this.makeGroupsLayer(terrain, biome, tiles)
     }
     else {
-      this.makeConnectedLayer(terrain, biome, tiles, '_bg')
+      //this.makeConnectedLayer(terrain, biome, tiles, '_bg')
       this.makeConnectedLayer(terrain, biome, tiles)
       this.makeConnectedLayer(terrain, biome, tiles, '_mask')
     }
@@ -389,12 +389,13 @@ export class WargrooveMap {
           let riverPoints = 0
 
           connections.forEach((terr, i) => {
-            if (i % 2 != 0) return
-            if (terr == 'river') riverPoints++
-            if (['sea', 'ocean', 'beach', 'reef'].includes(terr)) seaPoints++
+            let point = (i % 2 != 0) ? 1 : 0.1
+            if (terr == 'river') riverPoints += point
+            if (['sea', 'ocean', 'beach', 'reef'].includes(terr)) seaPoints += point
           })
 
           if (terrain == 'sea' && riverPoints > seaPoints) return
+          if (terrain == 'river' && seaPoints > riverPoints) return
         }
 
         const connId = connections.map(terr => {
@@ -408,7 +409,7 @@ export class WargrooveMap {
           let score = 0
           for (let i = 0; i < id.length; i++) {
             if (id[i] == connId[i]) {
-              score++
+              score += 1 + (id[i] == 'p' ? 0.02 : id[i] == 's' ? 0.01 : 0)
             }
             else if (id[i] != '.') return
 
