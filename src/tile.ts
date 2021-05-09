@@ -284,8 +284,8 @@ export class WargrooveMap {
     })
   }
 
-  private makeTilesLayer(name: string, tileIds: number[][]){
-    if(!tileIds.length) return
+  private makeTilesLayer(name: string, tileIds?: number[][]){
+    if(!tileIds?.length || !tileIds[0]?.length) return
     const layer = this.tilemap.createBlankLayer(name, this.tileset, 0, 0, tileIds[0].length, tileIds.length)
     if(!layer) return
     console.log(name)
