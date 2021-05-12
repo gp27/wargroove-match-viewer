@@ -2,22 +2,22 @@ import React, { useContext, useEffect, useState } from "react"
 import { Box } from "grommet";
 import { Match } from "../match";
 
-import { WargrooveMatchViewer } from '../phaser/macth-viewer'
+import { PhaserWargrooveGame } from '../phaser/phaser-wagroove-game'
 
-export const MatchViewerContext = React.createContext<{ game: WargrooveMatchViewer, setGame: (v: WargrooveMatchViewer) => void }>({
+export const PhaserWargrooveGameContext = React.createContext<{ game: PhaserWargrooveGame, setGame: (v: PhaserWargrooveGame) => void }>({
     game: null,
     setGame: () => { }
 })
 
-const GameBoard = ({ match }: { match: Match }) => {
-    let { game, setGame } = useContext(MatchViewerContext)
+const GameBoard = ({ match, onSelected }: { match: Match, onSelected?: Function }) => {
+    let { game, setGame } = useContext(PhaserWargrooveGameContext)
     //let [game, setGame] = useState<WargrooveMatchViewer>(null)
 
 
 
     useEffect(() => {
         if (!game) {
-            game = new WargrooveMatchViewer()
+            game = new PhaserWargrooveGame({ updateUI: onSelected })
         }
 
         game.onReady(() => {
@@ -29,33 +29,9 @@ const GameBoard = ({ match }: { match: Match }) => {
     }, [match])
 
     return <Box
-        id="game-board"
+        id="phaser-wargroove-game"
         overflow="hidden"
     />
 }
 
 export default GameBoard
-
-/*export default class GameBoard extends React.Component<{ match: Match }> {
-    game: WargrooveMatchViewer
-   
-    render() {
-        return (
-            <Box
-                id="game-board"
-                overflow="hidden"
-            />
-        );
-    }
-
-    componentDidMount() {
-        this.game = new WargrooveMatchViewer()
-        this.game.onReady(() => {
-            this.game.setMatch(this.props.match)
-        })
-    }
-
-    componentDidUpdate(){
-        //this.game.setMatch(this.props.match)
-    }
-}*/

@@ -2,14 +2,14 @@ import { Board, Shape, Monopoly } from 'phaser3-rex-plugins/plugins/board-compon
 import  { Label, RoundRectangle } from 'phaser3-rex-plugins/templates/ui/ui-components'
 import { MatchData, Entry, Unit, Match } from '../match'
 import { getUnitFrameNames, terrainColors } from '../match-utils'
-import { WargrooveMap } from '../tile'
-import { MatchScene } from './match-scene'
+import { MovementType, Terrain, TerrainMeta, WargrooveMap } from '../tile'
+import { PhaserWargrooveScene } from './phaser-wagroove-scene'
 
 const cellSize = 48
 
-export class WargrooveBoard extends Board {
+export class PhaserWargrooveBoard extends Board {
 
-    scene: MatchScene
+    scene: PhaserWargrooveScene
 
     w: number = 0
     h: number = 0
@@ -18,8 +18,12 @@ export class WargrooveBoard extends Board {
     chessUnits: Phaser.GameObjects.Group
     elements: Phaser.GameObjects.Group
     gridOverlay: Phaser.GameObjects.Grid
+    terrainsMeta: { [key in Terrain]?: TerrainMeta } = this.scene.cache.json.get('terrains').reduce((metas, meta: TerrainMeta) => {
+        metas[meta.id] = meta
+        return metas
+    },{})
 
-    constructor(scene: MatchScene) {
+    constructor(scene: PhaserWargrooveScene) {
 
         super(scene, {
             grid: {
@@ -72,23 +76,6 @@ export class WargrooveBoard extends Board {
         return this
     }
 
-    /*createTiles(tiles: Match['map']['tiles']){
-        this.tiles.clear(true)
-
-        for(let terrain of tiles) {
-            let { terrain, x, y } = tile
-            let color = terrainColors[terrain] || 0x000000
-
-            let tileSprite = new RoundRectangle(this.scene, 0, 0, 48, 48, 0, color)
-            //let shape = new Shape(this, x, y, 0, color)
-            this.tiles.add(tileSprite)
-            this.addChess(tileSprite, x, y, getDepth('tile'))
-
-            this.scene.add.existing(tileSprite).setStrokeStyle(2, 0xffffff, 0.3).setData('terrain', terrain)
-        }
-        return this
-    }*/
-
     unitsCache: Record<number,WargrooveUnit> = {}
     touchedUnits: Record<number,boolean> = {}
 
@@ -130,7 +117,7 @@ export class WargrooveBoard extends Board {
         return this
     }
 
-    getUnit(id: number){
+    private getUnit(id: number){
         return this.unitsCache[id]
     }
 
@@ -154,19 +141,23 @@ export class WargrooveBoard extends Board {
         return ele
     }
 
-    addShadow(x: number, y: number, width: number, height: number, originX?: number, originY?: number) {
+    private addShadow(x: number, y: number, width: number, height: number, originX?: number, originY?: number) {
         let shadow = new Phaser.GameObjects.Ellipse(this.scene, 0, 0, width, 5, 0x000000, 0.4)
         shadow.setOrigin(originX, originY - 0.8)
         shadow.setScale(2)
         this.addChess(shadow, x, y, getDepth('unit'))
         this.scene.add.existing(shadow)
     }
+
+    getTerrainAt(x: number, y: number): Terrain{
+        return this.map?.tiles?.[y][x]
+    }
 }
 
 export class WargrooveSprite extends Phaser.GameObjects.Sprite {
     protected currentFrame: Phaser.Textures.Frame | null = null
 
-    constructor(readonly scene: MatchScene) {
+    constructor(readonly scene: PhaserWargrooveScene) {
         super(scene, 0, 0, '')
     }
 
@@ -191,9 +182,10 @@ export class WargrooveSprite extends Phaser.GameObjects.Sprite {
 }
 
 export class WargrooveBoardElement extends WargrooveSprite {
-    constructor(protected board: WargrooveBoard) {
+    constructor(protected board: PhaserWargrooveBoard) {
         super(board.scene)
         this.setDepth(getDepth('unit', 0))
+        this.setScale(2)
         board.scene.add.existing(this)
 
     }
@@ -209,11 +201,24 @@ export class WargrooveUnit extends WargrooveBoardElement {
     public readonly id: number
     info: any
 
-    constructor(board: WargrooveBoard, unit: Unit){
+    constructor(board: PhaserWargrooveBoard, unit: Unit){
         super(board)
         this.id = unit.id
         this.info = makeLabel(board.scene)
         this.info.setOrigin(-0.2, -0.2)
+
+        /*this.on('click', () => {
+            new Monopoly(board, {
+                face: 0,
+                pathTileZ: 0,
+                costCallback: ({ x, y }, preTileXY, monopoly) => {
+                    //let { unitClassId } = this.getUnit()
+                    let terrain: Terrain = board.getTerrainAt(x, y)
+                    let movement: MovementType = 'walking'
+                    return board.terrainsMeta[terrain]?.movementCost?.[movement] ?? 96
+                }
+            })
+        })*/
     }
 
     getUnit(){
@@ -254,7 +259,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
         this.visible = !outOfBoard
 
         if (this.currentFrame) {
-            this.displayOriginY = this.currentFrame.height - 16 - (isStructure ? 12 : 0)
+            this.displayOriginY = this.currentFrame.height - 8 - (isStructure ? 6 : 0)
         }
 
         this.info.setText(health).layout()

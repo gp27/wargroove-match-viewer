@@ -1,9 +1,26 @@
-import { WargrooveBoard } from "./phaser/wargroove-board"
+import { PhaserWargrooveBoard } from "./phaser/phaser-wargroove-board"
 
 export type Terrain = keyof typeof terrains
 export type Biome = 'grass' | 'ice' | 'desert' | 'volcano' | 'default'
 
 export type ExtendedTerrain = Terrain | 'river_mask' | 'sea_mask'
+
+export type MovementType = 'amphibious' | 'flying' | 'hovering' | 'indoor_building' | 'land_building' | 'riding' | 'walking' | 'wheels'
+
+export const unitsMovement: {
+  [unitClassId: string]: MovementType
+} = {
+  soldier: 'walking',
+  
+}
+
+export type TerrainMeta = {
+  id: Terrain
+  defenceBonus: number
+  movementGroupType: string
+  tilesets: { [index: string]: Terrain }
+  movementCost: { [movement in MovementType]: number }
+}
 
 type WangIdArray = [
   string | undefined,
@@ -47,91 +64,6 @@ export function tilesFromLinear({ tiles, width }: LinearTilesInput): TilesInput 
   }
   return matrix
 }
-
-/*class Tileset {
-  constructor(
-    //private tiles: TilesInput,
-    private mainTerrain: Terrain,
-    private fillTerrains: Terrain[] = []
-  ) {
-
-  }
-
-  getBlobIndexMatrix(tiles: TilesInput, { edges = true, corners = true } = {}){
-    return tiles.map((row, y, rows) => {
-      return row.map((v, x, cRow) => {
-        let pRow = rows[y - 1] || []
-        let nRow = rows[y + 1] || []
-
-        if(v != this.mainTerrain){
-          return null
-        }
-
-        return (edges && (
-          (v == pRow[x] && 1) |
-          (v == cRow[x - 1] && 64) |
-          (v == cRow[x + 1] && 4) |
-          (v == nRow[x] && 16)
-        )) | (corners && (
-          (v == pRow[x - 1] && 128) |
-          (v == pRow[x + 1] && 2) |
-          (v == nRow[x - 1] && 32) |
-          (v == nRow[x + 1] && 8)
-        ))
-      })
-    })
-  }
-}
-
-const terrainGroups = {
-  inside: ['cobblestone', 'carpet', 'wall'] as Terrain[],
-  outside: ['plains', 'forest', 'mountain'] as Terrain[],
-  sea: ['sea', 'ocean', 'reef'] as Terrain[],
-  water: ['sea', 'ocean', 'reef', 'river'] as Terrain[],
-}
-
-const CarpetTileset = new Tileset('carpet') // blob
-const WallTileset = new Tileset('wall') // 2e - y based
-const CobblestoneTileset = new Tileset('cobblestone', ['carpet', 'wall']) // blob
-
-const ForestTileset = new Tileset('forest') // simple - y based
-const MountainTileset = new Tileset('mountain') // square
-
-const PlainsTileset = new Tileset('plains', [ // blob
-  ...terrainGroups.inside,
-  ...terrainGroups.outside,
-  'road',
-  'river',
-  'beach'
-])
-const RoadTileset = new Tileset('road', ['bridge']) // 2e
-const RiverTileset = new Tileset('river') // blob
-
-const BridgeTileset = new Tileset('bridge', []) // 2e - y based
-
-const BeachTileset = new Tileset('beach', [ // blob (without tile 255)
-  ...terrainGroups.outside,
-  ...terrainGroups.inside
-])
-const SeaTileset = new Tileset('sea', ['ocean', 'reef', 'beach']) // simple
-const OceanTileset = new Tileset('ocean') // blob
-const ReefTileset = new Tileset('reef') // simple
-
-const tilesetsOrder = [
-  PlainsTileset,
-  SeaTileset,
-  OceanTileset,
-  RiverTileset,
-  BeachTileset,
-  ReefTileset,
-  RoadTileset,
-  BridgeTileset,
-  CobblestoneTileset,
-  CarpetTileset,
-  MountainTileset,
-  WallTileset,
-  ForestTileset
-]*/
 
 const terrainLayersOrder: Terrain[] = [
   'plains',
@@ -229,9 +161,9 @@ export class WargrooveMap {
   constructor(
     private tilemap: Phaser.Tilemaps.Tilemap,
     private tileset: Phaser.Tilemaps.Tileset,
-    private biome: Biome = 'grass',
-    private board: WargrooveBoard,
-    tiles?: TilesInput
+    readonly biome: Biome = 'grass',
+    private board: PhaserWargrooveBoard,
+    readonly tiles?: TilesInput
     ){
     this.tilesetData = this.parseTileset(this.tileset)
     

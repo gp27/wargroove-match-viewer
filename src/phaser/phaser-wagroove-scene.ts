@@ -1,13 +1,13 @@
 import Phaser from 'phaser'
 import { Entry, Match } from '../match'
-import { WargrooveBoard } from './wargroove-board'
+import { PhaserWargrooveBoard } from './phaser-wargroove-board'
 import { applyPalette, generatePalette } from '../palettes'
 import 'chart.js'
 
 
 const paletteNames = ['red', 'blue', 'green', 'yellow', 'purple', 'teal', 'pink', 'orange', 'black', 'grey']
 
-export class MatchScene extends Phaser.Scene {
+export class PhaserWargrooveScene extends Phaser.Scene {
   match: Match
 
   ui: Record<string, any> = {}
@@ -22,16 +22,26 @@ export class MatchScene extends Phaser.Scene {
     this.load.image('units', 'assets/units.png')
     this.load.image('wg_tilsets', 'assets/tilesets_clean.png')
     this.load.json('units', 'assets/units.json')
+    this.load.json('terrains', 'assets/terrains.json')
     this.load.atlas('trees', 'assets/trees.png', 'assets/trees.json')
     this.load.tilemapTiledJSON('map', 'assets/map.json')
   }
 
   create() {
     generatePalette('wg-palette', this.game.textures.get('palette').getSourceImage() as HTMLImageElement, paletteNames)
-    applyPalette(this.game.textures.get('units').getSourceImage() as HTMLCanvasElement, 'wg-palette', 'grey', 'grey')
+    const unitsCanvas = this.game.textures.get('units').getSourceImage() as HTMLCanvasElement
+    applyPalette(unitsCanvas, 'wg-palette', 'grey', 'grey')
 
     this.loaded = true
     this.makeUi()
+
+    this.input.keyboard.on("keydown-RIGHT", () => {
+      this.match.selectNextEntry()
+    })
+
+    this.input.keyboard.on("keydown-LEFT", () => {
+      this.match.selectPreviousEntry()
+    })
 
     this.input.on('wheel', (pointer, objs, dX, dY, dZ) => {
       let camera = this.cameras.main
@@ -92,14 +102,18 @@ export class MatchScene extends Phaser.Scene {
     let { cutHeight: height, cutWidth: width, cutX: x, cutY: y, texture } = frames[0]
 
     let c = document.createElement('canvas')
-    c.width = width
-    c.height = height
-    c.getContext('2d').drawImage(texture.getSourceImage() as HTMLImageElement, x, y, width, height, 0, 0, width, height)
+    c.width = width * 2
+    c.height = height * 2
+    
+    let ctx = c.getContext('2d')
+    ctx.imageSmoothingEnabled = false
+    ctx.scale(2, 2)
+    ctx.drawImage(texture.getSourceImage() as HTMLImageElement, x, y, width, height, 0, 0, width, height)
     return c
   }
 
   makeUi() {
-    let board = this.ui.board = new WargrooveBoard(this)
+    let board = this.ui.board = new PhaserWargrooveBoard(this)
     if (this.match) {
       board.setMap(this.match.getMap())
       this.reloadMatchEntry()
@@ -128,6 +142,7 @@ export class MatchScene extends Phaser.Scene {
     if (entry != this.currentEntry) {
       this.currentEntry = entry
       this.ui.board.loadEntry(entry)
+      ;(this.game as any).updateUI?.()
     }
   }
 

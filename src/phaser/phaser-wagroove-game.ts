@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import AwaitLoaderPlugin from 'phaser3-rex-plugins/plugins/awaitloader-plugin.js';
-import { MatchScene } from '../phaser/match-scene';
+import { PhaserWargrooveScene } from './phaser-wagroove-scene';
 
 import { Match } from "../match";
 
@@ -10,9 +10,9 @@ const config: Phaser.Types.Core.GameConfig = {
     render: {
         pixelArt: true
     },
-    parent: "game-board",
+    parent: "phaser-wargroove-game",
     backgroundColor: '#fff',//"#e7dab0",
-    scene: [MatchScene],
+    scene: [PhaserWargrooveScene],
     scale: {
         mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -23,23 +23,20 @@ const config: Phaser.Types.Core.GameConfig = {
             key: 'rexAwaitLoader',
             plugin: AwaitLoaderPlugin,
             start: true
-        }],
-        /*scene: [{
-            key: 'palette',
-            plugin: PalettePlugin,
-            mapping: 'palette',
-            start: true
-        }]*/
+        }]
     }
 };
 
-export class WargrooveMatchViewer extends Phaser.Game {
-    constructor(){
+export class PhaserWargrooveGame extends Phaser.Game {
+    readonly updateUI: Function
+
+    constructor({ updateUI }: { updateUI?: Function } = {}){
         super(config)
+        this.updateUI = updateUI
     }    
 
     setMatch(match: Match) {
-        let scene = this.scene.getScene('MatchScene') as MatchScene
+        let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
         scene.loadMatch(match)
     }
 
@@ -53,7 +50,7 @@ export class WargrooveMatchViewer extends Phaser.Game {
     }
 
     onSceneReady(cb: Function){
-        let scene = this.scene.getScene('MatchScene') as MatchScene
+        let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
         if (scene.loaded) {
             cb()
         }
@@ -65,7 +62,7 @@ export class WargrooveMatchViewer extends Phaser.Game {
     }
 
     getFrameCanvas(colorName: string, frameNames: string[]){
-        let scene = this.scene.getScene('MatchScene') as MatchScene
+        let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
         return scene?.getFrameCanvas(colorName, frameNames)
     }
 }

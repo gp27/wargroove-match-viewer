@@ -25,7 +25,7 @@ const MatchUI = ({ match }: { match: Match }) => {
         </Box>
 
         <Box flex align='center' justify='center' margin="small" round="small" overflow="hidden">
-            <GameBoard match={match} />
+            <GameBoard match={match} onSelected={update}/>
         </Box>
 
         <Box direction="column">

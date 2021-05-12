@@ -1,0 +1,246 @@
+[{
+        "defenceBonus": 1,
+        "id": "plains",
+        "movementGroupType": "land",
+        "tilesets": {
+            "0": "plains"
+        },
+        "movementCost": {
+            "amphibious": 2,
+            "flying": 1,
+            "hovering": 1,
+            "indoor_building": 1,
+            "land_building": 1,
+            "riding": 1,
+            "walking": 1,
+            "wheels": 2
+        }
+    },
+    {
+        "defenceBonus": 0,
+        "id": "road",
+        "movementGroupType": "land",
+        "tilesets": {
+            "0": "plains",
+            "2": "road"
+        },
+        "movementCost": {
+            "amphibious": 2,
+            "flying": 1,
+            "hovering": 1,
+            "indoor_building": 1,
+            "land_building": 1,
+            "riding": 1,
+            "walking": 1,
+            "wheels": 1
+        }
+    },
+    {
+        "defenceBonus": 3,
+        "id": "forest",
+        "movementGroupType": "land",
+        "tilesets": {
+            "0": "plains",
+            "1": "forest"
+        },
+        "movementCost": {
+            "amphibious": 4,
+            "flying": 1,
+            "hovering": 1,
+            "riding": 3,
+            "walking": 2
+        }
+    },
+    {
+        "defenceBonus": 4,
+        "id": "mountain",
+        "movementGroupType": "land",
+        "tilesets": {
+            "0": "plains",
+            "1": "mountain"
+        },
+        "movementCost": {
+            "flying": 1,
+            "hovering": 1,
+            "walking": 3
+        }
+    },
+    {
+        "defenceBonus": 2,
+        "id": "cobblestone",
+        "movementGroupType": "land",
+        "tilesets": {
+            "0": "plains",
+            "1": "cobblestone"
+        },
+        "movementCost": {
+            "amphibious": 2,
+            "hovering": 1,
+            "indoor_building": 1,
+            "riding": 1,
+            "walking": 1
+        }
+    },
+    {
+        "defenceBonus": 2,
+        "id": "carpet",
+        "movementGroupType": "land",
+        "tilesets": {
+            "0": "plains",
+            "1": "cobblestone",
+            "2": "carpet"
+        },
+        "movementCost": {
+            "amphibious": 2,
+            "hovering": 1,
+            "indoor_building": 1,
+            "riding": 1,
+            "walking": 1
+        }
+    },
+    {
+        "defenceBonus": 0,
+        "id": "wall",
+        "movementGroupType": "land",
+        "tilesets": {
+            "0": "plains",
+            "1": "cobblestone",
+            "2": "wall"
+        },
+        "movementCost": {}
+    },
+    {
+        "defenceBonus": 0,
+        "id": "bridge",
+        "movementGroupType": "land",
+        "tilesets": {
+            "0": "plains",
+            "1": [
+                "sea",
+                "river"
+            ],
+            "2": "bridge"
+        },
+        "movementCost": {
+            "amphibious": 2,
+            "flying": 1,
+            "hovering": 1,
+            "riding": 1,
+            "sailing": 2,
+            "walking": 1,
+            "wheels": 1
+        }
+    },
+    {
+        "defenceBonus": 1,
+        "id": "sea",
+        "movementGroupType": "water",
+        "tilesets": {
+            "0": "plains",
+            "1": "sea"
+        },
+        "movementCost": {
+            "amphibious": 1,
+            "flying": 1,
+            "hovering": 1,
+            "sailing": 2,
+            "sea_building": 1
+        }
+    },
+    {
+        "defenceBonus": 0,
+        "id": "ocean",
+        "movementGroupType": "water",
+        "tilesets": {
+            "1": "ocean"
+        },
+        "movementCost": {
+            "amphibious": 1,
+            "flying": 1,
+            "hovering": 1,
+            "sailing": 1,
+            "sea_building": 1
+        }
+    },
+    {
+        "defenceBonus": 2,
+        "id": "reef",
+        "movementGroupType": "water",
+        "tilesets": {
+            "0": "plains",
+            "1": "sea",
+            "2": "reef"
+        },
+        "movementCost": {
+            "amphibious": 2,
+            "flying": 1,
+            "hovering": 1,
+            "sailing": 4,
+            "sea_building": 1
+        }
+    },
+    {
+        "defenceBonus": -2,
+        "id": "river",
+        "movementGroupType": "land",
+        "tilesets": {
+            "0": "plains",
+            "1": "river"
+        },
+        "movementCost": {
+            "amphibious": 1,
+            "flying": 1,
+            "hovering": 1,
+            "riding": 4,
+            "walking": 2
+        }
+    },
+    {
+        "defenceBonus": -1,
+        "id": "beach",
+        "movementGroupType": "land",
+        "tilesets": {
+            "0": "plains",
+            "1": "beach"
+        },
+        "movementCost": {
+            "amphibious": 2,
+            "flying": 1,
+            "hovering": 1,
+            "riding": 1,
+            "sailing": 2,
+            "walking": 1
+        }
+    },
+    {
+        "defenceBonus": 0,
+        "id": "sky",
+        "movementGroupType": "air",
+        "movementCost": {
+            "flying": 1,
+            "hovering": 1
+        }
+    },
+    {
+        "defenceBonus": 4,
+        "id": "city",
+        "movementGroupType": "land",
+        "movementCost": {
+            "amphibious": 2,
+            "flying": 1,
+            "hovering": 1,
+            "riding": 1,
+            "walking": 1,
+            "wheels": 1
+        }
+    },
+    {
+        "defenceBonus": 0,
+        "id": "volcano",
+        "movementGroupType": "land",
+        "tilesets": {
+            "0": "volcano"
+        },
+        "movementCost": {}
+    }
+]

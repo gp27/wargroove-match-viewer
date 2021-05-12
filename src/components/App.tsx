@@ -4,8 +4,8 @@ import * as Icons from 'grommet-icons'
 import StatusGraphs from './StatusGraphs'
 import MatchUI from './MatchUI'
 import { Match } from "../match"
-import { MatchViewerContext } from "./GameBoard"
-import { WargrooveMatchViewer } from "../phaser/macth-viewer"
+import { PhaserWargrooveGameContext } from "./GameBoard"
+import { PhaserWargrooveGame } from "../phaser/phaser-wagroove-game"
 import { MatchContext, MatchLoader } from './MatchLoader'
 
 const theme: ThemeType = {
@@ -38,7 +38,7 @@ const NavBar = props => <Box
 
 const App = () => {
     let [match, setMatch] = useState<Match>(null)
-    let [game, setGame] = useState<WargrooveMatchViewer>(null)
+    let [game, setGame] = useState<PhaserWargrooveGame>(null)
 
     /*if (!match) {
         Match.load().then(match => {
@@ -58,7 +58,7 @@ const App = () => {
 
     return <Grommet theme={theme} full>
         <MatchContext.Provider value={{ match, setMatch }}>
-            <MatchViewerContext.Provider value={{ game, setGame }}>
+            <PhaserWargrooveGameContext.Provider value={{ game, setGame }}>
                 <Box fill direction="column">
                     <NavBar>
                         <Box direction="row">
@@ -72,7 +72,7 @@ const App = () => {
 
                     {match ? <MatchUI match={match} /> : <MatchLoader />}
                 </Box>
-            </MatchViewerContext.Provider>
+            </PhaserWargrooveGameContext.Provider>
         </MatchContext.Provider>
     </Grommet>
 }

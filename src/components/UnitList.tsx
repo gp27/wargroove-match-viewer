@@ -2,7 +2,7 @@ import React from "react"
 import { Box, List, Text } from 'grommet'
 
 import { Match, Unit } from "../match"
-import { MatchViewerContext } from "./GameBoard"
+import { PhaserWargrooveGameContext } from "./GameBoard"
 import { getUnitFrameNames } from "../match-utils"
 
 const UnitList = ({ match, playerId }: { match: Match, playerId?: number }) => {
@@ -16,7 +16,7 @@ const UnitList = ({ match, playerId }: { match: Match, playerId?: number }) => {
         return game?.getFrameCanvas(color, frameNames)
     }
     
-    return <MatchViewerContext.Consumer>
+    return <PhaserWargrooveGameContext.Consumer>
         {({ game }) => <List
             border="bottom"
             data={units}
@@ -26,7 +26,7 @@ const UnitList = ({ match, playerId }: { match: Match, playerId?: number }) => {
                 <Text>{unitClassId.replace("commander_", "")} (ID:{id})<br /> {health}%{grooveId ? ' Groove: ' + Math.round(grooveCharge / maxGroove * 100) + '%' : ''}</Text>
             </Box>)}
         />}
-    </MatchViewerContext.Consumer>
+    </PhaserWargrooveGameContext.Consumer>
 }
 
 export default UnitList

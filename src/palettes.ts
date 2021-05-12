@@ -71,6 +71,7 @@ export function applyPalette(source: HTMLCanvasElement | HTMLImageElement, palet
     let pixels = imageData.data
 
     if (from != to) {
+        //swapPalette(savedPalettes[paletteKey], pixels, ['red', 'blue', 'green', 'yellow',  'purple', 'teal', 'orange', 'black'], 'grey')
         swapPalette(savedPalettes[paletteKey], pixels, from, to)
         ctx.putImageData(imageData, 0, 0)
     }

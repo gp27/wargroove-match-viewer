@@ -170,10 +170,19 @@ export class Match {
   }
 
   selectEntry(entryId: number) {
-    this.currentEntry = this.entries.find(e => e.id == entryId) || this.entries[0]
+    this.currentEntry = this.entries.find(e => e.id == entryId) || this.currentEntry || this.entries[0]
     this.currentTurn = this.currentEntry.turn
     return this.currentEntry
   }
+
+  selectNextEntry() {
+    this.selectEntry(this.currentEntry?.id + 1)
+  }
+
+  selectPreviousEntry() {
+    this.selectEntry(this.currentEntry?.id - 1)
+  }
+
 
   getCurrentEntry(){
     return this.currentEntry
