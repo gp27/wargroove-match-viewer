@@ -159,7 +159,7 @@ export class PhaserWargrooveBoard extends Board {
     }
 
     getTerrainAt(x: number, y: number): Terrain{
-        return this.map?.tiles?.[y][x]
+        return this.map?.tiles?.[y]?.[x]
     }
 
     getUnitAt(x: number, y: number): WargrooveUnit {
