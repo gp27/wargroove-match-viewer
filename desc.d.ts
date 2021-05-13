@@ -8,6 +8,7 @@ declare module 'phaser3-rex-plugins/plugins/board-components' {
         addChess: Function
         moveChess: Function
         getGridPoints: Function
+        tileXYZToChess: Function
     }
 
     export class Shape extends Phaser.GameObjects.GameObject {
@@ -18,5 +19,11 @@ declare module 'phaser3-rex-plugins/plugins/board-components' {
 
     export class Monopoly extends Phaser.GameObjects.GameObject {
         constructor(...any)
+    }
+
+    export class PathFinder extends Phaser.GameObjects.GameObject {
+        constructor(...any)
+
+        findArea(movingPoints: number): { x: number, y: number, pathCost: number }[]
     }
 }

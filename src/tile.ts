@@ -7,6 +7,19 @@ export type ExtendedTerrain = Terrain | 'river_mask' | 'sea_mask'
 
 export type MovementType = 'amphibious' | 'flying' | 'hovering' | 'indoor_building' | 'land_building' | 'riding' | 'walking' | 'wheels'
 
+export const movementMappings: Record<string,MovementType> = {
+  knight: 'riding',
+  wagon: 'wheels',
+  trebuchet: 'wheels',
+  ballista: 'wheels',
+  balloon: 'flying',
+  harpy: 'flying',
+  dragon: 'flying',
+  witch: 'flying',
+  merman: 'amphibious',
+  sparrowbomb: 'hovering'
+}
+
 export const unitsMovement: {
   [unitClassId: string]: MovementType
 } = {
@@ -163,7 +176,7 @@ export class WargrooveMap {
     private tileset: Phaser.Tilemaps.Tileset,
     readonly biome: Biome = 'grass',
     private board: PhaserWargrooveBoard,
-    readonly tiles?: TilesInput
+    public tiles?: TilesInput
     ){
     this.tilesetData = this.parseTileset(this.tileset)
     
@@ -175,6 +188,7 @@ export class WargrooveMap {
   setTiles(tiles: TilesInput){
     this.tilemap.removeAllLayers()
     this.generateLayers(tiles, this.biome)
+    this.tiles = tiles
   }
 
   private parseTileset(tileset: Phaser.Tilemaps.Tileset, index: WargrooveMap['tilesetData'] = {}) {

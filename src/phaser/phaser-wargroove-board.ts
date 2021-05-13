@@ -1,8 +1,8 @@
-import { Board, Shape, Monopoly } from 'phaser3-rex-plugins/plugins/board-components'
+import { Board, Shape, Monopoly, PathFinder } from 'phaser3-rex-plugins/plugins/board-components'
 import  { Label, RoundRectangle } from 'phaser3-rex-plugins/templates/ui/ui-components'
 import { MatchData, Entry, Unit, Match } from '../match'
 import { getUnitFrameNames, terrainColors } from '../match-utils'
-import { MovementType, Terrain, TerrainMeta, WargrooveMap } from '../tile'
+import { movementMappings, MovementType, Terrain, TerrainMeta, WargrooveMap } from '../tile'
 import { PhaserWargrooveScene } from './phaser-wagroove-scene'
 
 const cellSize = 48
@@ -45,6 +45,12 @@ export class PhaserWargrooveBoard extends Board {
         this.gridOverlay.setOutlineStyle(0x000000, 0.1)
         this.scene.add.existing(this.gridOverlay)
         console.log(this.gridOverlay)
+
+        this.setInteractive()
+        this.on('tiledown', (pointer, { x, y }) => {
+            let area = this.getUnitMoveArea(x, y)
+            this.setMoveArea(area)
+        })
     }
 
     setMap(map: Match['map']){
@@ -78,9 +84,12 @@ export class PhaserWargrooveBoard extends Board {
 
     unitsCache: Record<number,WargrooveUnit> = {}
     touchedUnits: Record<number,boolean> = {}
+    moveArea: Phaser.GameObjects.GameObject[] = []
 
     loadEntry(entry: Entry){
         //this.removeAllChess(true)
+        this.setMoveArea([])
+
         for(let id in this.touchedUnits){
             this.touchedUnits[id] = false
         }
@@ -145,12 +154,53 @@ export class PhaserWargrooveBoard extends Board {
         let shadow = new Phaser.GameObjects.Ellipse(this.scene, 0, 0, width, 5, 0x000000, 0.4)
         shadow.setOrigin(originX, originY - 0.8)
         shadow.setScale(2)
-        this.addChess(shadow, x, y, getDepth('unit'))
+        this.addChess(shadow, x, y)
         this.scene.add.existing(shadow)
     }
 
     getTerrainAt(x: number, y: number): Terrain{
         return this.map?.tiles?.[y][x]
+    }
+
+    getUnitAt(x: number, y: number): WargrooveUnit {
+        return this.tileXYZToChess(x, y, getDepth('unit'))
+    }
+
+    setMoveArea(area: { x: number, y: number, color?: number, alpha?: number }[]){
+        this.moveArea.forEach(o => o.destroy())
+        this.moveArea = area.map(({ x, y, color = 0x000000, alpha = 0.3}) => {
+            let shape = new Phaser.GameObjects.Rectangle(this.scene, 0, 0, cellSize, cellSize)
+            shape.setFillStyle(color, alpha)
+            shape.setStrokeStyle(2, 0x000000, 1)
+            this.scene.add.existing(shape)
+            this.addChess(shape, x, y)
+            shape.setDepth(getDepth('unit'))
+            return shape
+        })
+    }
+
+    private getUnitMoveArea(x: number, y: number){
+        let unit = this.getUnitAt(x, y)
+        if(!unit) return []
+        let { playerId, unitClassId, unitClass: { moveRange } } = unit.getUnit()
+
+        const pathFinder = new PathFinder(unit, {
+            pathMode: 'A*',
+            costCallback: ({ x, y }, preTileXY, pathFinder) => {
+                let terrain: Terrain = this.getTerrainAt(x, y)
+                let { unitClassId, playerId: otherPlayerId = -3, unitClass: { canBeCaptured = false } = {} } = this.getUnitAt(x, y)?.getUnit() || {}
+                let movement: MovementType = movementMappings[unitClassId] || 'walking'
+
+                if (otherPlayerId > -3 && ((otherPlayerId != -1 && otherPlayerId != playerId) || (otherPlayerId == -1 && !canBeCaptured))) {
+                    return pathFinder.BLOCKER
+                }
+
+                let cost = this.terrainsMeta[terrain]?.movementCost?.[movement] ?? pathFinder.BLOCKER
+                return cost
+            }
+        })
+
+        return [{ x,y, color: 0xffffff }].concat(pathFinder.findArea(moveRange).map(({ x, y }) => ({ x, y, color: 0x000000 })))
     }
 }
 
@@ -190,12 +240,14 @@ export class WargrooveBoardElement extends WargrooveSprite {
 
     }
 
-    setBoardPosition(x: number, y: number) {
+    setBoardPosition(x: number, y: number, z?: number) {
         const depth = getDepth('unit', (y - this.originY) * cellSize)
-        this.board.addChess(this, x, y, depth)
+        this.board.addChess(this, x, y, z)
         this.setDepth(depth)
     }
 }
+
+let moveArea: Phaser.GameObjects.GameObject[] = []
 
 export class WargrooveUnit extends WargrooveBoardElement {
     public readonly id: number
@@ -206,19 +258,6 @@ export class WargrooveUnit extends WargrooveBoardElement {
         this.id = unit.id
         this.info = makeLabel(board.scene)
         this.info.setOrigin(-0.2, -0.2)
-
-        /*this.on('click', () => {
-            new Monopoly(board, {
-                face: 0,
-                pathTileZ: 0,
-                costCallback: ({ x, y }, preTileXY, monopoly) => {
-                    //let { unitClassId } = this.getUnit()
-                    let terrain: Terrain = board.getTerrainAt(x, y)
-                    let movement: MovementType = 'walking'
-                    return board.terrainsMeta[terrain]?.movementCost?.[movement] ?? 96
-                }
-            })
-        })*/
     }
 
     getUnit(){
@@ -245,6 +284,9 @@ export class WargrooveUnit extends WargrooveBoardElement {
         }
 
         let frameNames = getUnitFrameNames(unitClassId, faction)
+        if (unitClassId == 'gate' && [this.board.getTerrainAt(x, y - 1), this.board.getTerrainAt(x, y + 1)].every(t => t == 'wall')){
+            frameNames = ['gate_2']
+        }
 
         let frames = this.scene.getFrames(color, frameNames)
 
@@ -263,10 +305,10 @@ export class WargrooveUnit extends WargrooveBoardElement {
         }
 
         this.info.setText(health).layout()
-        this.board.addChess(this.info, x, y, getDepth('ui'))
+        this.board.addChess(this.info, x, y)
         this.info.visible = health == 100 ? false : true
 
-        this.setBoardPosition(x, y)
+        this.setBoardPosition(x, y, getDepth('unit'))
     }
 
     getSprite(){
