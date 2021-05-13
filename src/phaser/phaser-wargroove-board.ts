@@ -188,7 +188,7 @@ export class PhaserWargrooveBoard extends Board {
             pathMode: 'A*',
             costCallback: ({ x, y }, preTileXY, pathFinder) => {
                 let terrain: Terrain = this.getTerrainAt(x, y)
-                let { unitClassId, playerId: otherPlayerId = -3, unitClass: { canBeCaptured = false } = {} } = this.getUnitAt(x, y)?.getUnit() || {}
+                let { playerId: otherPlayerId = -3, unitClass: { canBeCaptured = false } = {} } = this.getUnitAt(x, y)?.getUnit() || {}
                 let movement: MovementType = movementMappings[unitClassId] || 'walking'
 
                 if (otherPlayerId > -3 && ((otherPlayerId != -1 && otherPlayerId != playerId) || (otherPlayerId == -1 && !canBeCaptured))) {
