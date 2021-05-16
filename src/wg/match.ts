@@ -246,7 +246,7 @@ export class Match {
 
     return Object.values(entry.state.units)
       .filter(u => playerId === undefined ? u.playerId >= 0 : u.playerId == playerId)
-      .filter(u => !u.garrisonClassId)
+      .filter(u => !u.garrisonClassId && !['area_damage', 'area_heal'].includes(u.unitClassId))
       .sort((u1, u2) => {
 
         let deltaPlayer = relativePlayerId(u1.playerId, entry.state.playerId) - relativePlayerId(u2.playerId, entry.state.playerId)

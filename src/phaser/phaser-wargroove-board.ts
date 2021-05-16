@@ -24,7 +24,7 @@ export class PhaserWargrooveBoard extends Board {
         return metas
     },{})
 
-    wgLOS: WargrooveLineOfSight
+    fieldOfView: WargrooveFieldOfView
 
     constructor(scene: PhaserWargrooveScene) {
 
@@ -44,7 +44,7 @@ export class PhaserWargrooveBoard extends Board {
         this.chessUnits = this.scene.add.group()
         this.elements = this.scene.add.group()
         this.gridOverlay = new Phaser.GameObjects.Grid(scene, 0, 0, 0, 0, cellSize, cellSize)
-        this.gridOverlay.setDepth(getDepth('ui'))
+        this.gridOverlay.setDepth(getDepth('floor'))
         this.gridOverlay.setOutlineStyle(0x000000, 0.1)
         this.scene.add.existing(this.gridOverlay)
 
@@ -71,8 +71,11 @@ export class PhaserWargrooveBoard extends Board {
         camera.zoom = 0.8
         
 
-        this.w = this.gridOverlay.width = w
-        this.h = this.gridOverlay.height = h
+        this.w = x
+        this.h = y
+
+        this.gridOverlay.width = x * cellSize
+        this.gridOverlay.height = y * cellSize
 
         const tilemap = this.scene.make.tilemap({ key: 'map' })
         const tileset = tilemap.addTilesetImage('wg_tilsets')
@@ -80,7 +83,7 @@ export class PhaserWargrooveBoard extends Board {
         this.map.setTiles(tiles)
         console.log(this.map)
         //this.addElement('villager_cherrystone', 10, 10, 0.5, 0.3)
-        this.wgLOS = new WargrooveLineOfSight(this, x, y)
+        this.fieldOfView = new WargrooveFieldOfView(this, x, y)
 
         return this
     }
@@ -133,6 +136,16 @@ export class PhaserWargrooveBoard extends Board {
         return this.unitsCache[id]
     }
 
+    addSquare(x: number, y: number, color?: number, alpha?: number, strokeColor?: number, strokeAlpha?: number){
+        let shape = new Phaser.GameObjects.Rectangle(this.scene, 0, 0, cellSize, cellSize)
+        shape.setFillStyle(color, alpha)
+        if(strokeColor != undefined) shape.setStrokeStyle(2, strokeColor, strokeAlpha)
+        this.scene.add.existing(shape)
+        this.addChess(shape, x, y)
+        shape.setDepth(getDepth('floor'))
+        return shape
+    }
+
     addElement(frame: string | Phaser.Textures.Frame , x: number, y: number, originX?: number, originY?: number, withShadow = false) {
         if(typeof frame == 'string'){
             frame = this.scene.getFrames('grey', [frame])[0]
@@ -154,7 +167,7 @@ export class PhaserWargrooveBoard extends Board {
     }
 
     private addShadow(x: number, y: number, width: number, height: number, originX?: number, originY?: number) {
-        let shadow = new Phaser.GameObjects.Ellipse(this.scene, 0, 0, width, 5, 0x000000, 0.4)
+        let shadow = new Phaser.GameObjects.Ellipse(this.scene, 0, 0, width, 5, 0x000000, 0.3)
         shadow.setOrigin(originX, originY - 0.8)
         shadow.setScale(2)
         this.addChess(shadow, x, y)
@@ -172,17 +185,11 @@ export class PhaserWargrooveBoard extends Board {
     setMoveArea(area: { x: number, y: number, color?: number, alpha?: number }[]){
         this.moveArea.forEach(o => o.destroy())
         this.moveArea = area.map(({ x, y, color = 0x000000, alpha = 0.3}) => {
-            let shape = new Phaser.GameObjects.Rectangle(this.scene, 0, 0, cellSize, cellSize)
-            shape.setFillStyle(color, alpha)
-            shape.setStrokeStyle(2, 0x000000, 1)
-            this.scene.add.existing(shape)
-            this.addChess(shape, x, y)
-            shape.setDepth(getDepth('unit'))
-            return shape
+            return this.addSquare(x, y, color, alpha, 0x00000, 1)
         })
     }
 
-    private getUnitMoveArea(x: number, y: number){
+    getUnitMoveArea(x: number, y: number){
         let unit = this.getUnitAt(x, y)
         if(!unit) return []
         let { playerId, unitClassId, unitClass: { moveRange } } = unit.getUnit()
@@ -204,6 +211,23 @@ export class PhaserWargrooveBoard extends Board {
         })
 
         return [{ x,y, color: 0xffffff }].concat(pathFinder.findArea(moveRange).map(({ x, y }) => ({ x, y, color: 0x000000 })))
+    }
+
+    getTargetsInRange({ x: x0, y: y0 }, radius){
+        let result: { x: number, y: number }[] = []
+        for(let dy = -radius; dy <= radius; dy++) {
+            for (let dx = -radius; dx <= radius; dx++) {
+                let d = Math.abs(dx) + Math.abs(dy)
+                if (d > radius) continue
+
+                let x = x0 + dx
+                let y = y0 + dy
+                if( x >= 0 && y >= 0 && x < this.w && y < this.h){
+                    result.push({ x, y })
+                }
+            }
+        }
+        return result
     }
 }
 
@@ -256,11 +280,14 @@ export class WargrooveUnit extends WargrooveBoardElement {
     public readonly id: number
     info: any
 
+    private buffs: Phaser.GameObjects.Group
+
     constructor(board: PhaserWargrooveBoard, unit: Unit){
         super(board)
         this.id = unit.id
         this.info = makeLabel(board.scene)
         this.info.setOrigin(-0.2, -0.2)
+        this.buffs = this.scene.add.group()
     }
 
     getUnit(){
@@ -275,9 +302,19 @@ export class WargrooveUnit extends WargrooveBoardElement {
     setUnit(){
 
         let unit = this.getUnit()
+        
 
         let { pos: { x, y, facing }, unitClassId, unitClass: { isStructure }, hadTurn, health } = unit
         let { color = 'grey', faction = 'cherrystone' } = this.getPlayer() || {}
+
+        let outOfBoard = (x < 0 || y < 0)
+        this.visible = !outOfBoard
+        
+        this.info.visible = !Number.isInteger(health) || health == 100 ? false : true
+        if(this.info.visible){
+            this.info.setText(health).layout()
+            this.board.addChess(this.info, x, y)
+        }
 
         if (hadTurn) {
             this.tint = 0x999999
@@ -285,6 +322,8 @@ export class WargrooveUnit extends WargrooveBoardElement {
         else {
             this.tint = 0xffffff
         }
+
+        this.setBuffs()
 
         let frameNames = getUnitFrameNames(unitClassId, faction)
         if (unitClassId == 'gate' && [this.board.getTerrainAt(x, y - 1), this.board.getTerrainAt(x, y + 1)].every(t => t == 'wall')){
@@ -300,16 +339,10 @@ export class WargrooveUnit extends WargrooveBoardElement {
         
         this.setFlipX(facing == 3)
 
-        let outOfBoard = (x < 0 || y < 0)
-        this.visible = !outOfBoard
-
         if (this.currentFrame) {
             this.displayOriginY = this.currentFrame.height - 8 - (isStructure ? 6 : 0)
         }
-
-        this.info.setText(health).layout()
-        this.board.addChess(this.info, x, y)
-        this.info.visible = health == 100 ? false : true
+        
 
         this.setBoardPosition(x, y, getDepth('unit'))
     }
@@ -324,6 +357,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
 
     destroy() {
         this.info?.destroy()
+        this.buffs?.destroy(true)
         super.destroy()
     }
 
@@ -349,11 +383,47 @@ export class WargrooveUnit extends WargrooveBoardElement {
 
         return { vision, sight }
     }
+
+    getFieldOfView(){
+        return this.board.fieldOfView.findUnitFieldOfView(this)
+    }
+
+    setBuffs(){
+        this.buffs.clear(true)
+        let { pos, unitClassId, state } = this.getUnit()
+        let s = Object.values(state).reduce((s, { key, value }) => {
+            s[key] = value
+            return s
+        }, {} as Record<string,string>)
+
+        let isAreaDamage = unitClassId == 'area_damage'
+
+        if (isAreaDamage || unitClassId == 'area_heal'){
+            let [x0, y0] = s.pos.split(',').map(v => +v)
+            let radius = +s.radius
+
+            this.board.getTargetsInRange({ x: x0, y: y0 }, radius).forEach(({ x, y }) => {
+                let isEdge = Math.abs(x-x0) + Math.abs(y-y0) == radius
+                let shape = this.board.addSquare(x, y, isAreaDamage ? 0xcc3333 : 0x00cccc, isEdge ? 0.5 : 0.8, 0x000000, 0.4)
+                this.buffs.add(shape)
+            })
+        }
+
+        if(unitClassId == 'crystal'){
+            let { x, y } = pos
+            this.board.getTargetsInRange({ x, y }, 3).forEach(({ x, y }) => {
+                let shape = this.board.addSquare(x, y, 0xcc3333, 0.5)
+                this.buffs.add(shape)
+            })
+        }
+
+    }
 }
 
 function getDepth(type: string, y: number = 0){
     let depth = {
         'tile': 0,
+        'floor': 99,
         'unit': 100,
         'overlay': 200 * cellSize,
         'ui': 300 * cellSize
@@ -405,7 +475,7 @@ export function makeLabel(scene: Phaser.Scene) {
  * return this.wgLOS.findFieldOfView(unit, 5)
     .map(({ x, y }) => ({ x, y, color: 0xfffff }))
  */
-class WargrooveLineOfSight {
+class WargrooveFieldOfView {
     private sightBoard: Board
     private k: number
     private cellSize: number
@@ -468,7 +538,7 @@ class WargrooveLineOfSight {
         return shape
     }
 
-    findUnitFieldOfView(unit: WargrooveUnit){
+    findUnitFieldOfView(unit: WargrooveUnit): { x: number, y: number}[] {
         let { pos: { x, y }} = unit.getUnit()
         let { vision, sight } = unit.getSight()
 
