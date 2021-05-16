@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import AwaitLoaderPlugin from 'phaser3-rex-plugins/plugins/awaitloader-plugin.js';
 import { PhaserWargrooveScene } from './phaser-wagroove-scene';
 
-import { Match } from "../match";
+import { Match } from "../wg/match";
 
 const config: Phaser.Types.Core.GameConfig = {
     title: "Wargroove Match Viewer",

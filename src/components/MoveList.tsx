@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react"
 import { Box, List, Text, Avatar } from 'grommet'
 
-import { Entry, Match, PlayerTurn } from "../match"
+import { Entry, Match, PlayerTurn } from "../wg/match"
 
 const MoveList = ({ match, onSelected }: { match: Match, onSelected?: Function }) => {
     if (!match) return null

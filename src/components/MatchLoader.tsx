@@ -1,8 +1,10 @@
 import { Box, Menu, Text, FileInput, Button, Card, CardHeader, CardBody, CardFooter, TextInput } from 'grommet'
 import * as Icons from 'grommet-icons'
+import { ModInfo } from './ModInfo'
+
 import { Dexie } from "dexie";
 import React, { useContext, useEffect, useState } from "react";
-import { Match, MatchData } from '../match'
+import { Match, MatchData } from '../wg/match'
 
 import { readAsText } from 'promise-file-reader';
 
@@ -85,7 +87,7 @@ export const MatchLoader = () => {
     let { setMatch } = useContext(MatchContext)
     let [iMatches, setImatches] =  useState<IMatch[]>(null)
 
-    function getImatches(){
+    function refreshImatches(){
         db.matches.toCollection().reverse().sortBy('updated_date').then(setImatches)
     }
 
@@ -100,16 +102,13 @@ export const MatchLoader = () => {
                 }
             }
             else {
-                getImatches()
+                refreshImatches()
             }
         })
     }, [])
 
-    return iMatches ? <Box direction="column" margin="small" align="center">
-        <Box margin="small">
-            <Text>Download and install the <a href="https://github.com/gp27/wargroove-match-logger" target="_blank">Wargroove Match Logger Mod</a> to start recording matches.</Text>
-        </Box>
-
+    return iMatches && <Box direction="column" margin="small" align="center">
+        <ModInfo />
         <Box overflow="auto" direction="row" wrap={true} justify="center">
             <Box margin="small">
                 <Card background="light-1" pad="small" width="small" fill="vertical" >
@@ -120,20 +119,24 @@ export const MatchLoader = () => {
                             className="grow"
                             onChange={({ target }) => {
                                 let files = target.files
-                                loadFiles(files).then(getImatches)
+                                loadFiles(files).then(refreshImatches)
                                 target.value = ""
                             }}
                         />
                     </CardBody>
                 </Card>
             </Box>
-            {iMatches.map(imatch => <Box margin="small" key={imatch.id}><IMatchCard imatch={imatch} update={getImatches} /></Box>)}
+            {iMatches.map(imatch => <Box margin="small" key={imatch.id}><IMatchCard imatch={imatch} update={refreshImatches} /></Box>)}
         </Box>
         
-    </Box> : null
+    </Box>
 }
 
-export const IMatchCard = ({ imatch, update }: { imatch: IMatch, update?: Function }) => {
+export function IMatchList () {
+    
+}
+
+export function  IMatchCard({ imatch, update }: { imatch: IMatch, update?: Function }){
     let { setMatch } = useContext(MatchContext)
     let { id, online, data, updated_date, match } = imatch
 

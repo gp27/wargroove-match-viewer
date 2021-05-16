@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { Entry, Match } from '../match'
+import { Entry, Match } from '../wg/match'
 import { PhaserWargrooveBoard } from './phaser-wargroove-board'
 import { applyPalette, generatePalette } from '../palettes'
 import 'chart.js'

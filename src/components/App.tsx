@@ -3,7 +3,7 @@ import { Grommet, ThemeType, Box, Text, Button } from 'grommet'
 import * as Icons from 'grommet-icons'
 import StatusGraphs from './StatusGraphs'
 import MatchUI from './MatchUI'
-import { Match } from "../match"
+import { Match } from "../wg/match"
 import { PhaserWargrooveGameContext } from "./GameBoard"
 import { PhaserWargrooveGame } from "../phaser/phaser-wagroove-game"
 import { MatchContext, MatchLoader } from './MatchLoader'

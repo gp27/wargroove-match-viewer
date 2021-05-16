@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react"
 import { Box } from "grommet";
-import { Match } from "../match";
+import { Match } from "../wg/match";
 
 import { PhaserWargrooveGame } from '../phaser/phaser-wagroove-game'
 

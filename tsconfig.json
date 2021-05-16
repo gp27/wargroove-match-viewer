@@ -9,9 +9,6 @@
   },
   "include": [
     "src/*",
-    "desc.d.ts",
-    "src/components/app.tsx",
-    "src/phaser/phaser-wargroove-board.ts",
-    "src/phaser/phaser-wagroove-scene.ts"
+    "desc.d.ts"
   ]
 }

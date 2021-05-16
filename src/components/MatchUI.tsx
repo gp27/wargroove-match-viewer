@@ -5,7 +5,7 @@ import GameBoard from './GameBoard'
 import MoveList from './MoveList'
 import UnitList from './UnitList'
 import PlayerStatus from './PlayerStatus'
-import { Match } from "../match"
+import { Match } from "../wg/match"
 
 const MatchUI = ({ match }: { match: Match }) => {
     let [_, setState] = useState<any>(0)

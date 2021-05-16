@@ -1,7 +1,7 @@
 import React from "react"
 import { Box, List, Text, Avatar, DataTable } from 'grommet'
 
-import { Match } from "../match"
+import { Match } from "../wg/match"
 
 const PlayerStatus = ({ match }: { match: Match }) => {
     if (!match) return null

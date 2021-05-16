@@ -2,7 +2,8 @@ import * as jsondiffpatch from 'jsondiffpatch'
 import 'chart.js'
 import { ChartConfiguration, ChartData, ChartDataSets } from 'chart.js'
 import { getCommanderMeta, PlayerColor, playerColors } from './match-utils'
-import { Biome, Terrain, terrains, tilesFromLinear } from './tile'
+import { Biome, Terrain, terrains, tilesFromLinear } from '../phaser/phaser-wargroove-map'
+import { crc32 } from '../crc32'
 
 const diffpatcher = jsondiffpatch.create()
 
@@ -125,17 +126,21 @@ export interface Entry {
   moveNumber?: number
 }
 
+export interface MatchMap {
+  w: number
+  h: number
+  tiles: Terrain[][],
+  biome?: Biome
+}
+
 export class Match {
+
+  readonly tags: string[]
 
   private entries: Entry[]
   private turns: PlayerTurn[]
   private players: Player[]
-  private map: {
-    w: number
-    h: number
-    tiles: Terrain[][],
-    biome?: Biome
-  }
+  private map: MatchMap
 
   currentTurn: PlayerTurn | null = null
   currentEntry: Entry | null = null
@@ -163,10 +168,19 @@ export class Match {
     this.players = generatePlayers(this.entries, this.matchData)
     this.turns = generatePlayerTurns(this.entries, this.getPlayers().length)
     this.map = generateMap(matchData)
+    this.tags = this.makeTags()
 
     this.selectEntry(this.getWinners().length ? 0 : this.entries.length - 1)
 
     console.log(this)
+  }
+
+  makeTags(){
+    let tags = [
+      `map:${crc32(this.matchData.map.tiles)}`,
+      ...this.players.map(({ commander }) => `commander:${commander}`)
+    ]
+    return tags
   }
 
   selectEntry(entryId: number) {
@@ -353,7 +367,7 @@ function generateStates({ state, deltas }: MatchData){
 }
 
 function generateStateStatus({ units, gold }: State){
-  let meta: Status = {}
+  let status: Status = {}
 
   for(let i in units){
     let unit = units[i]
@@ -362,12 +376,12 @@ function generateStateStatus({ units, gold }: State){
     let { playerId, health, unitClassId, unitClass: { cost } } = unit
     if(playerId < 0) continue
 
-    let playerMeta = meta[playerId]
+    let playerStatus = status[playerId]
 
     let goldValue = gold['p_'+playerId] || gold[playerId]
 
-    if(!playerMeta){
-      playerMeta = meta[playerId] = {
+    if(!playerStatus){
+      playerStatus = status[playerId] = {
         gold: goldValue,
         income: 0,
         armyValue: 0,
@@ -377,20 +391,20 @@ function generateStateStatus({ units, gold }: State){
     }
     
     if (['city', 'hq'].includes(unitClassId)){
-      playerMeta.income += 100
+      playerStatus.income += 100
     }
 
     if(unitClassId != 'hq'){
-      playerMeta.unitCount++
+      playerStatus.unitCount++
     }
 
     if (!['city', 'hq', 'barracks', 'port', 'tower', 'hideout'].includes(unitClassId)){
-      playerMeta.combatUnitCount++
-      playerMeta.armyValue += Math.round(cost * health / 100)
+      playerStatus.combatUnitCount++
+      playerStatus.armyValue += Math.round(cost * health / 100)
     }
   }
 
-  return meta
+  return status
 }
 
 function generatePlayers(entries: Entry[], { players }: MatchData){
@@ -451,7 +465,7 @@ function getTerrainFromAbbr(code: string): Terrain {
   return terrainAbbrvs[code] || 'plains'
 }
 
-function generateMap(matchData: MatchData) {
+function generateMap(matchData: MatchData): MatchMap {
   let { size: { x, y }, tiles: strData, biome } = matchData.map
   let linearData = strData.split('')
 
@@ -463,4 +477,19 @@ function generateMap(matchData: MatchData) {
     tiles,
     biome
   } as Match['map']
+}
+
+function generateVisibilityMap({ w, h }: MatchMap, players: Player[], { state: { units } }: Entry) {
+  let maps: { [playerId: number]: boolean[][]  } = {}
+  players.forEach(({ id }) => maps[id] = Array(h).fill(0).map(() => Array(w).fill(false)))
+
+  Object.values(units).forEach(({ playerId, unitClass, pos: { x, y }}) => {
+  })
+
+  return maps
+}
+
+function validateFogOfWar(match_id: string, players: Player[], entry: Entry) {
+  let found = ""
+
 }

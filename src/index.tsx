@@ -1,4 +1,4 @@
-import './match'
+import './wg/match'
 
 import React from "react";
 import ReactDOM from "react-dom";

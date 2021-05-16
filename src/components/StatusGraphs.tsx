@@ -2,7 +2,7 @@ import React from "react"
 import { Button, Layer, Box } from 'grommet'
 import { Line } from 'react-chartjs-2'
 
-import { Match } from "../match"
+import { Match } from "../wg/match"
 
 const StatusGraphs = ({ match }: { match: Match }) => {
     if (!match) return null

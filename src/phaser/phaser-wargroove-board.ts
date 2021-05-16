@@ -1,11 +1,12 @@
-import { Board, Shape, Monopoly, PathFinder } from 'phaser3-rex-plugins/plugins/board-components'
+import { Scene } from 'phaser'
+import { Board, Shape, FieldOfView, PathFinder } from 'phaser3-rex-plugins/plugins/board-components'
 import  { Label, RoundRectangle } from 'phaser3-rex-plugins/templates/ui/ui-components'
-import { MatchData, Entry, Unit, Match } from '../match'
-import { getUnitFrameNames, terrainColors } from '../match-utils'
-import { movementMappings, MovementType, Terrain, TerrainMeta, WargrooveMap } from '../tile'
+import { MatchData, Entry, Unit, Match } from '../wg/match'
+import { getUnitFrameNames, terrainColors } from '../wg/match-utils'
+import { movementMappings, MovementType, Terrain, TerrainMeta, PhaserWargrooveMap } from './phaser-wargroove-map'
 import { PhaserWargrooveScene } from './phaser-wagroove-scene'
 
-const cellSize = 48
+export const cellSize = 48
 
 export class PhaserWargrooveBoard extends Board {
 
@@ -14,7 +15,7 @@ export class PhaserWargrooveBoard extends Board {
     w: number = 0
     h: number = 0
 
-    map: WargrooveMap
+    map: PhaserWargrooveMap
     chessUnits: Phaser.GameObjects.Group
     elements: Phaser.GameObjects.Group
     gridOverlay: Phaser.GameObjects.Grid
@@ -22,6 +23,8 @@ export class PhaserWargrooveBoard extends Board {
         metas[meta.id] = meta
         return metas
     },{})
+
+    wgLOS: WargrooveLineOfSight
 
     constructor(scene: PhaserWargrooveScene) {
 
@@ -44,7 +47,6 @@ export class PhaserWargrooveBoard extends Board {
         this.gridOverlay.setDepth(getDepth('ui'))
         this.gridOverlay.setOutlineStyle(0x000000, 0.1)
         this.scene.add.existing(this.gridOverlay)
-        console.log(this.gridOverlay)
 
         this.setInteractive()
         this.on('tiledown', (pointer, { x, y }) => {
@@ -74,10 +76,11 @@ export class PhaserWargrooveBoard extends Board {
 
         const tilemap = this.scene.make.tilemap({ key: 'map' })
         const tileset = tilemap.addTilesetImage('wg_tilsets')
-        this.map = new WargrooveMap(tilemap, tileset, biome, this)
+        this.map = new PhaserWargrooveMap(tilemap, tileset, biome, this)
         this.map.setTiles(tiles)
         console.log(this.map)
         //this.addElement('villager_cherrystone', 10, 10, 0.5, 0.3)
+        this.wgLOS = new WargrooveLineOfSight(this, x, y)
 
         return this
     }
@@ -323,6 +326,29 @@ export class WargrooveUnit extends WargrooveBoardElement {
         this.info?.destroy()
         super.destroy()
     }
+
+    getSight(){
+        let { pos: { x, y }, unitClassId, unitClass: { isCommander, isStructure, tags } } = this.getUnit()
+        let tagsa = Object.values(tags)
+
+        let vision: 'normal' | 'air' | 'strong' = tagsa.includes('animal') ? 'strong' : tagsa.includes('type.air') ? 'air' : 'normal'
+
+        let sight = 2
+
+        if (isStructure && unitClassId != 'hq') {
+            sight = 1
+        }
+        else if (isCommander || ['dog', 'rifleman', 'crystal', 'sparrowbomb', 'balloon', 'harpy', 'dragon', 'travelboat', 'harpoonship'].includes(unitClassId)) {
+            sight = 3
+        } else if (['witch', 'turtle'].includes(unitClassId)) {
+            sight = 4
+        }
+
+        let terrain = this.board.getTerrainAt(x, y)
+        if (terrain == 'mountain' && vision != 'air') sight += 2
+
+        return { vision, sight }
+    }
 }
 
 function getDepth(type: string, y: number = 0){
@@ -372,4 +398,105 @@ export function makeLabel(scene: Phaser.Scene) {
     label.layout()
 
     return label
+}
+
+
+/**
+ * return this.wgLOS.findFieldOfView(unit, 5)
+    .map(({ x, y }) => ({ x, y, color: 0xfffff }))
+ */
+class WargrooveLineOfSight {
+    private sightBoard: Board
+    private k: number
+    private cellSize: number
+
+    constructor(private board: PhaserWargrooveBoard, private w: number, private h: number) {
+        let tl = w + h - 1
+        this.k = w - 1
+        
+        let csize = this.cellSize = Math.round(cellSize / Math.sqrt(2))
+
+        this.sightBoard = new Board(board.scene, {
+            width: tl,
+            height: tl,
+            grid: {
+                gridType: 'quadGrid',
+                type: 'orthogonal',
+                dir: 4,
+                cellWidth: csize,
+                cellHeight: csize
+            }
+        })
+    }
+
+    isSightBlocker(x: number, y: number, vision: 'normal' | 'air' | 'strong'){
+        if(vision != 'normal') return false
+        let terrain = this.board.getTerrainAt(x, y)
+        return ['reef', 'forest', 'mountain', 'wall'].includes(terrain)
+    }
+
+    isHidingPlace(x: number, y: number, vision: 'normal' | 'air' | 'strong'){
+        if(vision == 'strong') return false
+        let terrain = this.board.getTerrainAt(x, y)
+        return ['reef', 'forest'].includes(terrain)
+    }
+
+    xyToSightXY({ x, y }: { x: number, y: number }){
+        return {
+            x: x + y,
+            y: this.k - x + y
+        }
+    }
+
+    sightXYToXY({ x: sx, y: sy }: { x: number, y: number }){
+        let x = (sx - sy + this.k) / 2
+        let y = (sx + sy - this.k) / 2
+
+        if (!Number.isInteger(x)) x = -1
+        if (!Number.isInteger(y)) y = -1
+
+        return { x, y }
+    }
+
+    setViewChess(x: number, y: number){
+        this.sightBoard.removeAllChess()
+
+        let { x: xv, y: yv } = this.xyToSightXY({ x, y })
+        let shape = new Shape(this.sightBoard)
+        this.sightBoard.scene.add.existing(shape)
+        this.sightBoard.addChess(shape, xv, yv)
+        return shape
+    }
+
+    findUnitFieldOfView(unit: WargrooveUnit){
+        let { pos: { x, y }} = unit.getUnit()
+        let { vision, sight } = unit.getSight()
+
+        let sightChess = this.setViewChess(x, y)
+
+        const fow = new FieldOfView(sightChess, {
+            costCallback: ({ x, y }, fieldOfView, tileXYArray) => {
+                let { x: ox, y: oy } = this.sightXYToXY({ x, y })
+
+                if (this.isSightBlocker(ox, oy, vision)) {
+                    return fieldOfView.BLOCKER
+                }
+                //return (x % 2 == 0) || (y % 2 == 1) ? 1 : 0
+                let { x: x0, y: y0 } = tileXYArray[tileXYArray.findIndex(({ x: xp, y: yp }) => x == xp && y == yp) - 1]
+                return Math.abs(x - x0) + Math.abs(y - y0)
+            }
+        })
+
+        return fow.findFOV(sight * 2)
+        .map(xy => this.sightXYToXY(xy))
+        .filter(({ x: xv, y: yv }) => {
+            let distance = (Math.abs(x - xv) + Math.abs(y - yv))
+            return (
+                xv >= 0 && xv < this.w &&
+                yv >= 0 && yv < this.h &&
+                distance <= sight &&
+                (distance == 1 || !this.isHidingPlace(xv, yv, vision))
+            )
+        })
+    }
 }

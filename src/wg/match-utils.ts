@@ -1,4 +1,4 @@
-import { Terrain } from "./tile"
+import { Terrain } from "../phaser/phaser-wargroove-map"
 
 export const terrainColors: Record<Terrain,number> = {
   forest: 0x277d23,

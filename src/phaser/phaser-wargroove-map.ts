@@ -1,4 +1,4 @@
-import { PhaserWargrooveBoard } from "./phaser/phaser-wargroove-board"
+import { PhaserWargrooveBoard } from "./phaser-wargroove-board"
 
 export type Terrain = keyof typeof terrains
 export type Biome = 'grass' | 'ice' | 'desert' | 'volcano' | 'default'
@@ -164,7 +164,7 @@ type TerrainData = {
   }
 }
 
-export class WargrooveMap {
+export class PhaserWargrooveMap {
   tilesetData: {
     [key in Terrain]?: {
       [key in Biome]?: TerrainData
@@ -191,7 +191,7 @@ export class WargrooveMap {
     this.tiles = tiles
   }
 
-  private parseTileset(tileset: Phaser.Tilemaps.Tileset, index: WargrooveMap['tilesetData'] = {}) {
+  private parseTileset(tileset: Phaser.Tilemaps.Tileset, index: PhaserWargrooveMap['tilesetData'] = {}) {
     let cols = tileset.columns
 
     for (let id in tileset.tileProperties) {
@@ -234,7 +234,7 @@ export class WargrooveMap {
     if(!tileIds?.length || !tileIds[0]?.length) return
     const layer = this.tilemap.createBlankLayer(name, this.tileset, 0, 0, tileIds[0].length, tileIds.length)
     if(!layer) return
-    console.log(name)
+    //console.log(name)
     layer.setScale(2)
 
     tileIds.forEach((row, y) => {
