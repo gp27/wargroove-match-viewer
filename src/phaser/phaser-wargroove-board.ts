@@ -417,6 +417,15 @@ export class WargrooveUnit extends WargrooveBoardElement {
             })
         }
 
+        if (unitClassId == 'smoke_producer') {
+            let [x, y] = s.pos.split(',').map(v => +v)
+
+            this.board.getTargetsInRange({ x, y }, 3).forEach(({ x, y }) => {
+                let shape = this.board.addSquare(x, y, 0x000000, 0.65)
+                this.buffs.add(shape)
+            })
+        }
+
     }
 }
 
