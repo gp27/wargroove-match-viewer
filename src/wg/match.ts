@@ -21,6 +21,7 @@ export type MatchData = {
 
   state: State,
   deltas: LuaArray<jsondiffpatch.Delta>
+  fog_blocks?: string[]
 }
 
 export interface Pos { x: number, y: number, facing?: number }
@@ -38,7 +39,7 @@ export interface Player {
   color?: PlayerColor
 }
 
-export interface Unit {
+export interface UnitData {
   id: number,
   garrisonClassId: string,
   transportedBy: number,
@@ -97,7 +98,7 @@ export interface State {
   playerId: number
   turnNumber: number
   gold: Record<string,number>
-  units: LuaArray<Unit>
+  units: LuaArray<UnitData>
   unitClasses?: Record<string,UnitClass>
 }
 
@@ -337,6 +338,85 @@ export class Match {
         }
       }]
   }
+
+  validateFogOfWar(sights: { [playerId: number]: boolean[][] }) {
+    function bts(x: boolean){
+      return (x ? "1" : "0")
+    }
+
+    let match_id = this.matchData.match_id
+    let players = this.players
+
+    let isFog = false
+    let vics = players.map(({ is_victorious }) => bts(is_victorious)).join('')
+
+    let block0 = '' + crc32(match_id + vics)
+    let block1 = block0
+    let line0 = '', line1 = ''
+
+    let blocks: [string[], string[]] = [[block0], [block1]]
+
+    let h = sights[0].length
+    let w = sights[0][0].length
+
+    let i = 0
+
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        let visible = sights[i % players.length][y][x]
+
+        if (!visible) {
+          isFog = true
+        }
+
+        line0 += bts(visible)
+        line1 += bts(true)
+
+        if(i == (+block0 % 32)) {
+          line0 += this.map.tiles[y][x]
+        }
+
+        if (i == (+block1 % 32)) {
+          line1 += this.map.tiles[y][x]
+        }
+
+        i++
+
+        if (i >= 32) {
+          console.log(block0 + line0 + match_id + vics + bts(isFog))
+
+          block0 = "" + crc32(block0 + line0 + match_id + vics + bts(isFog))
+          block1 = "" + crc32(block1 + line1 + match_id + vics)
+
+          blocks[0].push(block0)
+          blocks[1].push(block1)
+          i = 0
+          line0 = line1 = ""
+        }
+      }
+    }
+
+    block0 = "" + crc32(block0 + line0 + match_id + vics + bts(isFog))
+    block1 = "" + crc32(block1 + line1 + match_id + vics)
+
+    blocks[0].push(block0)
+    blocks[1].push(block1)
+
+    let oblocksstr = (this.matchData.fog_blocks || []).join('-')
+    let oblockstr0 = blocks[0].join('-')
+    let oblockstr1 = blocks[1].join('-')
+
+    console.log([oblocksstr, oblockstr0, oblockstr1])
+
+    if (oblocksstr == oblockstr0) {
+      return 1
+    }
+    if (oblocksstr == oblockstr1) {
+      return 0
+    }
+
+    return -1
+  }
 }
 
 function generateStates({ state, deltas }: MatchData){
@@ -477,19 +557,4 @@ function generateMap(matchData: MatchData): MatchMap {
     tiles,
     biome
   } as Match['map']
-}
-
-function generateVisibilityMap({ w, h }: MatchMap, players: Player[], { state: { units } }: Entry) {
-  let maps: { [playerId: number]: boolean[][]  } = {}
-  players.forEach(({ id }) => maps[id] = Array(h).fill(0).map(() => Array(w).fill(false)))
-
-  Object.values(units).forEach(({ playerId, unitClass, pos: { x, y }}) => {
-  })
-
-  return maps
-}
-
-function validateFogOfWar(match_id: string, players: Player[], entry: Entry) {
-  let found = ""
-
 }

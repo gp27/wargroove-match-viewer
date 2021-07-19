@@ -2,7 +2,7 @@ import React from "react"
 import { Box, List, Text } from 'grommet'
 import { Favorite, Trigger } from 'grommet-icons'
 
-import { Match, Unit } from "../wg/match"
+import { Match, UnitData } from "../wg/match"
 import { PhaserWargrooveGameContext } from "./GameBoard"
 import { getUnitFrameNames } from "../wg/match-utils"
 
@@ -14,11 +14,11 @@ const UnitList = ({ match, playerId }: { match: Match, playerId?: number }) => {
     return <List
         border="bottom"
         data={units}
-        primaryKey={(unit: Unit) => <UnitInfo unit={unit} match={match} />}
+        primaryKey={(unit: UnitData) => <UnitInfo unit={unit} match={match} />}
     />
 }
 
-function UnitInfo({ unit: { id, playerId, unitClassId, health, grooveCharge, grooveId, unitClass: { maxGroove } }, match }: { match: Match, unit: Unit }) {
+function UnitInfo({ unit: { id, playerId, unitClassId, health, grooveCharge, grooveId, unitClass: { maxGroove } }, match }: { match: Match, unit: UnitData }) {
     function getFrame(game, unitClassId, playerId) {
         let { faction = 'cherrystone', color = 'grey' } = match.getPlayers()[playerId] || {}
         let frameNames = getUnitFrameNames(unitClassId, faction)

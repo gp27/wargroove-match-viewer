@@ -10,6 +10,8 @@ declare module 'phaser3-rex-plugins/plugins/board-components' {
         getGridPoints: Function
         tileXYZToChess: Function
         chessToTileXYZ: Function
+        width: number
+        height: number
     }
 
     export class Shape extends Phaser.GameObjects.GameObject {
