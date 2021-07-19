@@ -17,7 +17,7 @@ export const movementMappings: Record<string,MovementType> = {
   dragon: 'flying',
   witch: 'flying',
   merman: 'amphibious',
-  sparrowbomb: 'hovering'
+  drone: 'hovering'
 }
 
 export const unitsMovement: {
@@ -278,6 +278,7 @@ export class PhaserWargrooveMap {
     let terrainData = this.getTerrainData(terrain, biome)
     if (!terrainData?.groups) return
     let tileIds = this.generateTerrainGroups(terrain, tiles, terrainData)
+    console.log(tileIds)
     this.makeTilesLayer(terrain, tileIds)
   }
 
@@ -396,7 +397,7 @@ export class PhaserWargrooveMap {
 
     let ts = tiles.map(row => row.map(t => t == terrain))
 
-    let tileIds: number[][] = []
+    let tileIds = tiles.map(row => row.map(t => undefined))
 
     groups.forEach(g => {
       for (let y = 0; y < ts.length; y++) {
@@ -412,7 +413,7 @@ export class PhaserWargrooveMap {
             ts[y + dy][x + dx] = false
             //layer.putTileAt(tileId + 1, x + dx, y + dy)
             
-            let r = tileIds[y + dy] = tileIds[y + dy]  || Array(row.length)
+            let r = tileIds[y + dy]
             r[x + dx] = tileId
           })
         }
