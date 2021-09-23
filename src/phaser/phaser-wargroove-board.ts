@@ -396,7 +396,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
         if (isStructure && unitClassId != 'hq') {
             sight = 1
         }
-        else if (isCommander || ['dog', 'rifleman', 'crystal', 'sparrowbomb', 'balloon', 'harpy', 'dragon', 'travelboat', 'harpoonship'].includes(unitClassId)) {
+        else if (isCommander || ['dog', 'rifleman', 'crystal', 'drone', 'balloon', 'harpy', 'dragon', 'travelboat', 'harpoonship'].includes(unitClassId)) {
             sight = 3
         } else if (['witch', 'turtle'].includes(unitClassId)) {
             sight = 4
