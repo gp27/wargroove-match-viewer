@@ -162,10 +162,10 @@ export class Match {
     this.entries = states.map((state, id) => ({
       id,
       state,
-      status: generateStateStatus(state),
+      status: generateStateStatus(state, matchData),
     }))
 
-    this.players = generatePlayers(this.entries, this.matchData)
+    this.players = generatePlayers(this.entries, matchData)
     this.turns = generatePlayerTurns(this.entries, this.getPlayers().length)
     this.map = generateMap(matchData)
     this.tags = this.makeTags()
@@ -366,8 +366,18 @@ function generateStates({ state, deltas }: MatchData){
   return states
 }
 
-function generateStateStatus({ units, gold }: State){
+function generateStateStatus({ units, gold }: State, { players }: MatchData){
   let status: Status = {}
+  
+  Object.values(players).forEach((_, playerId) => {
+    status[playerId] = {
+      gold: gold['p_' + playerId] || gold[playerId],
+      income: 0,
+      armyValue: 0,
+      unitCount: 0,
+      combatUnitCount: 0
+    }
+  })
 
   for(let i in units){
     let unit = units[i]
@@ -377,18 +387,6 @@ function generateStateStatus({ units, gold }: State){
     if(playerId < 0) continue
 
     let playerStatus = status[playerId]
-
-    let goldValue = gold['p_'+playerId] || gold[playerId]
-
-    if(!playerStatus){
-      playerStatus = status[playerId] = {
-        gold: goldValue,
-        income: 0,
-        armyValue: 0,
-        unitCount: 0,
-        combatUnitCount: 0
-      }
-    }
     
     if (['city', 'hq'].includes(unitClassId)){
       playerStatus.income += 100
