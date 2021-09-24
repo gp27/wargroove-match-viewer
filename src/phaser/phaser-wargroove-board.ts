@@ -558,6 +558,8 @@ class WargrooveFieldOfView {
 
     isSightBlocker(x: number, y: number, vision: 'normal' | 'air' | 'strong'){
         if(vision != 'normal') return false
+        let unit = this.board.getUnitAt(x, y)?.getUnit()
+        if(unit?.unitClassId == 'gate') return true
         let terrain = this.board.getTerrainAt(x, y)
         return ['reef', 'forest', 'mountain', 'wall'].includes(terrain)
     }
@@ -610,6 +612,13 @@ class WargrooveFieldOfView {
                 }
                 //return (x % 2 == 0) || (y % 2 == 1) ? 1 : 0
                 let { x: x0, y: y0 } = tileXYArray[tileXYArray.findIndex(({ x: xp, y: yp }) => x == xp && y == yp) - 1]
+                if(x0 != x && y0 != y){
+                    let adjacents = [{ x: x0, y }, { x, y: y0 }].map(c => this.sightXYToXY(c))
+                    if(adjacents.every(({x, y}) => this.isSightBlocker(x, y, vision))){
+                        return fieldOfView.BLOCKER
+                    }
+                }
+
                 return Math.abs(x - x0) + Math.abs(y - y0)
             }
         })
