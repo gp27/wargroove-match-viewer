@@ -4,6 +4,7 @@ import { MatchData, Entry, UnitData, Match } from '../wg/match'
 import { getUnitFrameNames, terrainColors } from '../wg/match-utils'
 import { movementMappings, MovementType, Terrain, TerrainMeta, PhaserWargrooveMap } from './phaser-wargroove-map'
 import { PhaserWargrooveScene } from './phaser-wagroove-scene'
+import { PiedPiper } from 'grommet-icons'
 
 export const cellSize = 48
 
@@ -91,6 +92,7 @@ export class PhaserWargrooveBoard extends Board {
     touchedUnits: Record<number,boolean> = {}
     moveArea: Phaser.GameObjects.GameObject[] = []
     sightMap: ReturnType<PhaserWargrooveBoard['generateSightMap']>
+    fog: Phaser.GameObjects.GameObject[] = []
 
     loadEntry(entry: Entry){
         //this.removeAllChess(true)
@@ -100,7 +102,7 @@ export class PhaserWargrooveBoard extends Board {
             this.touchedUnits[id] = false
         }
 
-        let { state: { units: u } } = entry
+        let { state: { units: u, playerId } } = entry
 
         let units = Object.values(u)
 
@@ -128,9 +130,30 @@ export class PhaserWargrooveBoard extends Board {
         })*/
 
         //console.log(this.scene.children)
-        this.sightMap = this.generateSightMap()
+        let match = this.scene.getMatch()
+        if (match.isFog){
+            this.sightMap = this.generateSightMap()
+            console.log(this.sightMap)
+            let players = match.getPlayers()
+            let player = players.find(p => p.id == playerId)
+            let alliesId = players.filter(p => p.team == player.team).map(p => p.id)
 
-        console.log('fog', this.scene.match.validateFogOfWar(this.sightMap), this.sightMap)
+            this.fog.forEach(s => s.destroy())
+            this.fog = []
+            this.sightMap.forEach((row, y) => {
+                row.forEach((sights, x) => {
+                    let visible = alliesId.some(id => sights[id])
+
+                    if (!visible){
+                        let square = this.addSquare(x, y, 0x967b3e, 0.7, undefined, undefined, 'fog')
+                        this.fog.push(square)
+                    }
+                })
+            })
+        }
+        
+        //console.log('fog', this.scene.match.validateFogOfWar(this.sightMap), this.sightMap)
+
 
         return this
     }
@@ -139,13 +162,13 @@ export class PhaserWargrooveBoard extends Board {
         return this.unitsCache[id]
     }
 
-    addSquare(x: number, y: number, color?: number, alpha?: number, strokeColor?: number, strokeAlpha?: number){
+    addSquare(x: number, y: number, color?: number, alpha?: number, strokeColor?: number, strokeAlpha?: number, depth = "floor"){
         let shape = new Phaser.GameObjects.Rectangle(this.scene, 0, 0, cellSize, cellSize)
         shape.setFillStyle(color, alpha)
         if(strokeColor != undefined) shape.setStrokeStyle(2, strokeColor, strokeAlpha)
         this.scene.add.existing(shape)
         this.addChess(shape, x, y)
-        shape.setDepth(getDepth('floor'))
+        shape.setDepth(getDepth(depth))
         return shape
     }
 
@@ -234,13 +257,9 @@ export class PhaserWargrooveBoard extends Board {
     }
 
     generateSightMap(){
-        let match = this.scene.getMatch()
-        let sights: { [playerId: number]: boolean[][] } = {}
         let { w, h } = this
-        
-        match.getPlayers()
-        .forEach(({ id }) => sights[id] = Array(h).fill(0).map(() => Array(w).fill(false)))
 
+        let sights: ({ [playerId: number]: boolean })[][] = Array(h).fill(0).map(() => Array(w).fill(undefined).map(x => ({})))
 
         Object.values(this.unitsCache)
             .forEach(unit => {
@@ -249,7 +268,7 @@ export class PhaserWargrooveBoard extends Board {
 
                 let sight = this.fieldOfView.findUnitFieldOfView(unit)
                 sight.forEach(({ x, y }) => {
-                    sights[playerId][y][x] = true
+                    sights[y][x][playerId] = true
                 })
             })
         
@@ -459,7 +478,8 @@ function getDepth(type: string, y: number = 0){
         'floor': 99,
         'unit': 100,
         'overlay': 200 * cellSize,
-        'ui': 300 * cellSize
+        'fog': 300 * cellSize,
+        'ui': 400 * cellSize
     }[type] || 0
 
     return (depth + y)
