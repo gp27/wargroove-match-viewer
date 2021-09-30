@@ -36,6 +36,7 @@ export class PhaserWargrooveGame extends Phaser.Game {
     }    
 
     setMatch(match: Match) {
+        console.log(match)
         let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
         scene.loadMatch(match)
     }

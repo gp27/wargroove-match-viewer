@@ -133,7 +133,7 @@ export class PhaserWargrooveBoard extends Board {
         let match = this.scene.getMatch()
         if (match.isFog){
             this.sightMap = this.generateSightMap()
-            console.log(this.sightMap)
+            //console.log(this.sightMap)
             let players = match.getPlayers()
             let player = players.find(p => p.id == playerId)
             let alliesId = players.filter(p => p.team == player.team).map(p => p.id)

@@ -278,7 +278,7 @@ export class PhaserWargrooveMap {
     let terrainData = this.getTerrainData(terrain, biome)
     if (!terrainData?.groups) return
     let tileIds = this.generateTerrainGroups(terrain, tiles, terrainData)
-    console.log(tileIds)
+    //console.log(tileIds)
     this.makeTilesLayer(terrain, tileIds)
   }
 

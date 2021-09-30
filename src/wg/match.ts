@@ -2,6 +2,7 @@ import * as jsondiffpatch from 'jsondiffpatch'
 import 'chart.js'
 import { ChartConfiguration, ChartData, ChartDataSets } from 'chart.js'
 import { getCommanderMeta, PlayerColor, playerColors } from './match-utils'
+import { MapInfo, mapFinder } from './map-utils'
 import { Biome, Terrain, terrains, tilesFromLinear } from '../phaser/phaser-wargroove-map'
 import { crc32 } from '../crc32'
 
@@ -143,6 +144,7 @@ export class Match {
   private turns: PlayerTurn[]
   private players: Player[]
   private map: MatchMap
+  readonly mapInfo: MapInfo
 
   currentTurn: PlayerTurn | null = null
   currentEntry: Entry | null = null
@@ -171,17 +173,18 @@ export class Match {
     this.players = generatePlayers(this.entries, matchData)
     this.turns = generatePlayerTurns(this.entries, this.getPlayers().length)
     this.map = generateMap(matchData)
+    this.mapInfo = generateMapInfo(matchData, states[0])
     this.tags = this.makeTags()
     this.isFog = Boolean(matchData.fog_blocks?.length || matchData.is_fog)
 
     this.selectEntry(this.getWinners().length ? 0 : this.entries.length - 1)
 
-    console.log(this)
+    //console.log(this)
   }
 
   makeTags(){
     let tags = [
-      `map:${crc32(this.matchData.map.tiles)}`,
+      `map:${this.mapInfo.tileHash}`,
       ...this.players.map(({ commander }) => `commander:${commander}`)
     ]
     return tags
@@ -468,8 +471,8 @@ function getTerrainFromAbbr(code: string): Terrain {
 }
 
 function generateMap(matchData: MatchData): MatchMap {
-  let { size: { x, y }, tiles: strData, biome } = matchData.map
-  let linearData = strData.split('')
+  let { size: { x, y }, tiles: tileString, biome } = matchData.map
+  let linearData = tileString.split('')
 
   let tiles = tilesFromLinear({ tiles: linearData.map(getTerrainFromAbbr), width: x })
 
@@ -479,4 +482,38 @@ function generateMap(matchData: MatchData): MatchMap {
     tiles,
     biome
   } as Match['map']
+}
+
+function generateMapInfo({ map: { size: { x }, tiles: tileString } }: MatchData, state: State): MapInfo {
+  const stateString = generateStateString(state)
+  let info: MapInfo = {
+    tileHash: `${x}_${crc32(tileString)}`,
+    tileString,
+    stateString,
+    stateHash: '' + crc32(stateString)
+  }
+
+  let guess = mapFinder.guess(info)
+
+  Object.assign(info, guess)
+
+  return info
+}
+
+function generateStateString(state: State) {
+  let g = Object.entries(state.gold).sort(([a],[b]) => +a - +b).map(([i,g]) => `${i}-${g}g`).sort()
+  let u = Object.values(state.units).sort((u1, u2) => u1.id - u2.id).map(u => [
+    u.unitClassId.startsWith('commander_') ? 'commander' : u.unitClassId,
+    u.playerId,
+    u.pos.x,
+    u.pos.y,
+    u.health,
+    u.grooveCharge
+  ].join('.')).sort()
+
+  return g.concat(u).join(',')
+}
+
+function analyzeDelta(delta: jsondiffpatch.Delta): string[]{
+  if(delta.playerId) return ["end_turn"]
 }

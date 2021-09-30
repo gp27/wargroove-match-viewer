@@ -1,4 +1,4 @@
-import { Box, Menu, Text, FileInput, Button, Card, CardHeader, CardBody, CardFooter, TextInput } from 'grommet'
+import { Box, Menu, Text, FileInput, Button, Card, CardHeader, CardBody, CardFooter, TextInput, TextArea } from 'grommet'
 import * as Icons from 'grommet-icons'
 import { ModInfo } from './ModInfo'
 
@@ -7,6 +7,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { Match, MatchData } from '../wg/match'
 
 import { readAsText } from 'promise-file-reader';
+import { playerColors } from '../wg/match-utils';
 
 export interface IMatch {
     id?: string
@@ -194,6 +195,10 @@ export function  IMatchCard({ imatch, update }: { imatch: IMatch, update?: Funct
         setCopied(true)
     }
 
+    let entries = match.getEntries()
+    let players = match.getPlayers()
+    let { map: { name: mapName = '' } = {}, version: { v: vName, code } = { v: '?' } } = match.mapInfo
+
     return <Card background="light-1" width="small">
         <CardHeader pad="small" justify="between">
             <Text size="xsmall">{id}/{online ? 'Online' : 'Local'}</Text>
@@ -203,18 +208,19 @@ export function  IMatchCard({ imatch, update }: { imatch: IMatch, update?: Funct
             <Text size="xsmall">Updated: {new Date(updated_date).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' } as any)}</Text>
 
             <Box direction="column" align="center">
-                <TextInput placeholder="Unnamed" value={imatch.name} onChange={updateName} style={{padding: '5px', textAlign: 'center'}} />
+                <TextArea placeholder="Unnamed" value={imatch.name} onChange={updateName} style={{height: imatch.name ? '' : '32px', padding: '5px', textAlign: 'center'}} resize="vertical" />
                 {match
                     ? <Box direction="column" align="center">
                         <Box direction="column">
 
-                            {match.getPlayers().map(({ id, commander, username }, index) => <Text key={index}>
-                                <Icons.StatusGoodSmall color={match.getPlayerColorHex(id)} style={{ verticalAlign: 'middle', marginRight: '10px' }} />
+                            {players.map(({ id, commander, username, color }, index) => <Text key={index}>
+                                <Icons.StatusGoodSmall color={playerColors[color].hex} style={{ verticalAlign: 'middle', marginRight: '10px' }} />
                                 {username ? `${username} (${commander})` : commander}
                             </Text>)}
                         </Box>
-
-                        <Text>Moves: {match.getEntries().length}</Text>
+                        {mapName && <Text weight="bold" size="small">{mapName} {vName && '('+vName+')'} </Text>}
+                        {/*code && <code style={{ fontSize: 'small' }}>{code}</code>*/}
+                        <Text size="small">{entries.length} move{entries.length > 1 && 's'}</Text>
                     </Box>
                     : null
                 }
