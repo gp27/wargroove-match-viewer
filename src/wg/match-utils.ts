@@ -1,6 +1,6 @@
-import { Terrain } from "../phaser/phaser-wargroove-map"
+import { Terrain } from '../phaser/phaser-wargroove-map'
 
-export const terrainColors: Record<Terrain,number> = {
+export const terrainColors: Record<Terrain, number> = {
   forest: 0x277d23,
   river: 0x9ad6d4,
   mountain: 0x5c3600,
@@ -44,7 +44,7 @@ export const playerColors = {
 
 export type PlayerColor = keyof typeof playerColors
 
-const commandersMeta: Record<string,{color: PlayerColor, faction: string}> = {
+const commandersMeta: Record<string, { color: PlayerColor; faction: string }> = {
   mercia: { color: 'red', faction: 'cherrystone' },
   caesar: { color: 'red', faction: 'cherrystone' },
   mercival: { color: 'red', faction: 'cherrystone' },
@@ -65,17 +65,14 @@ const commandersMeta: Record<string,{color: PlayerColor, faction: string}> = {
   vesper: { color: 'black', faction: 'outlaw' }
 }
 
-export function getCommanderMeta(commander: string){
+export function getCommanderMeta(commander: string) {
   return commandersMeta[commander]
 }
 
-export function getUnitFrameNames(unitClassId: string, faction: string){
-  let names = [
-    unitClassId + '_' + faction,
-    unitClassId
-  ]
+export function getUnitFrameNames(unitClassId: string, faction: string) {
+  let names = [unitClassId + '_' + faction, unitClassId]
 
-  if(faction != 'cherrystone'){
+  if (faction != 'cherrystone') {
     names.push(unitClassId + '_cherrystone')
   }
 
