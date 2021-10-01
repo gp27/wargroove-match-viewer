@@ -194,6 +194,10 @@ export class MapFinder {
 
     this.makeIndexes()
   }
+
+  getMaps() {
+    return Array.from(this.maps)
+  }
 }
 
 export const mapFinder = new MapFinder(mapRecords)

@@ -1,29 +1,29 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState } from 'react'
 import { Grommet, ThemeType, Box, Text, Button } from 'grommet'
 import * as Icons from 'grommet-icons'
 import StatusGraphs from './StatusGraphs'
 import MatchUI from './MatchUI'
-import { Match } from "../wg/match"
-import { PhaserWargrooveGameContext } from "./GameBoard"
-import { PhaserWargrooveGame } from "../phaser/phaser-wagroove-game"
+import { Match } from '../wg/match'
+import { PhaserWargrooveGameContext } from './GameBoard'
+import { PhaserWargrooveGame } from '../phaser/phaser-wagroove-game'
 import { MatchContext, MatchLoader } from './MatchLoader'
 
 const theme: ThemeType = {
-    global: {
-        colors: {
-            brand: 'black',
-            focus: 'accent-4'
-        },
-        font: {
-            family: 'Raleway',
-            size: '16px',
-            height: '18px',
-
-        },
+  global: {
+    colors: {
+      brand: 'black',
+      focus: 'accent-4'
+    },
+    font: {
+      family: 'Raleway',
+      size: '16px',
+      height: '18px'
     }
+  }
 }
 
-const NavBar = props => <Box
+const NavBar = props => (
+  <Box
     tag="header"
     direction="row"
     overflow="visible"
@@ -34,47 +34,58 @@ const NavBar = props => <Box
     style={{ minHeight: 'auto' }}
     pad={{ left: 'medium', right: 'small', vertical: 'small' }}
     {...props}
-/>
+  />
+)
 
 const App = () => {
-    let [match, setMatch] = useState<Match>(null)
-    let [game, setGame] = useState<PhaserWargrooveGame>(null)
+  let [match, setMatch] = useState<Match>(null)
+  let [game, setGame] = useState<PhaserWargrooveGame>(null)
 
-    /*if (!match) {
+  /*if (!match) {
         Match.load().then(match => {
             setMatch(match)
         })
     }*/
 
-    function back(){
-        setMatch(null)
-        game?.destroy(true)
-        setGame(null)
-        let url = new URL(location.origin)
-        history?.replaceState(null, null, url.href)
-    }
+  function back() {
+    setMatch(null)
+    game?.destroy(true)
+    setGame(null)
+    let url = new URL(location.origin)
+    history?.replaceState(null, null, url.href)
+  }
 
-    window.addEventListener('popstate', back)
+  window.addEventListener('popstate', back)
 
-    return <Grommet theme={theme} full>
-        <MatchContext.Provider value={{ match, setMatch }}>
-            <PhaserWargrooveGameContext.Provider value={{ game, setGame }}>
-                <Box fill direction="column">
-                    <NavBar>
-                        <Box direction="row">
-                            {match ? <Button margin={{right: "small"}} plain icon={<Icons.LinkPrevious />} onClick={back} /> : null}
-                            <Text size="1.3em">Wargroove Match Viewer</Text>
-                        </Box>
-                        <Text size="small">Credit to <a href="https://chucklefish.org/" target="_blank">Chucklefish</a> for all images. Check the game on <a target="_blank" href="https://store.steampowered.com/app/607050/Wargroove/">Steam</a></Text>
-                        {match ? <StatusGraphs match={match} /> : <span />}
+  return (
+    <Grommet theme={theme} full>
+      <MatchContext.Provider value={{ match, setMatch }}>
+        <PhaserWargrooveGameContext.Provider value={{ game, setGame }}>
+          <Box fill direction="column">
+            <NavBar>
+              <Box direction="row">
+                {match ? <Button margin={{ right: 'small' }} plain icon={<Icons.LinkPrevious />} onClick={back} /> : null}
+                <Text size="1.3em">Wargroove Match Viewer</Text>
+              </Box>
+              <Text size="small">
+                Credit to{' '}
+                <a href="https://chucklefish.org/" target="_blank">
+                  Chucklefish
+                </a>{' '}
+                for all images. Check the game on{' '}
+                <a target="_blank" href="https://store.steampowered.com/app/607050/Wargroove/">
+                  Steam
+                </a>
+              </Text>
+              {match ? <StatusGraphs match={match} /> : <span />}
+            </NavBar>
 
-                    </NavBar>
-
-                    {match ? <MatchUI match={match} /> : <MatchLoader />}
-                </Box>
-            </PhaserWargrooveGameContext.Provider>
-        </MatchContext.Provider>
+            {match ? <MatchUI match={match} /> : <MatchLoader />}
+          </Box>
+        </PhaserWargrooveGameContext.Provider>
+      </MatchContext.Provider>
     </Grommet>
+  )
 }
 
 export default App
