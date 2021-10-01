@@ -143,7 +143,7 @@ export class MapFinder {
     let [isGeneric, included, unknown] = key.match(/(included)|(unknown)/i) || []
     if (isGeneric) {
       key = Math.random().toString(36).substr(2)
-      code = included ? '[Included in game]' : '[Unknown]'
+      code = included ? '[In game]' : '[Unknown]'
     }
 
     let map = {

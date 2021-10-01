@@ -6,7 +6,10 @@ import { Match } from '../wg/match'
 import { PhaserWargrooveGame } from '../phaser/phaser-wagroove-game'
 import { Close, Menu, Map, SportsEsports } from '@mui/icons-material'
 
-import MapTable from './MapTable'
+import { useLocation, Route, Switch } from "wouter"
+
+import Maps from './routes/Maps'
+import PlayerChips from './common/PlayerChips'
 
 function ChucklefishCredits(props: any) {
   return (
@@ -55,6 +58,7 @@ export default function App() {
 
   const [match, setMatch] = useState<Match>(null)
   const [game, setGame] = useState<PhaserWargrooveGame>(null)
+  const [location, setLocation] = useLocation()
 
   return (
     <ThemeProvider theme={mdTheme}>
@@ -74,7 +78,7 @@ export default function App() {
           </Toolbar>
         </AppBar>
 
-        <Drawer open={open} sx={{ maxWidth: '85%', width: 600, position: 'relative', whiteSpace: 'nowrap' }}>
+        <Drawer open={open} sx={{ maxWidth: '85%', width: 600, position: 'relative', whiteSpace: 'nowrap' }} onBackdropClick={toggleDrawer}>
           <Toolbar sx={{ justifyContent: 'flex-end' }}>
             <IconButton onClick={toggleDrawer}>
               <Close />
@@ -82,14 +86,14 @@ export default function App() {
           </Toolbar>
           <Divider />
           <List>
-            <ListItem button>
+            <ListItem button selected={location == '/'} onClick={() => setLocation('/')}>
               <ListItemIcon>
                 <SportsEsports />
               </ListItemIcon>
               <ListItemText primary="Matches" />
             </ListItem>
 
-            <ListItem button>
+            <ListItem button selected={location == '/maps'} onClick={() => setLocation('/maps')}>
               <ListItemIcon>
                 <Map />
               </ListItemIcon>
@@ -99,9 +103,16 @@ export default function App() {
           <Divider />
           {/*<List>{secondaryListItems}</List>*/}
         </Drawer>
-        <Box component="main" sx={{ flexGrow: 1, overflow: 'auto', position: 'relative' }}>
+        <Box component="main" sx={{ flexGrow: 1, display: 'flex', flexDirection: "column", width: '100%' }}>
           <Toolbar />
-          <MapTable />
+          <Box sx={{ flexGrow: 1, overflow: 'auto', position: 'relative'}}>
+            <Switch>
+              <Route path="/">
+                  a
+              </Route>
+              <Route path="/maps" component={Maps} />
+            </Switch>
+          </Box>
         </Box>
       </Box>
     </ThemeProvider>

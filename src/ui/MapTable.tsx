@@ -12,7 +12,7 @@ import Box from '@mui/material/Box'
 import Link from '@mui/material/Link'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
-import { mapFinder, MapRecord, MapVersion } from '../wg/map-utils'
+import { MapRecord, MapVersion } from '../wg/map-utils'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 
 function VersionRow({ version, map, firstCellEle, showBorder = false }: { version: MapVersion; map?: MapRecord; firstCellEle?: React.ReactElement; showBorder?: boolean }) {
@@ -20,7 +20,7 @@ function VersionRow({ version, map, firstCellEle, showBorder = false }: { versio
     <TableRow sx={!showBorder ? { '& > *': { borderBottom: 'unset !important' } } : null}>
       <TableCell>{firstCellEle}</TableCell>
       <TableCell>
-        <Typography component="h4" variant="h6">
+        <Typography component="div" variant="subtitle1" fontWeight="bold">
           {map?.name}
         </Typography>
       </TableCell>
@@ -32,12 +32,12 @@ function VersionRow({ version, map, firstCellEle, showBorder = false }: { versio
           {version.v}
         </Box>
       </TableCell>
-      <TableCell>{version.code}</TableCell>
+      <TableCell><code>{version.code}</code></TableCell>
       <TableCell>{version.notes}</TableCell>
       <TableCell>{map?.footer}</TableCell>
       <TableCell>{map?.author}</TableCell>
       <TableCell sx={{ height: '80px', width: '80px', p: 0 }}>
-        <Link href={version.imgSrc} target="_nlank">
+        <Link href={version.imgSrc} target="_blank">
           <img src={version.imgSrc} style={{ maxHeight: '100%', maxWidth: '100%' }} />
         </Link>
       </TableCell>
@@ -65,10 +65,10 @@ function MapRow({ map }: { map: MapRecord }) {
   return <React.Fragment>{...rows}</React.Fragment>
 }
 
-export default function MapTable() {
+export default function MapTable({ maps }: { maps: MapRecord[] }) {
   return (
-    <TableContainer component={Paper}>
-      <Table size="small">
+    <TableContainer component={Paper} sx={{maxHeight: '100%', maxWidth: '100%'}}>
+      <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
             <TableCell />
@@ -82,7 +82,7 @@ export default function MapTable() {
           </TableRow>
         </TableHead>
         <TableBody>
-          {mapFinder.getMaps().map((map, i) => (
+          {maps.map((map, i) => (
             <MapRow key={i} map={map} />
           ))}
         </TableBody>
