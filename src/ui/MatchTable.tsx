@@ -6,23 +6,24 @@ import TableCell from '@mui/material/TableCell'
 import TableContainer from '@mui/material/TableContainer'
 import TableHead from '@mui/material/TableHead'
 import TableRow from '@mui/material/TableRow'
-import Dialog from '@mui/material/Dialog'
 import Paper from '@mui/material/Paper'
 import Box from '@mui/material/Box'
 import TextField from '@mui/material/TextField'
 import { CloudDownload, InsertDriveFile, Map } from '@mui/icons-material'
 
 import { IMatch, db } from '../db'
-import { Match, MatchData } from '../wg/match'
 import PlayerChips from './common/PlayerChips'
 import SkeletonRow from './common/SkeletonRow'
-import { MapCard } from './common/MapCard'
+import { MapCardDialog } from './common/MapCard'
 import MatchActions from './common/MatchActions'
+import { useModal } from 'mui-modal-provider'
 
-function MatchRow({ imatch, openDialog }: { imatch: IMatch, openDialog: (component: React.ReactElement) => void }){
+function MatchRow({ imatch }: { imatch: IMatch }){
     let { id, online, data, updated_date, match } = imatch
 
     let [name, setName] = React.useState(imatch.name)
+
+    const { showModal } = useModal()
 
     function updateName(ev: any) {
       let name = ev.target.value
@@ -41,7 +42,9 @@ function MatchRow({ imatch, openDialog }: { imatch: IMatch, openDialog: (compone
     
     function openMapDialog(){
         const { map, version } = match.mapInfo
-        if(map) openDialog(<MapCard map={map} version={version}/>)
+        if(map) {
+          showModal(MapCardDialog, { map, version })
+        }
     }
 
     return (
@@ -108,22 +111,15 @@ export default function MatchTable({ matches }: { matches: IMatch[] }) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {matches.map((match, i) => (
-              <MatchRow key={i} imatch={match} openDialog={setDialogContent} />
+            {matches?.map((match, i) => (
+              <MatchRow key={i} imatch={match} />
             ))}
-            {matches.length == 0 &&
+            {!matches &&
               Array(10)
                 .fill(0)
                 .map((_, i) => <SkeletonRow key={i} length={6} />)}
           </TableBody>
         </Table>
-
-        <Dialog
-          open={Boolean(dialogContent)}
-          onClose={() => setDialogContent(undefined)}
-        >
-          {dialogContent}
-        </Dialog>
       </TableContainer>
     )
 }

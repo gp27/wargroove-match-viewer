@@ -45,6 +45,8 @@ db.on('populate', () => {
 })
 
 db.matches.hook('reading', (imatch) => {
+  if(!imatch) return imatch
+
   let r = { ...imatch }
   if (imatch.data) {
     try {

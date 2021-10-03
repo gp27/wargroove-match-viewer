@@ -20,9 +20,10 @@ import { Match } from '../wg/match'
 import { PhaserWargrooveGame } from '../phaser/phaser-wagroove-game'
 import { Close, Menu, Map, SportsEsports, AltRoute } from '@mui/icons-material'
 import { SnackbarProvider } from 'notistack'
+import ModalProvider from 'mui-modal-provider'
 
-import { useLocation, Route, Switch } from 'wouter'
-import { initialUrlParams } from '../init'
+import { useLocation, Route, Switch, Redirect } from 'wouter'
+import { initialUrlParams } from '../utils'
 
 import Maps from './routes/Maps'
 import Matches from './routes/Matches'
@@ -83,7 +84,9 @@ export default function App() {
   return (
     <ThemeProvider theme={mdTheme}>
       <SnackbarProvider maxSnack={3}>
-        <AppContent />
+        <ModalProvider>
+          <AppContent />
+        </ModalProvider>
       </SnackbarProvider>
     </ThemeProvider>
   )
@@ -168,7 +171,7 @@ function AppContent() {
             <ListItemText primary="Maps" />
           </ListItem>
 
-          <ListItem
+          {/*<ListItem
             button
             selected={location == '/openings'}
             onClick={() => navigate('/openings')}
@@ -177,7 +180,7 @@ function AppContent() {
               <AltRoute />
             </ListItemIcon>
             <ListItemText primary="Openings" />
-          </ListItem>
+          </ListItem>}*/}
         </List>
         <Divider />
         {/*<List>{secondaryListItems}</List>*/}
@@ -205,7 +208,10 @@ function AppContent() {
             <Route path="/" component={Matches} />
             <Route path="/maps" component={Maps} />
             <Route path="/match/:id" component={MatchRoute} />
-            {/*<Route path="/openings" component={OpeningsRoute} />*/}
+            <Route path="/openings" component={OpeningsRoute} />
+            <Route path="/*">
+              <Redirect to="/"/>
+            </Route>
           </Switch>
         </Box>
       </Box>

@@ -2,7 +2,6 @@ import * as React from 'react'
 import Box from '@mui/material/Box'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
-import CardMedia from '@mui/material/CardMedia'
 import CardActions from '@mui/material/CardActions'
 import TextField from '@mui/material/TextField'
 import IconButton from '@mui/material/IconButton'
@@ -12,13 +11,13 @@ import Skeleton from '@mui/material/Skeleton'
 import Typography from '@mui/material/Typography'
 
 import { IMatch, db } from '../../db'
-import { Match, MatchData } from '../../wg/match'
 import PlayerChips from './PlayerChips'
-import { MapCard } from './MapCard'
 import MatchActions from './MatchActions'
+import { MapCardDialog } from './MapCard'
+import { useModal } from 'mui-modal-provider'
 
 export default function MatchCard({ imatch }: { imatch: IMatch }) {
-  let { id, online, data, updated_date, match } = imatch
+  let { id, online, updated_date, match } = imatch
 
   let [name, setName] = React.useState(imatch.name)
 
@@ -28,6 +27,15 @@ export default function MatchCard({ imatch }: { imatch: IMatch }) {
     setName(name)
 
     db.matches.update(id, { name })
+  }
+
+  const { showModal } = useModal()
+  
+  function openMapDialog() {
+    const { map, version } = match.mapInfo
+    if (map) {
+      showModal(MapCardDialog, { map, version })
+    }
   }
 
   const entries = match.getEntries()
@@ -86,7 +94,7 @@ export default function MatchCard({ imatch }: { imatch: IMatch }) {
         />
         <Box>
           {mapName && (
-            <IconButton>
+            <IconButton onClick={openMapDialog}>
               <Map />
             </IconButton>
           )}
@@ -99,6 +107,7 @@ export default function MatchCard({ imatch }: { imatch: IMatch }) {
       <CardActions
         sx={{
           display: 'flex',
+          p: 0,
           justifyContent: 'space-between',
           bgcolor: 'ActiveCaption',
         }}
@@ -119,7 +128,13 @@ export function MatchCardSkeleton() {
           pb: 1,
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <Skeleton animation="wave" height={10} width={100} />
           <Skeleton
             variant="circular"
@@ -170,7 +185,7 @@ export function MatchCardSkeleton() {
           <Skeleton animation="wave" width={80} />
         </Box>
       </CardContent>
-      <CardActions sx={{ bgcolor: 'ActiveCaption', height: 56 }}></CardActions>
+      <CardActions sx={{ bgcolor: 'ActiveCaption', height: 40 }}></CardActions>
     </Card>
   )
 }

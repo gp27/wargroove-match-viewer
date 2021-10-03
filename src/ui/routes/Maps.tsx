@@ -7,11 +7,12 @@ import MapTable from "../MapTable";
 import { MapCard } from "../common/MapCard";
 import SearchField from "../common/SearchField";
 import { mapFinder } from "../../wg/map-utils";
+import { useLocalStorage } from "../../utils";
 
 export default function Maps() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-  const [showCards, setShowCards] = React.useState(false);
+  const [showCards, setShowCards] = useLocalStorage('maps_showCards', false)
 
   const allMaps = mapFinder.getMaps()
 
@@ -21,8 +22,9 @@ export default function Maps() {
     const searches = search.toLowerCase().split(' ').filter(A => A)
 
     if(searches.length){
-      maps = allMaps.filter(({ name, author }) => {
-        const t = `${name} ${author}`.toLowerCase()
+      maps = allMaps.filter(({ name, author, versions }) => {
+        const vs = Object.values(versions).map(v => v.v).join(' ')
+        const t = `${name} ${author} ${vs}`.toLowerCase()
         return searches.some(s => t.includes(s))
       })
     }

@@ -14,6 +14,7 @@ import MatchCard, { MatchCardSkeleton } from '../common/MatchCard'
 import FileInputWrapper from '../common/FileInputWrapper'
 import MatchTable from '../MatchTable'
 import { Match, MatchData } from '../../wg/match'
+import { useLocalStorage } from '../../utils'
 
 const matchLoggerInfo = (
   <React.Fragment>
@@ -26,16 +27,11 @@ const matchLoggerInfo = (
 )
 
 export default function Matches() {
-  const [infoOpen, setInfoOpen] = React.useState(!Boolean(localStorage.matchesInfoClosed))
-
-  function setOpen(open: boolean){
-      localStorage.matchesInfoClosed = open ? '' : '1'
-      setInfoOpen(open)
-  }
+  const [infoOpen, setInfoOpen] = useLocalStorage('matches_infoOpen', true)
 
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
-  const [showCards, setShowCards] = React.useState(false)
+  const [showCards, setShowCards] = useLocalStorage('matches_showCards', false)
 
   const [matches, setMatches] = React.useState<IMatch[]>([])
 
@@ -69,19 +65,37 @@ export default function Matches() {
     loadMatches()
   }, [])
 
-  function filterMatches(search: string){
+  const [search, setSearch] = React.useState<string>('')
 
+  function filterMatches(){
+    if(!search) return matches
+    const searches = search.trim().toLowerCase().split(' ').filter(A => A)
+
+    if (searches.length) {
+      return matches.filter(({ id, name, match: { mapInfo: { map: { name: mapName = '' } = {}, version: { v = '' } = {} } } }) => {
+        const t = `${id} ${name} ${mapName} ${v}`.toLowerCase()
+        return searches.some((s) => t.includes(s))
+      })
+    }
+
+    return matches
   }
+
+  const filteredMatches = filterMatches()
 
   return (
     <React.Fragment>
       <Box sx={{ p: 2 }}>
         {infoOpen && (
-          <Alert severity="info" onClose={() => setOpen(false)} sx={{ mb: 2 }}>
+          <Alert
+            severity="info"
+            onClose={() => setInfoOpen(false)}
+            sx={{ mb: 2 }}
+          >
             {matchLoggerInfo}
           </Alert>
         )}
-        <Box sx={{ display: 'flex' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <span style={{ flex: 1 }} />
           <FileInputWrapper
             onChange={loadMatchFiles}
@@ -98,7 +112,7 @@ export default function Matches() {
               Add Matches
             </Button>
           </FileInputWrapper>
-          {/*<SearchField sx={{ mr: 2 }} onChange={filterMatches} />*/}
+          <SearchField sx={{ ml: 2 }} onChange={setSearch} />
           {!isMobile && (
             <FormControlLabel
               sx={{ ml: 2 }}
@@ -113,7 +127,7 @@ export default function Matches() {
           )}
 
           {!infoOpen && (
-            <IconButton onClick={() => setOpen(true)} size="small">
+            <IconButton onClick={() => setInfoOpen(true)} size="small">
               <Info color="info" />
             </IconButton>
           )}
@@ -129,16 +143,16 @@ export default function Matches() {
             alignItems: 'center',
           }}
         >
-          {matches.map((match, i) => (
+          {filteredMatches.map((match, i) => (
             <MatchCard key={i} imatch={match} />
           ))}
           {matches.length == 0 &&
-            Array(4)
+            Array(6)
               .fill(0)
               .map((_, i) => <MatchCardSkeleton key={i} />)}
         </Box>
       ) : (
-        <MatchTable matches={matches} />
+        <MatchTable matches={matches.length ? filteredMatches : null} />
       )}
     </React.Fragment>
   )

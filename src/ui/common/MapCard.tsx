@@ -5,6 +5,7 @@ import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import CardActions from "@mui/material/CardActions";
 import Typography from "@mui/material/Typography";
+import Dialog, { DialogProps } from '@mui/material/Dialog'
 
 import { MapRecord, MapVersion } from "../../wg/map-utils";
 import {
@@ -53,48 +54,79 @@ export function MapCard({
   }
 
   return (
-    <Card sx={{ maxWidth: "380px", m: 2, boxShadow: 2 }}>
-        <Box sx={{ display: "flex", flexGrow: 0 }}>
-      <Box sx={{ display: "flex", flexDirection: "column", justifyContent: 'space-between', flexGrow: 1 }}>
-        <CardContent sx={{ pb: 1, minWidth: 150 }}>
-          <Typography component="div" variant="h5">
-            {map.name}
-          </Typography>
-          <Typography
-            variant="subtitle1"
-            color="text.secondary"
-            component="div"
-          >
-            {map.author}
-          </Typography>
-        </CardContent>
+    <Card sx={{ maxWidth: '380px', m: 2, boxShadow: 2 }}>
+      <Box sx={{ display: 'flex', flexGrow: 0 }}>
         <Box
           sx={{
-            display: "flex",
-            position: "relative",
-            alignItems: "center",
-            pb: 1, pl: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            flexGrow: 1,
           }}
         >
-          <SwipeableViewsWithArrows>
-            {versions.map((version, i) => <VersionSection key={i} version={version}/>)}
-          </SwipeableViewsWithArrows>
+          <CardContent sx={{ pb: 1, minWidth: 150 }}>
+            <Typography component="div" variant="h5">
+              {map.name}
+            </Typography>
+            <Typography
+              variant="subtitle1"
+              color="text.secondary"
+              component="div"
+            >
+              {map.author}
+            </Typography>
+          </CardContent>
+          <Box
+            sx={{
+              display: 'flex',
+              position: 'relative',
+              alignItems: 'center',
+              pb: 1,
+              pl: 1,
+            }}
+          >
+            <SwipeableViewsWithArrows initialIndex={versions.indexOf(version)}>
+              {versions.map((version, i) => (
+                <VersionSection key={i} version={version} />
+              ))}
+            </SwipeableViewsWithArrows>
+          </Box>
         </Box>
-        
+        <CardMedia
+          component="img"
+          loading="lazy"
+          sx={{ maxWidth: 151, maxHeight: 151, cursor: 'pointer' }}
+          image={version.imgSrc}
+          onClick={() => window.open(version.imgSrc)}
+        />
       </Box>
-      <CardMedia
-        component="img"
-        loading="lazy"
-        sx={{ maxWidth: 151, maxHeight: 151, cursor: 'pointer' }}
-        image={version.imgSrc}
-        onClick={()=>window.open(version.imgSrc)}
-      /></Box>
-      {version.notes ? <CardActions disableSpacing sx={{bgcolor: 'InfoBackground', pt: 0.5, pb: 0.5}}>
-          <Typography variant="caption" display="div" sx={{textAlign: 'center', maxWidth: 350}}>
-        {version.notes}
-      </Typography>
-        </CardActions> : null}
-      
+      {version.notes ? (
+        <CardActions
+          disableSpacing
+          sx={{ bgcolor: 'InfoBackground', pt: 0.5, pb: 0.5 }}
+        >
+          <Typography
+            variant="caption"
+            display="div"
+            sx={{ textAlign: 'center', maxWidth: 350 }}
+          >
+            {version.notes}
+          </Typography>
+        </CardActions>
+      ) : null}
     </Card>
-  );
+  )
+}
+
+
+export function MapCardDialog({
+  map,
+  version,
+  ...props
+}: DialogProps & { map: MapRecord; version?: MapVersion }) {
+  return (
+    <Dialog {...props}>
+      <MapCard map={map} version={version} />
+    </Dialog>
+  )
 }

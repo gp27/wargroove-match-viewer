@@ -1,14 +1,16 @@
 import * as React from 'react'
 import IconButton from '@mui/material/IconButton'
 import { IMatch, db } from '../../db'
-import { Match, MatchData } from '../../wg/match'
 import { useSnackbar } from 'notistack'
+import { useModal } from 'mui-modal-provider'
 import { useLocation } from 'wouter'
 
 import { Close, Download, Link, Launch } from '@mui/icons-material'
+import { Button, Dialog, DialogActions, DialogProps, DialogTitle } from '@mui/material'
 
 export default function MatchActions({ imatch }: { imatch: IMatch }){
     const { enqueueSnackbar } = useSnackbar()
+    const { showModal } = useModal()
     const [, setLocation] = useLocation()
 
     let { id, online, data, name } = imatch
@@ -38,7 +40,33 @@ export default function MatchActions({ imatch }: { imatch: IMatch }){
     }
 
     function deleteMatch(){
-        db.matches.delete(id)
+      return db.matches.delete(id)
+    }
+
+    function DeleteDialog({ close, ...props }: { close: Function } & DialogProps){
+      return (
+        <Dialog {...props}>
+          <DialogTitle>Delete this match?</DialogTitle>
+          <DialogActions>
+            <Button onClick={() => close()} autoFocus>
+              Cancel
+            </Button>
+            <Button
+              color="primary"
+              onClick={() => {
+                deleteMatch().then(() => {
+                  location.reload()
+                })
+                close()
+              }}
+            >Confirm</Button>
+          </DialogActions>
+        </Dialog>
+      )
+    }
+
+    function openDeleteDialog() {
+      const modal = showModal(DeleteDialog, { close: () => modal.destroy() })
     }
 
     return (
@@ -57,7 +85,7 @@ export default function MatchActions({ imatch }: { imatch: IMatch }){
           </IconButton>
         )}
 
-        <IconButton>
+        <IconButton onClick={openDeleteDialog}>
           <Close />
         </IconButton>
       </React.Fragment>
