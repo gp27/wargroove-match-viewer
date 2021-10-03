@@ -37,7 +37,13 @@ export type MapInfo = MapIdentifiers & Partial<MapGuess>
 export type MapEntry = Omit<MapRecord, 'versions'> & MapVersion
 
 export class MapFinder {
-  index: { [tileHash: string]: [map: MapRecord, tileString: string, unseenVersions: MapVersion[]] }
+  index: {
+    [tileHash: string]: [
+      map: MapRecord,
+      tileString: string,
+      unseenVersions: MapVersion[]
+    ]
+  }
   unseen: { [name: string]: MapRecord }
   byCode: { [code: string]: [MapRecord, MapVersion] }
 
@@ -68,9 +74,9 @@ export class MapFinder {
 
     for (let map of this.maps) {
       const allVersions = Object.values(map.versions)
-      const unseenVersions = allVersions.filter(v => !v.tileHash)
+      const unseenVersions = allVersions.filter((v) => !v.tileHash)
 
-      allVersions.forEach(version => {
+      allVersions.forEach((version) => {
         let { tileHash, tileString, code } = version
         if (!code.startsWith('[')) {
           this.byCode[code] = [map, version]
@@ -90,12 +96,17 @@ export class MapFinder {
   }
 
   guess(info: MapInfo) {
-    return this.find(info.tileHash, info.stateHash) || this.findSimiliar(info.tileString)
+    return (
+      this.find(info.tileHash, info.stateHash) ||
+      this.findSimiliar(info.tileString)
+    )
   }
 
   find(tileHash: string, stateHash: string): MapGuess | undefined {
     let [map, str, unseenVersions] = this.index[tileHash] || []
-    let version = Object.values(map?.versions || {}).find(({ stateHash: hash }) => hash == stateHash)
+    let version = Object.values(map?.versions || {}).find(
+      ({ stateHash: shash, tileHash: thash }) => shash == stateHash && tileHash == thash
+    )
     if (map) {
       return { map, version, unseenVersions }
     }
@@ -125,7 +136,7 @@ export class MapFinder {
     let minDist = Infinity
     let minName: string
 
-    Object.keys(this.unseen).forEach(name => {
+    Object.keys(this.unseen).forEach((name) => {
       const dist = levenshtein(search, name)
       if (dist < minDist) {
         minDist = dist
@@ -138,9 +149,24 @@ export class MapFinder {
     }
   }
 
-  private makeMapFromEntry({ name, author, archived, isNew, footer, code, v, notes, imgSrc, tileHash, tileString, stateHash, stateString }: MapEntry): [MapRecord, MapVersion] {
+  private makeMapFromEntry({
+    name,
+    author,
+    archived,
+    isNew,
+    footer,
+    code,
+    v,
+    notes,
+    imgSrc,
+    tileHash,
+    tileString,
+    stateHash,
+    stateString,
+  }: MapEntry): [MapRecord, MapVersion] {
     let key = code
-    let [isGeneric, included, unknown] = key.match(/(included)|(unknown)/i) || []
+    let [isGeneric, included, unknown] =
+      key.match(/(included)|(unknown)/i) || []
     if (isGeneric) {
       key = Math.random().toString(36).substr(2)
       code = included ? '[In game]' : '[Unknown]'
@@ -161,9 +187,9 @@ export class MapFinder {
           tileHash,
           tileString,
           stateHash,
-          stateString
-        }
-      }
+          stateString,
+        },
+      },
     }
 
     map = JSON.parse(JSON.stringify(map))

@@ -5,20 +5,42 @@ import { useTheme } from "@mui/material/styles";
 import useMediaQuery from "@mui/material/useMediaQuery";
 import MapTable from "../MapTable";
 import { MapCard } from "../common/MapCard";
-import { mapFinder, MapRecord, MapVersion } from "../../wg/map-utils";
+import SearchField from "../common/SearchField";
+import { mapFinder } from "../../wg/map-utils";
 
 export default function Maps() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [showCards, setShowCards] = React.useState(false);
 
-  const maps = mapFinder.getMaps();
+  const allMaps = mapFinder.getMaps()
+
+  let [maps, setMaps] = React.useState(allMaps)
+
+  function filterMaps(search: string){
+    const searches = search.toLowerCase().split(' ').filter(A => A)
+
+    if(searches.length){
+      maps = allMaps.filter(({ name, author }) => {
+        const t = `${name} ${author}`.toLowerCase()
+        return searches.some(s => t.includes(s))
+      })
+    }
+    else{
+      maps = allMaps
+    }
+
+    setMaps(maps)
+  }
 
   return (
     <React.Fragment>
-      {!isMobile && (
-        <Box sx={{ p: 2, display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ p: 2, display: 'flex' }}>
+        <span style={{ flex: 1 }} />
+        <SearchField onChange={filterMaps} />
+        {!isMobile && (
           <FormControlLabel
+            sx={{ ml: 2 }}
             control={
               <Switch
                 checked={showCards}
@@ -27,11 +49,19 @@ export default function Maps() {
             }
             label="Show Cards"
           />
-        </Box>
-      )}
+        )}
+      </Box>
 
       {isMobile || showCards ? (
-        <Box sx={{display: 'flex', flexDirection: isMobile ? 'column' : 'row', flexWrap: 'wrap', alignItems: 'center'}}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            flexWrap: 'wrap',
+            justifyContent: 'space-between',
+            alignItems: isMobile ? 'stretch' : 'center',
+          }}
+        >
           {maps.map((map, i) => (
             <MapCard key={i} map={map} />
           ))}
@@ -40,5 +70,5 @@ export default function Maps() {
         <MapTable maps={maps} />
       )}
     </React.Fragment>
-  );
+  )
 }

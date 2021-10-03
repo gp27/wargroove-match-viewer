@@ -1,13 +1,13 @@
-import { Dexie } from "dexie"
+import { Dexie } from 'dexie'
 import { Match, MatchData } from './wg/match'
 
 export interface IMatch {
-    id?: string
-    name?: string
-    online: boolean
-    updated_date: Date
-    data?: MatchData,
-    match?: Match
+  id?: string
+  name?: string
+  online: boolean
+  updated_date: Date
+  data?: MatchData
+  match?: Match
 }
 
 /*export interface IMapEntry {
@@ -16,30 +16,42 @@ export interface IMatch {
 }*/
 
 class MatchViewerDatabase extends Dexie {
-    matches: Dexie.Table<IMatch, string>
+  matches: Dexie.Table<IMatch, string>
 
-    constructor() {
-        super('MatchViewerDatabase')
+  constructor() {
+    super('MatchViewerDatabase')
 
-        this.version(1).stores({
-            matches: 'id, name, online, updated_date, data'
-        })
+    this.version(1).stores({
+      matches: 'id, name, online, updated_date, data',
+    })
 
-        /*this.version(2).stores({
+    /*this.version(2).stores({
             matches: 'id, name, online, updated_date, data',
 
         })*/
 
-        this.matches = this.table('matches')
-    }
+    this.matches = this.table('matches')
+  }
 }
 
 export const db = new MatchViewerDatabase()
 
-db.on("populate", () => {
-    /*db.matches.add({
+db.on('populate', () => {
+  /*db.matches.add({
         id: '2938883839',
         online: true,
         updated_date: new Date()
     })*/
+})
+
+db.matches.hook('reading', (imatch) => {
+  let r = { ...imatch }
+  if (imatch.data) {
+    try {
+      r.match = new Match(imatch.data)
+    } catch (e) {
+      console.error(e)
+    }
+  }
+  return r
 })

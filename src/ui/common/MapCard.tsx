@@ -53,10 +53,10 @@ export function MapCard({
   }
 
   return (
-    <Card sx={{ maxWidth: "340px", m: 2 }}>
+    <Card sx={{ maxWidth: "380px", m: 2, boxShadow: 2 }}>
         <Box sx={{ display: "flex", flexGrow: 0 }}>
       <Box sx={{ display: "flex", flexDirection: "column", justifyContent: 'space-between', flexGrow: 1 }}>
-        <CardContent sx={{ pb: 1 }}>
+        <CardContent sx={{ pb: 1, minWidth: 150 }}>
           <Typography component="div" variant="h5">
             {map.name}
           </Typography>
@@ -84,11 +84,13 @@ export function MapCard({
       </Box>
       <CardMedia
         component="img"
-        sx={{ maxWidth: 151, maxHeight: 151 }}
+        loading="lazy"
+        sx={{ maxWidth: 151, maxHeight: 151, cursor: 'pointer' }}
         image={version.imgSrc}
+        onClick={()=>window.open(version.imgSrc)}
       /></Box>
       {version.notes ? <CardActions disableSpacing sx={{bgcolor: 'InfoBackground', pt: 0.5, pb: 0.5}}>
-          <Typography variant="caption" display="div" sx={{textAlign: 'center'}}>
+          <Typography variant="caption" display="div" sx={{textAlign: 'center', maxWidth: 350}}>
         {version.notes}
       </Typography>
         </CardActions> : null}

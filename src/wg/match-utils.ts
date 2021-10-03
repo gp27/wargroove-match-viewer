@@ -13,7 +13,7 @@ export const terrainColors: Record<Terrain, number> = {
   plains: 0xadd49f,
   road: 0xe0cea4,
   sea: 0x549af0,
-  carpet: 0xcc3333
+  carpet: 0xcc3333,
 }
 
 export const playerColors = {
@@ -26,7 +26,7 @@ export const playerColors = {
   pink: { hex: '#e62cac' },
   orange: { hex: '#cd5d10' },
   black: { hex: '#5c465e' },
-  grey: { hex: '#737288' }
+  grey: { hex: '#737288' },
 }
 
 /*export const playerColors = {
@@ -44,26 +44,27 @@ export const playerColors = {
 
 export type PlayerColor = keyof typeof playerColors
 
-const commandersMeta: Record<string, { color: PlayerColor; faction: string }> = {
-  mercia: { color: 'red', faction: 'cherrystone' },
-  caesar: { color: 'red', faction: 'cherrystone' },
-  mercival: { color: 'red', faction: 'cherrystone' },
-  emeric: { color: 'red', faction: 'cherrystone' },
-  valder: { color: 'blue', faction: 'felheim' },
-  ragna: { color: 'blue', faction: 'felheim' },
-  sigrid: { color: 'blue', faction: 'felheim' },
-  greenfinger: { color: 'green', faction: 'floran' },
-  nuru: { color: 'green', faction: 'floran' },
-  sedge: { color: 'green', faction: 'floran' },
-  tenri: { color: 'yellow', faction: 'heavensong' },
-  ryota: { color: 'yellow', faction: 'heavensong' },
-  koji: { color: 'yellow', faction: 'heavensong' },
-  elodie: { color: 'purple', faction: 'guardian' },
-  darkmercia: { color: 'purple', faction: 'guardian' },
-  wulfar: { color: 'black', faction: 'outlaw' },
-  twins: { color: 'black', faction: 'outlaw' },
-  vesper: { color: 'black', faction: 'outlaw' }
-}
+const commandersMeta: Record<string, { color: PlayerColor; faction: string }> =
+  {
+    mercia: { color: 'red', faction: 'cherrystone' },
+    caesar: { color: 'red', faction: 'cherrystone' },
+    mercival: { color: 'red', faction: 'cherrystone' },
+    emeric: { color: 'red', faction: 'cherrystone' },
+    valder: { color: 'blue', faction: 'felheim' },
+    ragna: { color: 'blue', faction: 'felheim' },
+    sigrid: { color: 'blue', faction: 'felheim' },
+    greenfinger: { color: 'green', faction: 'floran' },
+    nuru: { color: 'green', faction: 'floran' },
+    sedge: { color: 'green', faction: 'floran' },
+    tenri: { color: 'yellow', faction: 'heavensong' },
+    ryota: { color: 'yellow', faction: 'heavensong' },
+    koji: { color: 'yellow', faction: 'heavensong' },
+    elodie: { color: 'purple', faction: 'guardian' },
+    darkmercia: { color: 'purple', faction: 'guardian' },
+    wulfar: { color: 'black', faction: 'outlaw' },
+    twins: { color: 'black', faction: 'outlaw' },
+    vesper: { color: 'black', faction: 'outlaw' },
+  }
 
 export function getCommanderMeta(commander: string) {
   return commandersMeta[commander]
