@@ -3,7 +3,12 @@ import 'chart.js'
 import { ChartConfiguration, ChartData, ChartDataSets } from 'chart.js'
 import { getCommanderMeta, PlayerColor, playerColors } from './match-utils'
 import { MapInfo, mapFinder } from './map-utils'
-import { Biome, Terrain, terrains, tilesFromLinear } from '../phaser/phaser-wargroove-map'
+import {
+  Biome,
+  Terrain,
+  terrains,
+  tilesFromLinear,
+} from '../phaser/phaser-wargroove-map'
 import { crc32 } from '../crc32'
 
 const diffpatcher = jsondiffpatch.create()
@@ -13,26 +18,30 @@ type LuaArray<T> = T[] | Record<number, T>
 export type MatchData = {
   match_id: string
   map: {
-    size: Pos,
-    tiles: string,
+    size: Pos
+    tiles: string
     biome?: Biome
-  },
+  }
 
   players: LuaArray<Player>
 
-  state: State,
+  state: State
   deltas: LuaArray<jsondiffpatch.Delta>
   fog_blocks?: string[]
   is_fog?: boolean
 }
 
-export interface Pos { x: number, y: number, facing?: number }
+export interface Pos {
+  x: number
+  y: number
+  facing?: number
+}
 
 export interface Player {
-  id: number,
-  team: number,
-  is_victorious: boolean,
-  is_local: boolean,
+  id: number
+  team: number
+  is_victorious: boolean
+  is_local: boolean
   is_human: boolean
 
   commander?: string
@@ -42,76 +51,79 @@ export interface Player {
 }
 
 export interface UnitData {
-  id: number,
-  garrisonClassId: string,
-  transportedBy: number,
-  unitClassId: string,
-  loadedUnits: LuaArray<number>,
-  damageTakenPercent: number,
-  grooveId: string,
-  playerId: number,
-  health: number,
-  hadTurn: boolean,
-  inTransport: boolean,
-  state: LuaArray<{ key: string, value: any }>,
-  attackerId: number,
-  pos: Pos,
-  canBeAttacked: boolean,
-  grooveCharge: number,
-  attackerUnitClass: string,
-  attackerPlayerId: number,
-  killedByLosing: boolean,
-  recruits: LuaArray<string>,
-  startPos: Pos,
+  id: number
+  garrisonClassId: string
+  transportedBy: number
+  unitClassId: string
+  loadedUnits: LuaArray<number>
+  damageTakenPercent: number
+  grooveId: string
+  playerId: number
+  health: number
+  hadTurn: boolean
+  inTransport: boolean
+  state: LuaArray<{ key: string; value: any }>
+  attackerId: number
+  pos: Pos
+  canBeAttacked: boolean
+  grooveCharge: number
+  attackerUnitClass: string
+  attackerPlayerId: number
+  killedByLosing: boolean
+  recruits: LuaArray<string>
+  startPos: Pos
   unitClass?: UnitClass
 }
 
 export interface UnitClass {
-  id: string,
-  weapons: LuaArray<Weapon>,
-  inAir: boolean,
-  moveRange: number,
-  isCommander: boolean,
-  tags: LuaArray<string>,
-  cost: number,
-  passiveMultiplier: number,
-  transportTags: LuaArray<string>,
-  isStructure: boolean,
-  canReinforce: boolean,
-  loadCapacity: number,
-  weaponIds: LuaArray<string>,
-  maxGroove: number,
-  canBeCaptured: boolean,
+  id: string
+  weapons: LuaArray<Weapon>
+  inAir: boolean
+  moveRange: number
+  isCommander: boolean
+  tags: LuaArray<string>
+  cost: number
+  passiveMultiplier: number
+  transportTags: LuaArray<string>
+  isStructure: boolean
+  canReinforce: boolean
+  loadCapacity: number
+  weaponIds: LuaArray<string>
+  maxGroove: number
+  canBeCaptured: boolean
   maxHealth: number
 }
 
 export interface Weapon {
-  id: string,
-  directionality: string,
-  maxRange: number,
-  minRange: number,
-  horizontalAndVerticalOnly: boolean,
-  terrainExclusion: LuaArray<string>,
-  canMoveAndAttack: boolean,
+  id: string
+  directionality: string
+  maxRange: number
+  minRange: number
+  horizontalAndVerticalOnly: boolean
+  terrainExclusion: LuaArray<string>
+  canMoveAndAttack: boolean
   horizontalAndVerticalExtraWidth: number
 }
 
 export interface State {
   playerId: number
   turnNumber: number
-  gold: Record<string,number>
+  gold: Record<string, number>
   units: LuaArray<UnitData>
-  unitClasses?: Record<string,UnitClass>
+  unitClasses?: Record<string, UnitClass>
 }
 
-export type Status = Record<number,{
-  gold: number,
-  income: number
-  armyValue: number
-  unitCount: number // hq does not count
-  combatUnitCount: number
-  //activeUnitCount: number
-}>
+export type Status = Record<
+  number,
+  {
+    gold: number
+    income: number
+    armyValue: number
+    unitCount: number // hq does not count
+    combatUnitCount: number
+    //activeUnitCount: number
+  }
+>
 
 export interface PlayerTurn {
   id: number
@@ -132,12 +144,11 @@ export interface Entry {
 export interface MatchMap {
   w: number
   h: number
-  tiles: Terrain[][],
+  tiles: Terrain[][]
   biome?: Biome
 }
 
 export class Match {
-
   readonly tags: string[]
 
   private entries: Entry[]
@@ -157,11 +168,11 @@ export class Match {
     })
   }*/
 
-  static isValid({ match_id, map, players, state, deltas }: any = {}){
+  static isValid({ match_id, map, players, state, deltas }: any = {}) {
     return match_id && map && players && state && deltas
   }
 
-  constructor(private matchData: MatchData){
+  constructor(private matchData: MatchData) {
     let states = generateStates(matchData)
 
     this.entries = states.map((state, id) => ({
@@ -182,16 +193,19 @@ export class Match {
     //console.log(this)
   }
 
-  makeTags(){
+  makeTags() {
     let tags = [
       `map:${this.mapInfo.tileHash}`,
-      ...this.players.map(({ commander }) => `commander:${commander}`)
+      ...this.players.map(({ commander }) => `commander:${commander}`),
     ]
     return tags
   }
 
   selectEntry(entryId: number) {
-    this.currentEntry = this.entries.find(e => e.id == entryId) || this.currentEntry || this.entries[0]
+    this.currentEntry =
+      this.entries.find((e) => e.id == entryId) ||
+      this.currentEntry ||
+      this.entries[0]
     this.currentTurn = this.currentEntry.turn
     return this.currentEntry
   }
@@ -204,8 +218,7 @@ export class Match {
     this.selectEntry(this.currentEntry?.id - 1)
   }
 
-
-  getCurrentEntry(){
+  getCurrentEntry() {
     return this.currentEntry
   }
 
@@ -213,7 +226,7 @@ export class Match {
     return this.currentTurn
   }
 
-  getEntries(){
+  getEntries() {
     return this.entries
   }
 
@@ -221,52 +234,73 @@ export class Match {
     return this.turns
   }
 
-  getMap(){
+  getMap() {
     return this.map
   }
 
-  getWinners(){
-    return this.getPlayers().filter(p => p.is_victorious)
+  getWinners() {
+    return this.getPlayers().filter((p) => p.is_victorious)
   }
 
-  getPlayers(){
+  getPlayers() {
     return this.players
   }
 
-  getPlayerColorHex(playerId){
+  getPlayerColorHex(playerId) {
     let color = this.players[playerId].color || 'grey'
     return playerColors[color].hex
   }
 
-  changePlayerColor(playerId: number, color: PlayerColor){
+  changePlayerColor(playerId: number, color: PlayerColor) {
     let p = this.players[playerId]
-    if(p &&  color in playerColors && !this.players.find(p => p.color == color)){
+    if (
+      p &&
+      color in playerColors &&
+      !this.players.find((p) => p.color == color)
+    ) {
       p.color = color
     }
   }
 
-  getCurrentCombatUnits(playerId?: number){
+  getCurrentCombatUnits(playerId?: number) {
     let players = this.getPlayers()
-    let relativePlayerId = (playerId, currentPlayerId) => (playerId - currentPlayerId + players.length) % players.length
+    let relativePlayerId = (playerId, currentPlayerId) =>
+      (playerId - currentPlayerId + players.length) % players.length
 
     let entry = this.getCurrentEntry()
 
     return Object.values(entry.state.units)
-      .filter(u => playerId === undefined ? u.playerId >= 0 : u.playerId == playerId)
-      .filter(u => !u.garrisonClassId && !['area_damage', 'area_heal', 'smoke_producer'].includes(u.unitClassId))
+      .filter((u) =>
+        playerId === undefined ? u.playerId >= 0 : u.playerId == playerId
+      )
+      .filter(
+        (u) =>
+          !u.garrisonClassId &&
+          !['area_damage', 'area_heal', 'smoke_producer'].includes(
+            u.unitClassId
+          )
+      )
       .sort((u1, u2) => {
+        let deltaPlayer =
+          relativePlayerId(u1.playerId, entry.state.playerId) -
+          relativePlayerId(u2.playerId, entry.state.playerId)
 
-        let deltaPlayer = relativePlayerId(u1.playerId, entry.state.playerId) - relativePlayerId(u2.playerId, entry.state.playerId)
-        
-        if(deltaPlayer != 0) return deltaPlayer
+        if (deltaPlayer != 0) return deltaPlayer
 
-        return Number(u2.unitClass.isCommander) - Number(u1.unitClass.isCommander)
+        return (
+          Number(u2.unitClass.isCommander) - Number(u1.unitClass.isCommander)
+        )
       })
   }
 
-  getCharts(): ChartConfiguration[] {
-    function getDataSet(datasets: ChartDataSets[], index: number, dataset: ChartDataSets = {}): ChartDataSets{
-      return datasets[index] = datasets[index] || Object.assign({ data: [] }, dataset)
+  getCharts(entryFilter: (entry: Entry) => boolean = () => true): ChartConfiguration[] {
+    function getDataSet(
+      datasets: ChartDataSets[],
+      index: number,
+      dataset: ChartDataSets = {}
+    ): ChartDataSets {
+      return (datasets[index] =
+        datasets[index] || Object.assign({ data: [] }, dataset))
     }
 
     let labels: string[] = []
@@ -278,84 +312,126 @@ export class Match {
 
     let pointBackgroundColor: string[] = []
 
+    for (let entry of this.entries) {
+      if(!entryFilter(entry)) continue
 
-    for(let entry of this.entries){
-      let { status, turn: { turnNumber, playerId, entries: tEntries } } = entry
-      labels.push(`T${turnNumber}-P${playerId+1}-M${tEntries.indexOf(entry) + 1}`)
+      let {
+        status,
+        turn: { turnNumber, playerId, entries: tEntries },
+      } = entry
+      labels.push(
+        `T${turnNumber}-P${playerId + 1}-M${tEntries.indexOf(entry) + 1}`
+      )
 
       let color = this.getPlayerColorHex(playerId)
       pointBackgroundColor.push(color)
 
-      Object.entries(status).forEach(([playerIdStr, { income, armyValue, unitCount, combatUnitCount }], i)=> {
-        let playerId = +playerIdStr
-        let color = this.getPlayerColorHex(playerId)
+      Object.entries(status).forEach(
+        (
+          [playerIdStr, { income, armyValue, unitCount, combatUnitCount }],
+          i
+        ) => {
+          let playerId = +playerIdStr
+          let color = this.getPlayerColorHex(playerId)
 
-        getDataSet(incomeDataSet, i, { label: `P${playerId + 1} Income`, borderColor: color, pointBackgroundColor }).data.push(income)
-        getDataSet(armyValueDataSet, i, { label: `P${playerId + 1} Army Value`, borderColor: color, pointBackgroundColor }).data.push(armyValue)
-        getDataSet(unitCountDataSet, i, { label: `P${playerId + 1} Unit Count`, borderColor: color, pointBackgroundColor }).data.push(unitCount)
-        getDataSet(combatUnitCountDataSet, i, { label: `P${playerId + 1} Combat Unit Count`, borderColor: color, pointBackgroundColor }).data.push(combatUnitCount)
-      })
+          getDataSet(incomeDataSet, i, {
+            label: `P${playerId + 1} Income`,
+            borderColor: color,
+            pointBackgroundColor,
+          }).data.push(income)
+          getDataSet(armyValueDataSet, i, {
+            label: `P${playerId + 1} Army Value`,
+            borderColor: color,
+            pointBackgroundColor,
+          }).data.push(armyValue)
+          getDataSet(unitCountDataSet, i, {
+            label: `P${playerId + 1} Unit Count`,
+            borderColor: color,
+            pointBackgroundColor,
+          }).data.push(unitCount)
+          getDataSet(combatUnitCountDataSet, i, {
+            label: `P${playerId + 1} Combat U.C.`,
+            borderColor: color,
+            pointBackgroundColor,
+          }).data.push(combatUnitCount)
+        }
+      )
     }
 
-    return [{
-      type: 'line',
-      options: {
-        scales: {
-          yAxes: [{
-            ticks: { stepSize: 100 }
-          }]
-        }
+    return [
+      {
+        type: 'line',
+        options: {
+          scales: {
+            yAxes: [
+              {
+                ticks: { stepSize: 100 },
+              },
+            ],
+          },
+        },
+        data: {
+          labels,
+          datasets: incomeDataSet,
+        },
       },
-      data: {
-        labels,
-        datasets: incomeDataSet
-      }
-    }, {
+      {
         type: 'line',
         data: {
           labels,
-          datasets: armyValueDataSet
-        }
-      }, {
+          datasets: armyValueDataSet,
+        },
+      },
+      {
         type: 'line',
         options: {
           scales: {
-            yAxes: [{
-              ticks: { stepSize: 1 }
-            }]
-          }
+            yAxes: [
+              {
+                ticks: { stepSize: 1 },
+              },
+            ],
+          },
         },
         data: {
           labels,
-          datasets: unitCountDataSet
-        }
-      }, {
+          datasets: unitCountDataSet,
+        },
+      },
+      {
         type: 'line',
         options: {
           scales: {
-            yAxes: [{
-              ticks: { stepSize: 1 }
-            }]
-          }
+            yAxes: [
+              {
+                ticks: { stepSize: 1 },
+              },
+            ],
+          },
         },
         data: {
           labels,
-          datasets: combatUnitCountDataSet
-        }
-      }]
+          datasets: combatUnitCountDataSet,
+        },
+      },
+    ]
+  }
+
+  getTurnEndCharts(){
+    return this.getCharts(entry => {
+      return entry.turn.entries.slice(-1)[0] == entry
+    })
   }
 }
 
-function generateStates({ state, deltas }: MatchData){
-  let states: State[] = [
-    diffpatcher.clone(state)
-  ]
+function generateStates({ state, deltas }: MatchData) {
+  let states: State[] = [diffpatcher.clone(state)]
 
-  for(let delta of Object.values(deltas).reverse()){
+  for (let delta of Object.values(deltas).reverse()) {
     let prev = diffpatcher.clone(states[0])
     try {
       states.unshift(diffpatcher.unpatch(prev, delta))
-    } catch(e){
+    } catch (e) {
       console.error(e)
       console.warn('Error while unpatching delta-state', delta, prev)
       break
@@ -363,8 +439,8 @@ function generateStates({ state, deltas }: MatchData){
   }
 
   states.forEach(({ units = {}, unitClasses = {} }) => {
-    Object.values(units).forEach(unit => {
-      if(!unit.unitClass){
+    Object.values(units).forEach((unit) => {
+      if (!unit.unitClass) {
         unit.unitClass = unitClasses[unit.unitClassId]
       }
     })
@@ -373,83 +449,98 @@ function generateStates({ state, deltas }: MatchData){
   return states
 }
 
-function generateStateStatus({ units, gold }: State, { players }: MatchData){
+function generateStateStatus({ units, gold }: State, { players }: MatchData) {
   let status: Status = {}
-  
+
   Object.values(players).forEach((_, playerId) => {
     status[playerId] = {
-      gold: gold['p_' + playerId] || gold[playerId],
+      gold: gold['p_' + playerId] ?? gold[playerId],
       income: 0,
       armyValue: 0,
       unitCount: 0,
-      combatUnitCount: 0
+      combatUnitCount: 0,
     }
   })
 
-  for(let i in units){
+  for (let i in units) {
     let unit = units[i]
-    if(!unit) continue
+    if (!unit) continue
 
-    let { playerId, health, unitClassId, unitClass: { cost } } = unit
-    if(playerId < 0) continue
+    let {
+      playerId,
+      health,
+      unitClassId,
+      unitClass: { cost },
+    } = unit
+    if (playerId < 0) continue
 
     let playerStatus = status[playerId]
-    
-    if (['city', 'hq'].includes(unitClassId)){
+
+    if (['city', 'hq'].includes(unitClassId)) {
       playerStatus.income += 100
     }
 
-    if(unitClassId != 'hq'){
+    if (unitClassId != 'hq') {
       playerStatus.unitCount++
     }
 
-    if (!['city', 'hq', 'barracks', 'port', 'tower', 'hideout'].includes(unitClassId)){
+    if (
+      !['city', 'hq', 'barracks', 'port', 'tower', 'hideout'].includes(
+        unitClassId
+      )
+    ) {
       playerStatus.combatUnitCount++
-      playerStatus.armyValue += Math.round(cost * health / 100)
+      playerStatus.armyValue += Math.round((cost * health) / 100)
     }
   }
 
   return status
 }
 
-function generatePlayers(entries: Entry[], { players }: MatchData){
-  let commanderUnits = Object.values(entries[0].state.units).filter(u => u.unitClass.isCommander)
+function generatePlayers(entries: Entry[], { players }: MatchData) {
+  let commanderUnits = Object.values(entries[0].state.units).filter(
+    (u) => u.unitClass.isCommander
+  )
 
-  let comm: Record<number,{ commander: string, faction: string, color: PlayerColor }> = {}
+  let comm: Record<
+    number,
+    { commander: string; faction: string; color: PlayerColor }
+  > = {}
 
-  let takenColors: Partial<Record<PlayerColor,boolean>> = {}
+  let takenColors: Partial<Record<PlayerColor, boolean>> = {}
 
-  for(let c of commanderUnits){
+  for (let c of commanderUnits) {
     let commander = c.unitClassId.replace(/commander_/, '')
     let { color, faction } = getCommanderMeta(commander)
-    
-    if(takenColors[color]){
-      color = (Object.keys(playerColors) as PlayerColor[]).find(c => !takenColors[c])
+
+    if (takenColors[color]) {
+      color = (Object.keys(playerColors) as PlayerColor[]).find(
+        (c) => !takenColors[c]
+      )
     }
     takenColors[color] = true
 
     comm[c.playerId] = {
       commander,
       color,
-      faction
+      faction,
     }
   }
-  
 
-  return Object.values(players).map(p => Object.assign({}, p, comm[p.id]))
+  return Object.values(players).map((p) => Object.assign({}, p, comm[p.id]))
 }
 
-function generatePlayerTurns(entries: Entry[], n: number){
+function generatePlayerTurns(entries: Entry[], n: number) {
   let turns: PlayerTurn[] = []
   let turnsById: Record<string, PlayerTurn> = {}
 
-  for(let entry of entries){
+  for (let entry of entries) {
     let { playerId, turnNumber } = entry.state
 
     let id = (turnNumber - 1) * n + playerId
     let turn = turnsById[id]
 
-    if(!turn){
+    if (!turn) {
       turn = { id, turnNumber, playerId, entries: [], mainEntry: entry }
       turnsById[id] = turn
       turns.push(turn)
@@ -463,34 +554,51 @@ function generatePlayerTurns(entries: Entry[], n: number){
   return turns
 }
 
-const terrainAbbrvs: Record<string, Terrain> = Object.entries(terrains)
-  .reduce((o, [key, val]) => (o[val] = key, o), {})
+const terrainAbbrvs: Record<string, Terrain> = Object.entries(terrains).reduce(
+  (o, [key, val]) => ((o[val] = key), o),
+  {}
+)
 
 function getTerrainFromAbbr(code: string): Terrain {
   return terrainAbbrvs[code] || 'plains'
 }
 
 function generateMap(matchData: MatchData): MatchMap {
-  let { size: { x, y }, tiles: tileString, biome } = matchData.map
+  let {
+    size: { x, y },
+    tiles: tileString,
+    biome,
+  } = matchData.map
   let linearData = tileString.split('')
 
-  let tiles = tilesFromLinear({ tiles: linearData.map(getTerrainFromAbbr), width: x })
+  let tiles = tilesFromLinear({
+    tiles: linearData.map(getTerrainFromAbbr),
+    width: x,
+  })
 
   return {
     w: x,
     h: y,
     tiles,
-    biome
+    biome,
   } as Match['map']
 }
 
-function generateMapInfo({ map: { size: { x }, tiles: tileString } }: MatchData, state: State): MapInfo {
+function generateMapInfo(
+  {
+    map: {
+      size: { x },
+      tiles: tileString,
+    },
+  }: MatchData,
+  state: State
+): MapInfo {
   const stateString = generateStateString(state)
   let info: MapInfo = {
     tileHash: `${x}_${crc32(tileString)}`,
     tileString,
     stateString,
-    stateHash: '' + crc32(stateString)
+    stateHash: '' + crc32(stateString),
   }
 
   let guess = mapFinder.guess(info)
@@ -501,19 +609,27 @@ function generateMapInfo({ map: { size: { x }, tiles: tileString } }: MatchData,
 }
 
 function generateStateString(state: State) {
-  let g = Object.entries(state.gold).sort(([a],[b]) => +a - +b).map(([i,g]) => `${i}-${g}g`).sort()
-  let u = Object.values(state.units).sort((u1, u2) => u1.id - u2.id).map(u => [
-    u.unitClassId.startsWith('commander_') ? 'commander' : u.unitClassId,
-    u.playerId,
-    u.pos.x,
-    u.pos.y,
-    u.health,
-    u.grooveCharge
-  ].join('.')).sort()
+  let g = Object.entries(state.gold)
+    .sort(([a], [b]) => +a - +b)
+    .map(([i, g]) => `${i}-${g}g`)
+    .sort()
+  let u = Object.values(state.units)
+    .sort((u1, u2) => u1.id - u2.id)
+    .map((u) =>
+      [
+        u.unitClassId.startsWith('commander_') ? 'commander' : u.unitClassId,
+        u.playerId,
+        u.pos.x,
+        u.pos.y,
+        u.health,
+        u.grooveCharge,
+      ].join('.')
+    )
+    .sort()
 
   return g.concat(u).join(',')
 }
 
-function analyzeDelta(delta: jsondiffpatch.Delta): string[]{
-  if(delta.playerId) return ["end_turn"]
+function analyzeDelta(delta: jsondiffpatch.Delta): string[] {
+  if (delta.playerId) return ['end_turn']
 }
