@@ -19,6 +19,9 @@ const config: Phaser.Types.Core.GameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
     zoom: Phaser.Scale.MAX_ZOOM,
   },
+  input :{
+		activePointers: 2,
+	},
   plugins: {
     global: [
       /*{
