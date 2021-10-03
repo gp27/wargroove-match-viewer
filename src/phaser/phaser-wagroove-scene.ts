@@ -88,8 +88,15 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     })
 
     const pinch = new Pinch(this, { enable: true })
+
     pinch.on('pinch', function({ scaleFactor }){
       this.camera.main.zoom *= scaleFactor
+    }, this)
+
+    pinch.on('drag1', function ({ drag1Vector: { x, y } }) {
+      let camera = this.cameras.main
+      camera.scrollX -= x / camera.zoom
+      camera.scrollY -= y / camera.zoom
     }, this)
   }
 
@@ -194,24 +201,7 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     }
   }
 
-  dragPosition: Phaser.Math.Vector2
-
   update() {
     this.reloadMatchEntry()
-    this.updateDrag()
-  }
-
-  updateDrag() {
-    if (this.game.input.activePointer.isDown) {
-      let camera = this.cameras.main
-      let { x, y } = this.game.input.activePointer
-      if (this.dragPosition) {
-        camera.scrollX -= (x - this.dragPosition.x) / camera.zoom
-        camera.scrollY -= (y - this.dragPosition.y) / camera.zoom
-      }
-      this.dragPosition = this.game.input.activePointer.position.clone()
-    } else {
-      this.dragPosition = null
-    }
   }
 }

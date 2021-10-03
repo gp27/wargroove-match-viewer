@@ -33,7 +33,7 @@ export default function MatchesRoute() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [showCards, setShowCards] = useLocalStorage('matches_showCards', false)
 
-  const [matches, setMatches] = React.useState<IMatch[]>([])
+  const [matches, setMatches] = React.useState<IMatch[]>(null)
 
   function loadMatches(){
     db.matches.toCollection().reverse().sortBy('updated_date').then(setMatches)
@@ -72,7 +72,7 @@ export default function MatchesRoute() {
     const searches = search.trim().toLowerCase().split(' ').filter(A => A)
 
     if (searches.length) {
-      return matches.filter(({ id, name, match: { mapInfo: { map: { name: mapName = '' } = {}, version: { v = '' } = {} } } }) => {
+      return matches?.filter(({ id, name, match: { mapInfo: { map: { name: mapName = '' } = {}, version: { v = '' } = {} } } }) => {
         const t = `${id} ${name} ${mapName} ${v}`.toLowerCase()
         return searches.some((s) => t.includes(s))
       })
@@ -81,7 +81,7 @@ export default function MatchesRoute() {
     return matches
   }
 
-  const filteredMatches = filterMatches()
+  const filteredMatches = filterMatches() || []
 
   return (
     <React.Fragment>
@@ -146,13 +146,13 @@ export default function MatchesRoute() {
           {filteredMatches.map((match, i) => (
             <MatchCard key={i} imatch={match} />
           ))}
-          {matches.length == 0 &&
+          {!matches &&
             Array(6)
               .fill(0)
               .map((_, i) => <MatchCardSkeleton key={i} />)}
         </Box>
       ) : (
-        <MatchTable matches={matches.length ? filteredMatches : null} />
+        <MatchTable matches={matches ? filteredMatches : null} />
       )}
     </React.Fragment>
   )
