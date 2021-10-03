@@ -293,7 +293,7 @@ export class Match {
       })
   }
 
-  getCharts(): ChartConfiguration[] {
+  getCharts(entryFilter: (entry: Entry) => boolean = () => true): ChartConfiguration[] {
     function getDataSet(
       datasets: ChartDataSets[],
       index: number,
@@ -313,6 +313,8 @@ export class Match {
     let pointBackgroundColor: string[] = []
 
     for (let entry of this.entries) {
+      if(!entryFilter(entry)) continue
+
       let {
         status,
         turn: { turnNumber, playerId, entries: tEntries },
@@ -348,7 +350,7 @@ export class Match {
             pointBackgroundColor,
           }).data.push(unitCount)
           getDataSet(combatUnitCountDataSet, i, {
-            label: `P${playerId + 1} Combat Unit Count`,
+            label: `P${playerId + 1} Combat U.C.`,
             borderColor: color,
             pointBackgroundColor,
           }).data.push(combatUnitCount)
@@ -413,6 +415,12 @@ export class Match {
         },
       },
     ]
+  }
+
+  getTurnEndCharts(){
+    return this.getCharts(entry => {
+      return entry.turn.entries.slice(-1)[0] == entry
+    })
   }
 }
 

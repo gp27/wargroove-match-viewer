@@ -25,8 +25,8 @@ import ModalProvider from 'mui-modal-provider'
 import { useLocation, Route, Switch, Redirect } from 'wouter'
 import { initialUrlParams } from '../utils'
 
-import Maps from './routes/Maps'
-import Matches from './routes/Matches'
+import Maps from './routes/MapsRoute'
+import MatchesRoute from './routes/MatchesRoute'
 import MatchRoute from './routes/MatchRoute'
 import OpeningsRoute from './routes/OpeningsRoute'
 
@@ -205,7 +205,7 @@ function AppContent() {
           }}
         >
           <Switch>
-            <Route path="/" component={Matches} />
+            <Route path="/" component={MatchesRoute} />
             <Route path="/maps" component={Maps} />
             <Route path="/match/:id" component={MatchRoute} />
             <Route path="/openings" component={OpeningsRoute} />

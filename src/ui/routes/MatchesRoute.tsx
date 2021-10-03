@@ -26,7 +26,7 @@ const matchLoggerInfo = (
   </React.Fragment>
 )
 
-export default function Matches() {
+export default function MatchesRoute() {
   const [infoOpen, setInfoOpen] = useLocalStorage('matches_infoOpen', true)
 
   const theme = useTheme()

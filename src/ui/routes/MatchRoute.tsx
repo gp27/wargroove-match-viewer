@@ -12,6 +12,8 @@ import { IMatch, db } from '../../db'
 import { Match, MatchData } from '../../wg/match'
 import { Line } from 'react-chartjs-2'
 import { PhaserWargrooveGame } from '../../phaser/phaser-wagroove-game'
+import { useLocalStorage } from '../../utils'
+import { FormControlLabel, Switch } from '@mui/material'
 
 
 function loadMatchData(id: string): Promise<MatchData|undefined> {
@@ -143,7 +145,7 @@ function MatchDashboard({ match }: { match: Match }){
           <PlayersUnitList match={match} game={game} />
         </Box>
 
-        <Box sx={{ overflow: 'auto', p: 1 }}>
+        <Box sx={{ p: 1 }}>
           <Charts match={match} />
         </Box>
       </Box>
@@ -156,12 +158,31 @@ function MatchSkeleton(){
 }
 
 function Charts({ match }: { match: Match }){
-  let charts = match.getCharts()
+  const [showTurnEndCharts, setsShowTurnEndCharts] = useLocalStorage(
+    'match_showTurnEndCharts',
+    false
+  )
+
+  let charts = showTurnEndCharts ? match.getTurnEndCharts() : match.getCharts()
 
   return (
     <React.Fragment>
+      <FormControlLabel
+        sx={{ ml: 2 }}
+        control={
+          <Switch
+            checked={showTurnEndCharts}
+            onChange={() => setsShowTurnEndCharts(!showTurnEndCharts)}
+          />
+        }
+        label="Show Turn End Charts"
+      />
+
       {charts.map((chart, index) => (
-        <Box key={index} sx={{ p: 1, maxHeight: 400, height: '50%' }}>
+        <Box
+          key={index}
+          sx={{ p: 1, maxHeight: 400, minHeight: 250, height: '50%' }}
+        >
           <Line
             data={chart.data}
             options={Object.assign(chart.options || {}, {

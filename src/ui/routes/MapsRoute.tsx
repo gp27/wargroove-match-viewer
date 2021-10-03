@@ -9,7 +9,7 @@ import SearchField from "../common/SearchField";
 import { mapFinder } from "../../wg/map-utils";
 import { useLocalStorage } from "../../utils";
 
-export default function Maps() {
+export default function MapsRoute() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const [showCards, setShowCards] = useLocalStorage('maps_showCards', false)
