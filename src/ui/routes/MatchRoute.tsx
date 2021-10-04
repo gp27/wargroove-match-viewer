@@ -5,7 +5,7 @@ import Skeleton from '@mui/material/Skeleton'
 import WargrooveGame from '../common/WargrooveGame'
 import PlayerStatusTable from '../common/PlayerStatusTable'
 import PlayersUnitList from '../common/UnitList'
-import {TurnMoveList, TurnMoveSwipable } from '../common/TurnMoveList'
+import { TurnMoveList, TurnMoveSwipable } from '../common/TurnMoveList'
 import { useTheme } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { IMatch, db } from '../../db'
@@ -15,32 +15,31 @@ import { PhaserWargrooveGame } from '../../phaser/phaser-wagroove-game'
 import { useLocalStorage } from '../../utils'
 import { FormControlLabel, Switch } from '@mui/material'
 
-
-function loadMatchData(id: string): Promise<MatchData|undefined> {
+function loadMatchData(id: string): Promise<MatchData | undefined> {
   let matchUrl = `https://firebasestorage.googleapis.com/v0/b/wargroove-match-storage.appspot.com/o/matches%2F${id}.json?alt=media`
 
-    return fetch(matchUrl).then((res) => {
-      return res
-        .json()
-        .then((data) => {
-          return Match.isValid(data) ? data : null
-        })
-        .catch((err) => undefined)
-    })
+  return fetch(matchUrl).then((res) => {
+    return res
+      .json()
+      .then((data) => {
+        return Match.isValid(data) ? data : null
+      })
+      .catch((err) => undefined)
+  })
 }
 
-function putIMatch(matchData: MatchData, imatch?: IMatch){
+function putIMatch(matchData: MatchData, imatch?: IMatch) {
   let { name, online = true } = imatch || {}
   return db.matches.put({
     id: matchData.match_id,
     name,
     updated_date: new Date(),
     online,
-    data: matchData
+    data: matchData,
   })
 }
 
-function loadMatch(matchId: string){
+function loadMatch(matchId: string) {
   return db.matches.get(matchId).then((imatch) => {
     if (!imatch || imatch.online) {
       return loadMatchData(matchId).then((matchData) => {
@@ -76,20 +75,22 @@ export default function MatchRoute() {
   const [match, setMatch] = useState<Match>()
 
   useEffect(() => {
-    loadMatch(matchId).then(match => {
+    loadMatch(matchId).then((match) => {
       if (match) setMatch(match)
       else setLocation('/')
     })
   }, [matchId])
 
-  return <React.Fragment>
-    {match ? <MatchDashboard match={match}/> : <MatchSkeleton />}
-  </React.Fragment>
+  return (
+    <React.Fragment>
+      {match ? <MatchDashboard match={match} /> : <MatchSkeleton />}
+    </React.Fragment>
+  )
 }
 
-function MatchDashboard({ match }: { match: Match }){
-   const theme = useTheme()
-   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
+function MatchDashboard({ match }: { match: Match }) {
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   const [isGameReady, setGameReady] = useState(false)
 
@@ -140,7 +141,15 @@ function MatchDashboard({ match }: { match: Match }){
           <TurnMoveList match={match} />
         )}
       </Box>
-      <Box sx={{ p: 1, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'auto' }}>
+      <Box
+        sx={{
+          p: 1,
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'auto',
+        }}
+      >
         <Box sx={{ flexGrow: 1 }}>
           <PlayerStatusTable match={match} />
           <PlayersUnitList match={match} game={game} />
@@ -154,11 +163,11 @@ function MatchDashboard({ match }: { match: Match }){
   )
 }
 
-function MatchSkeleton(){
+function MatchSkeleton() {
   return <div />
 }
 
-function Charts({ match }: { match: Match }){
+function Charts({ match }: { match: Match }) {
   const [showTurnEndCharts, setsShowTurnEndCharts] = useLocalStorage(
     'match_showTurnEndCharts',
     false

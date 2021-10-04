@@ -1,6 +1,6 @@
 import * as jsondiffpatch from 'jsondiffpatch'
 import 'chart.js'
-import { ChartConfiguration, ChartData, ChartDataSets } from 'chart.js'
+import { ChartConfiguration, ChartDataSets } from 'chart.js'
 import { getCommanderMeta, PlayerColor, playerColors } from './match-utils'
 import { MapInfo, mapFinder } from './map-utils'
 import {
@@ -293,7 +293,9 @@ export class Match {
       })
   }
 
-  getCharts(entryFilter: (entry: Entry) => boolean = () => true): ChartConfiguration[] {
+  getCharts(
+    entryFilter: (entry: Entry) => boolean = () => true
+  ): ChartConfiguration[] {
     function getDataSet(
       datasets: ChartDataSets[],
       index: number,
@@ -313,7 +315,7 @@ export class Match {
     let pointBackgroundColor: string[] = []
 
     for (let entry of this.entries) {
-      if(!entryFilter(entry)) continue
+      if (!entryFilter(entry)) continue
 
       let {
         status,
@@ -417,8 +419,8 @@ export class Match {
     ]
   }
 
-  getTurnEndCharts(){
-    return this.getCharts(entry => {
+  getTurnEndCharts() {
+    return this.getCharts((entry) => {
       return entry.turn.entries.slice(-1)[0] == entry
     })
   }

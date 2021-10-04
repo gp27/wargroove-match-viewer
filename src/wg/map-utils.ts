@@ -95,59 +95,61 @@ export class MapFinder {
     }
   }
 
-  guess(info: MapInfo) {
+  guess(info: Partial<MapIdentifiers>): MapGuess | undefined {
     return (
       this.find(info.tileHash, info.stateHash) ||
       this.findSimiliar(info.tileString)
     )
   }
 
-  find(tileHash: string, stateHash: string): MapGuess | undefined {
+  find(tileHash?: string, stateHash?: string): MapGuess | undefined {
     let [map, str, unseenVersions] = this.index[tileHash] || []
     let version = Object.values(map?.versions || {}).find(
       ({ stateHash: shash, tileHash: thash }) =>
         shash == stateHash && tileHash == thash
     )
     if (map) {
-      return { map, version, unseenVersions }
+      return { map, ...(version ? { version } : { unseenVersions }) }
     }
   }
 
-  findSimiliar(tileString: string): MapGuess | undefined {
+  findSimiliar(tileString?: string): MapGuess | undefined {
+    if (!tileString) return
+
     let minDist = Infinity
     let minMap: MapRecord
+    let minUnseen: MapVersion[]
 
-    Object.values(this.index).forEach(([map, str]) => {
+    Object.values(this.index).forEach(([map, str, unseenVersions]) => {
       if (!str) return
       const dist = this.getTileStrDistance(tileString, str)
       if (dist < minDist) {
         minDist = dist
         minMap = map
+        minUnseen = unseenVersions
       }
     })
 
     if (minDist < tileString?.length * 0.1) {
-      return { map: minMap }
+      return { map: minMap, unseenVersions: minUnseen }
     }
   }
 
-  searchName(search: string) {
+  searchByName(search: string) {
+    return this.searchListByName(search)[0]
+  }
+
+  searchListByName(search: string) {
     search = this.normalizeName(search)
 
-    let minDist = Infinity
-    let minName: string
-
-    Object.keys(this.unseen).forEach((name) => {
-      const dist = levenshtein(search, name)
-      if (dist < minDist) {
-        minDist = dist
-        minName = name
-      }
-    })
-
-    if (minDist < 3) {
-      return this.unseen[minName]
-    }
+    return Object.keys(this.unseen)
+      .map((name) => {
+        const dist = levenshtein(search, name)
+        return [name, dist] as [string, number]
+      })
+      .filter(([name, dist]) => dist < 5)
+      .sort(([n1, d1], [n2, d2]) => d1 - d2)
+      .map(([name]) => this.unseen[name])
   }
 
   private makeMapFromEntry({
@@ -200,15 +202,17 @@ export class MapFinder {
 
   mergeFromEntries(entries: MapEntry[]) {
     for (let entry of entries) {
-      let [map, version] = this.byCode[entry.code] || []
       let [eMap, eVersion] = this.makeMapFromEntry(entry)
+
+      //let { map, version } = this.guess(entry)
+      let [map, version] = this.byCode[entry.code] || []
 
       if (version) {
         Object.assign(version, eVersion)
       }
 
       if (!map) {
-        map = this.searchName(eMap.name)
+        map = this.searchByName(eMap.name)
       }
 
       if (map) {

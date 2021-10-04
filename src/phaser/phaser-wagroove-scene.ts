@@ -61,30 +61,12 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     })
 
     this.input.on('wheel', (pointer, objs, dX, dY, dZ) => {
-      let camera = this.cameras.main
-
-      let { centerX, centerY, zoom } = camera
-
       if (dY > 0) {
-        camera.zoom /= 1.1
-        if (camera.zoom < 0.2) {
-          camera.zoom = 0.2
-        }
+        this.zoom(1 / 1.1)
       }
-
       if (dY < 0) {
-        camera.zoom *= 1.1
-        if (camera.zoom > 2) {
-          camera.zoom = 2
-        }
+        this.zoom(1.1)
       }
-
-      //let newZoom = camera.zoom / zoom
-
-      /*let dx = (pointer.worldX - centerX) / newZoom
-      let dy = (pointer.worldY - centerY) / newZoom
-      camera.x += dx
-      camera.y += dy*/
     })
 
     const pinch = new Pinch(this, { enable: true })
@@ -92,8 +74,7 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     pinch.on(
       'pinch',
       function ({ scaleFactor }) {
-        console.log(arguments[0])
-        this.cameras.main.zoom *= scaleFactor
+        this.zoom(scaleFactor)
       },
       this
     )
@@ -101,13 +82,25 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     pinch.on(
       'drag1',
       function ({ drag1Vector: { x, y } }) {
-        console.log(arguments[0])
         let camera = this.cameras.main
         camera.scrollX -= x / camera.zoom
         camera.scrollY -= y / camera.zoom
       },
       this
     )
+  }
+
+  zoom(scale: number) {
+    const camera = this.cameras.main
+
+    camera.zoom *= scale
+
+    if (camera.zoom < 0.2) {
+      camera.zoom = 0.2
+    }
+    if (camera.zoom > 2) {
+      camera.zoom = 2
+    }
   }
 
   makeAtlas(colorName: string) {
