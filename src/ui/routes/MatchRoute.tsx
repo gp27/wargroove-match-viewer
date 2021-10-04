@@ -29,13 +29,13 @@ function loadMatchData(id: string): Promise<MatchData|undefined> {
     })
 }
 
-function updateIMatch(imatch: IMatch, matchData: MatchData, isOnline?: boolean){
-  let { name, online } = imatch
+function putIMatch(matchData: MatchData, imatch?: IMatch){
+  let { name, online = true } = imatch || {}
   return db.matches.put({
     id: matchData.match_id,
     name,
     updated_date: new Date(),
-    online: isOnline ?? online,
+    online,
     data: matchData
   })
 }
@@ -51,8 +51,9 @@ function loadMatch(matchId: string){
           if (imatch) {
             imatch.data = matchData
             imatch.match = match
-            updateIMatch(imatch, matchData)
           }
+
+          putIMatch(matchData, imatch)
         }
 
         if (imatch && !match) {

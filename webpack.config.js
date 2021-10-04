@@ -28,7 +28,7 @@ module.exports = {
     new CopyWebpackPlugin({ patterns: [{ from: 'assets', to: 'assets' }] }),
   ],
   output: {
-    filename: 'app.js',
+    filename: argv.mode === 'production' ? 'app.[contenthash].js' : 'app.js',
     path: path.resolve(__dirname, 'dist'),
     publicPath: '/'
   },

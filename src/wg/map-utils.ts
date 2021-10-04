@@ -105,7 +105,8 @@ export class MapFinder {
   find(tileHash: string, stateHash: string): MapGuess | undefined {
     let [map, str, unseenVersions] = this.index[tileHash] || []
     let version = Object.values(map?.versions || {}).find(
-      ({ stateHash: shash, tileHash: thash }) => shash == stateHash && tileHash == thash
+      ({ stateHash: shash, tileHash: thash }) =>
+        shash == stateHash && tileHash == thash
     )
     if (map) {
       return { map, version, unseenVersions }

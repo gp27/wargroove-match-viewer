@@ -89,15 +89,25 @@ export class PhaserWargrooveScene extends Phaser.Scene {
 
     const pinch = new Pinch(this, { enable: true })
 
-    pinch.on('pinch', function({ scaleFactor }){
-      this.camera.main.zoom *= scaleFactor
-    }, this)
+    pinch.on(
+      'pinch',
+      function ({ scaleFactor }) {
+        console.log(arguments[0])
+        this.cameras.main.zoom *= scaleFactor
+      },
+      this
+    )
 
-    pinch.on('drag1', function ({ drag1Vector: { x, y } }) {
-      let camera = this.cameras.main
-      camera.scrollX -= x / camera.zoom
-      camera.scrollY -= y / camera.zoom
-    }, this)
+    pinch.on(
+      'drag1',
+      function ({ drag1Vector: { x, y } }) {
+        console.log(arguments[0])
+        let camera = this.cameras.main
+        camera.scrollX -= x / camera.zoom
+        camera.scrollY -= y / camera.zoom
+      },
+      this
+    )
   }
 
   makeAtlas(colorName: string) {
@@ -172,7 +182,7 @@ export class PhaserWargrooveScene extends Phaser.Scene {
   }
 
   loadMatch(match: Match) {
-    if(this.match == match) return
+    if (this.match == match) return
     this.match = match
 
     let cb = () => {
@@ -181,7 +191,7 @@ export class PhaserWargrooveScene extends Phaser.Scene {
       this.reloadMatchEntry()
     }
 
-    if(this.loaded) cb()
+    if (this.loaded) cb()
     else this.events.once('create', cb)
   }
 
