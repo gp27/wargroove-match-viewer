@@ -1,9 +1,9 @@
 const path = require('path')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
-const { argv } = require('process')
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 
-module.exports = {
+module.exports = (env, argv) => ({
   entry: './src/index.tsx',
   module: {
     rules: [
@@ -18,6 +18,7 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js'],
   },
   plugins: [
+    new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       title: 'Wargroove Match Viewer',
       template: 'index.html',
@@ -34,3 +35,4 @@ module.exports = {
   },
   mode: argv.mode === 'production' ? 'production' : 'development',
 }
+)

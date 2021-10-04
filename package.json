@@ -15,6 +15,7 @@
     "@types/js-levenshtein": "^1.1.0",
     "@types/react": "^17.0.2",
     "@types/react-dom": "^17.0.1",
+    "clean-webpack-plugin": "^4.0.0",
     "copy-webpack-plugin": "^8.0.0",
     "html-webpack-plugin": "^5.2.0",
     "live-server": "^1.2.1",
