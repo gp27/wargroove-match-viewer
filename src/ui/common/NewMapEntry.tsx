@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from 'react'
-import { MapInfo, mapFinder, MapEntry } from '../../wg/map-utils'
+import { MapInfo, mapFinder, MapEntry, MapRecord } from '../../wg/map-utils'
 import TextField from '@mui/material/TextField'
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete'
-
-function makeGetOptionLabel<T>(prop: keyof T) {
-  return (opt: string | T) => {
-    if (typeof opt == 'string') return opt
-    return opt[prop]
-  }
-}
 
 function makeDefaultEntry({
   tileHash,
@@ -31,7 +24,12 @@ function makeDefaultEntry({
 export function NewMapEntry({ mapInfo }: { mapInfo: MapInfo }) {
   const { map, version, unseenVersions } = mapInfo
 
-  const [entry, setEntry] = useState<MapEntry>(makeDefaultEntry(mapInfo))
+  const isLocal = version.isLocal
 
-  return <>{/*<Autocomplete selectOnFocus clearOnBlur handleHomeEndKeys />*/}</>
+  const [entry, setEntry] = useState<MapEntry>(makeDefaultEntry(mapInfo))
+  const maps = []
+
+  return <>
+   
+   </>
 }

@@ -37,7 +37,7 @@ export type MapInfo = MapIdentifiers & Partial<MapGuess>
 export type MapEntry = Omit<MapRecord, 'versions'> & MapVersion
 
 export class MapFinder {
-  index: {
+  byTileHash: {
     [tileHash: string]: [
       map: MapRecord,
       tileString: string,
@@ -68,7 +68,7 @@ export class MapFinder {
   }
 
   private makeIndexes() {
-    this.index = {}
+    this.byTileHash = {}
     this.unseen = {}
     this.byCode = {}
 
@@ -83,7 +83,7 @@ export class MapFinder {
         }
 
         if (tileHash) {
-          this.index[tileHash] = [map, tileString, unseenVersions]
+          this.byTileHash[tileHash] = [map, tileString, unseenVersions]
         }
       })
 
@@ -95,15 +95,16 @@ export class MapFinder {
     }
   }
 
-  guess(info: Partial<MapIdentifiers>): MapGuess | undefined {
+  guess({ tileHash, stateHash, tileString, code }: Partial<MapIdentifiers> & { code?: string }): MapGuess | undefined {
     return (
-      this.find(info.tileHash, info.stateHash) ||
-      this.findSimiliar(info.tileString)
+      this.find(tileHash, stateHash) ||
+      this.findSimiliar(tileString) ||
+      this.findByCode(code)
     )
   }
 
   find(tileHash?: string, stateHash?: string): MapGuess | undefined {
-    let [map, str, unseenVersions] = this.index[tileHash] || []
+    let [map, str, unseenVersions] = this.byTileHash[tileHash] || []
     let version = Object.values(map?.versions || {}).find(
       ({ stateHash: shash, tileHash: thash }) =>
         shash == stateHash && tileHash == thash
@@ -120,7 +121,7 @@ export class MapFinder {
     let minMap: MapRecord
     let minUnseen: MapVersion[]
 
-    Object.values(this.index).forEach(([map, str, unseenVersions]) => {
+    Object.values(this.byTileHash).forEach(([map, str, unseenVersions]) => {
       if (!str) return
       const dist = this.getTileStrDistance(tileString, str)
       if (dist < minDist) {
@@ -132,6 +133,14 @@ export class MapFinder {
 
     if (minDist < tileString?.length * 0.1) {
       return { map: minMap, unseenVersions: minUnseen }
+    }
+  }
+
+  findByCode(code?: string): MapGuess | undefined {
+    const [map, version] = this.byCode[code] || []
+    if(map) return {
+      map,
+      version,
     }
   }
 
@@ -203,9 +212,7 @@ export class MapFinder {
   mergeFromEntries(entries: MapEntry[]) {
     for (let entry of entries) {
       let [eMap, eVersion] = this.makeMapFromEntry(entry)
-
-      //let { map, version } = this.guess(entry)
-      let [map, version] = this.byCode[entry.code] || []
+      let { map, version } = this.guess(entry)
 
       if (version) {
         Object.assign(version, eVersion)
