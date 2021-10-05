@@ -1,34 +1,38 @@
-import * as React from "react";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import { Box, Switch, Stack } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import MapTable from "../MapTable";
-import { MapCard } from "../common/MapCard";
-import SearchField from "../common/SearchField";
-import { mapFinder } from "../../wg/map-utils";
-import { useLocalStorage } from "../../utils";
+import * as React from 'react'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import { Box, Switch, Stack } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import MapTable from '../common/map/MapTable'
+import { MapCard } from '../common/map/MapCard'
+import SearchField from '../common/generic/SearchField'
+import { mapFinder } from '../../wg/map-utils'
+import { useLocalStorage } from '../../utils'
 
 export default function MapsRoute() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [showCards, setShowCards] = useLocalStorage('maps_showCards', false)
 
   const allMaps = mapFinder.getMaps()
 
   let [maps, setMaps] = React.useState(allMaps)
 
-  function filterMaps(search: string){
-    const searches = search.toLowerCase().split(' ').filter(A => A)
+  function filterMaps(search: string) {
+    const searches = search
+      .toLowerCase()
+      .split(' ')
+      .filter((A) => A)
 
-    if(searches.length){
+    if (searches.length) {
       maps = allMaps.filter(({ name, author, versions }) => {
-        const vs = Object.values(versions).map(v => v.v).join(' ')
+        const vs = Object.values(versions)
+          .map((v) => v.v)
+          .join(' ')
         const t = `${name} ${author} ${vs}`.toLowerCase()
-        return searches.some(s => t.includes(s))
+        return searches.some((s) => t.includes(s))
       })
-    }
-    else{
+    } else {
       maps = allMaps
     }
 

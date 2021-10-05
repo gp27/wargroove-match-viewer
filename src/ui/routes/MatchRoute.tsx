@@ -14,6 +14,8 @@ import { Line } from 'react-chartjs-2'
 import { PhaserWargrooveGame } from '../../phaser/phaser-wagroove-game'
 import { useLocalStorage } from '../../utils'
 import { FormControlLabel, Switch } from '@mui/material'
+import { useModal } from 'mui-modal-provider'
+import { MapEntryEditorModal } from '../common/map/MapEntryEditor'
 
 function loadMatchData(id: string): Promise<MatchData | undefined> {
   let matchUrl = `https://firebasestorage.googleapis.com/v0/b/wargroove-match-storage.appspot.com/o/matches%2F${id}.json?alt=media`
@@ -89,6 +91,8 @@ export default function MatchRoute() {
 }
 
 function MatchDashboard({ match }: { match: Match }) {
+  const { showModal } = useModal()
+
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
@@ -100,6 +104,10 @@ function MatchDashboard({ match }: { match: Match }) {
   }
 
   const [game, setGame] = useState<PhaserWargrooveGame>()
+
+  useEffect(() => {
+    showModal(MapEntryEditorModal, { mapInfo: match.mapInfo })
+  }, [])
 
   return (
     <Box

@@ -8,26 +8,23 @@ import { useTheme } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import IconButton from '@mui/material/IconButton'
 import { Add, Info } from '@mui/icons-material'
-import SearchField from '../common/SearchField'
+import SearchField from '../common/generic/SearchField'
 import { db, IMatch } from '../../db'
-import MatchCard, { MatchCardSkeleton } from '../common/MatchCard'
-import FileInputWrapper from '../common/FileInputWrapper'
-import MatchTable from '../MatchTable'
+import MatchCard, { MatchCardSkeleton } from '../common/match/MatchCard'
+import FileInputWrapper from '../common/generic/FileInputWrapper'
+import MatchTable from '../common/match/MatchTable'
 import { Match, MatchData } from '../../wg/match'
 
 export default function OpeningsRoute() {
   const [matches, setMatches] = React.useState<IMatch[]>([])
 
   function loadMatches() {
-    
-
     /*db.matches.toCollection().toArray().then(matches => {
       matches.sort(({ match: { mapInfo } }, { match: { mapInfo } }) => {
         return 0
       })
     })*/
   }
-
 
   return <></>
 }

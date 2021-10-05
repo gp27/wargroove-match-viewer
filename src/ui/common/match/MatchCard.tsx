@@ -10,10 +10,10 @@ import Skeleton from '@mui/material/Skeleton'
 
 import Typography from '@mui/material/Typography'
 
-import { IMatch, db } from '../../db'
-import PlayerChips from './PlayerChips'
+import { IMatch, db } from '../../../db'
+import PlayerChips from '../PlayerChips'
 import MatchActions from './MatchActions'
-import { MapCardDialog } from './MapCard'
+import { MapCardDialog } from '../map/MapCard'
 import { useModal } from 'mui-modal-provider'
 
 export default function MatchCard({ imatch }: { imatch: IMatch }) {
@@ -30,7 +30,7 @@ export default function MatchCard({ imatch }: { imatch: IMatch }) {
   }
 
   const { showModal } = useModal()
-  
+
   function openMapDialog() {
     const { map, version } = match.mapInfo
     if (map) {

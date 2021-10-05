@@ -1,4 +1,5 @@
 import levenshtein from 'js-levenshtein'
+import { crc32 } from '../crc32'
 import { mapRecords, sheetMapEntries } from './map-registry'
 
 export interface MapIdentifiers {
@@ -44,7 +45,7 @@ export class MapFinder {
       unseenVersions: MapVersion[]
     ]
   }
-  unseen: { [name: string]: MapRecord }
+  unseenMaps: { [name: string]: MapRecord }
   byCode: { [code: string]: [MapRecord, MapVersion] }
 
   constructor(private maps: MapRecord[]) {
@@ -69,7 +70,7 @@ export class MapFinder {
 
   private makeIndexes() {
     this.byTileHash = {}
-    this.unseen = {}
+    this.unseenMaps = {}
     this.byCode = {}
 
     for (let map of this.maps) {
@@ -89,13 +90,18 @@ export class MapFinder {
 
       if (unseenVersions.length === allVersions.length) {
         const name = this.normalizeName(map.name)
-        this.unseen[name] = map
+        this.unseenMaps[name] = map
         continue
       }
     }
   }
 
-  guess({ tileHash, stateHash, tileString, code }: Partial<MapIdentifiers> & { code?: string }): MapGuess | undefined {
+  guess({
+    tileHash,
+    stateHash,
+    tileString,
+    code,
+  }: Partial<MapIdentifiers> & { code?: string }): MapGuess | undefined {
     return (
       this.find(tileHash, stateHash) ||
       this.findSimiliar(tileString) ||
@@ -103,7 +109,7 @@ export class MapFinder {
     )
   }
 
-  find(tileHash?: string, stateHash?: string): MapGuess | undefined {
+  private find(tileHash?: string, stateHash?: string): MapGuess | undefined {
     let [map, str, unseenVersions] = this.byTileHash[tileHash] || []
     let version = Object.values(map?.versions || {}).find(
       ({ stateHash: shash, tileHash: thash }) =>
@@ -114,7 +120,7 @@ export class MapFinder {
     }
   }
 
-  findSimiliar(tileString?: string): MapGuess | undefined {
+  private findSimiliar(tileString?: string): MapGuess | undefined {
     if (!tileString) return
 
     let minDist = Infinity
@@ -136,12 +142,13 @@ export class MapFinder {
     }
   }
 
-  findByCode(code?: string): MapGuess | undefined {
+  private findByCode(code?: string): MapGuess | undefined {
     const [map, version] = this.byCode[code] || []
-    if(map) return {
-      map,
-      version,
-    }
+    if (map)
+      return {
+        map,
+        version,
+      }
   }
 
   searchByName(search: string) {
@@ -151,14 +158,14 @@ export class MapFinder {
   searchListByName(search: string) {
     search = this.normalizeName(search)
 
-    return Object.keys(this.unseen)
+    return Object.keys(this.unseenMaps)
       .map((name) => {
         const dist = levenshtein(search, name)
         return [name, dist] as [string, number]
       })
       .filter(([name, dist]) => dist < 5)
       .sort(([n1, d1], [n2, d2]) => d1 - d2)
-      .map(([name]) => this.unseen[name])
+      .map(([name]) => this.unseenMaps[name])
   }
 
   private makeMapFromEntry({
@@ -235,6 +242,23 @@ export class MapFinder {
 
   getMaps() {
     return Array.from(this.maps)
+  }
+
+  getUnseenMaps() {
+    return Object.values(this.unseenMaps)
+  }
+
+  getMapInfo(width: number, tileString: string, stateString: string) {
+    let info: MapInfo = {
+      tileHash: `${width}_${crc32(tileString)}`,
+      tileString,
+      stateString,
+      stateHash: '' + crc32(stateString),
+    }
+
+    Object.assign(info, this.guess(info))
+
+    return info
   }
 }
 

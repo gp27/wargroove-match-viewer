@@ -9,7 +9,6 @@ import {
   terrains,
   tilesFromLinear,
 } from '../phaser/phaser-wargroove-map'
-import { crc32 } from '../crc32'
 
 const diffpatcher = jsondiffpatch.create()
 
@@ -149,8 +148,6 @@ export interface MatchMap {
 }
 
 export class Match {
-  readonly tags: string[]
-
   private entries: Entry[]
   private turns: PlayerTurn[]
   private players: Player[]
@@ -185,20 +182,11 @@ export class Match {
     this.turns = generatePlayerTurns(this.entries, this.getPlayers().length)
     this.map = generateMap(matchData)
     this.mapInfo = generateMapInfo(matchData, states[0])
-    this.tags = this.makeTags()
     this.isFog = Boolean(matchData.fog_blocks?.length || matchData.is_fog)
 
     this.selectEntry(this.getWinners().length ? 0 : this.entries.length - 1)
 
     //console.log(this)
-  }
-
-  makeTags() {
-    let tags = [
-      `map:${this.mapInfo.tileHash}`,
-      ...this.players.map(({ commander }) => `commander:${commander}`),
-    ]
-    return tags
   }
 
   selectEntry(entryId: number) {
@@ -596,18 +584,7 @@ function generateMapInfo(
   state: State
 ): MapInfo {
   const stateString = generateStateString(state)
-  let info: MapInfo = {
-    tileHash: `${x}_${crc32(tileString)}`,
-    tileString,
-    stateString,
-    stateHash: '' + crc32(stateString),
-  }
-
-  let guess = mapFinder.guess(info)
-
-  Object.assign(info, guess)
-
-  return info
+  return mapFinder.getMapInfo(x, tileString, stateString)
 }
 
 function generateStateString(state: State) {
