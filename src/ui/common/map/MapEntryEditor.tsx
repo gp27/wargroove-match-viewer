@@ -35,57 +35,58 @@ type EntryState = { entry: MapEntry; map?: MapRecord; version?: MapVersion }
 export function MapEntryEditor({ mapInfo }: { mapInfo: MapInfo }) {
   const { map, version, unseenVersions } = mapInfo
 
-  const [entryState, setEntryState] = useState<EntryState>({
+  const [state, setState] = useState<EntryState>({
     entry: makeDefaultEntry(mapInfo),
     map,
     version,
   })
 
   function setMapName(name: string, map?: MapRecord) {
-    entryState.entry.name = name
-    if (map != entryState.map) {
-      delete entryState.version
-      entryState.entry.v = ''
-      entryState.entry.code = ''
+    state.entry.name = map?.name || name
+    if (map != state.map) {
+      delete state.version
+      state.entry.v = ''
+      state.entry.code = ''
     }
-    entryState.map = map
-    setEntryState({ ...entryState })
+    state.map = map
+    setState({ ...state })
   }
 
   function setMapVersion(v: string, version?: MapVersion) {
-    entryState.entry.v = v
-    entryState.version = version
-    setEntryState({ ...entryState })
+    state.entry.v = version?.v || v
+    if (version != state.version) {
+      state.entry.code = ''
+    }
+    state.version = version
+    setState({ ...state })
   }
 
   function setMapCode(code: string) {
-    entryState.entry.code = code
-    setEntryState({ ...entryState })
+    state.entry.code = code
+    setState({ ...state })
   }
 
-  console.log(entryState)
+  console.log(state)
 
   const isLocal = version?.isLocal
   const canEditMap = isLocal || !map
   const canEditVersion = isLocal || !version
-  const canEditCode = isLocal || (!version?.code && !entryState.version?.code)
+  const canEditCode = isLocal || (!version?.code && !state.version?.code)
 
   const maps = canEditMap ? mapFinder.getUnseenMaps() : [map]
   const versions =
-    map && !version
-      ? unseenVersions
-      : Object.values(entryState.map?.versions || {})
+    map && !version ? unseenVersions : Object.values(state.map?.versions || {})
 
   const codeVersions = version
     ? [version]
-    : entryState.version
-    ? [entryState.version]
+    : state.version
+    ? [state.version]
     : [{ code: '[In game]' }, { code: '[Unknown]' }]
 
   return (
     <Box sx={{ p: 2 }}>
       <ObjectCreateAutocomplete
-        value={entryState.map || entryState.entry.name}
+        value={state.map || state.entry.name}
         keyName="name"
         options={maps}
         inputLabel="Map Name"
@@ -94,7 +95,7 @@ export function MapEntryEditor({ mapInfo }: { mapInfo: MapInfo }) {
       />
 
       <ObjectCreateAutocomplete
-        value={entryState.version || entryState.entry.v}
+        value={state.version || state.entry.v}
         keyName="v"
         options={versions}
         inputLabel="Map Version"
@@ -104,7 +105,7 @@ export function MapEntryEditor({ mapInfo }: { mapInfo: MapInfo }) {
       />
 
       <ObjectCreateAutocomplete
-        value={entryState.version || entryState.entry.code}
+        value={state.version || state.entry.code}
         keyName="code"
         options={codeVersions}
         inputLabel="Map Code"
