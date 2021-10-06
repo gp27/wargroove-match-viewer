@@ -1,4 +1,5 @@
 import { Dexie } from 'dexie'
+import { MapEntry } from './wg/map-utils'
 import { Match, MatchData } from './wg/match'
 
 export interface IMatch {
@@ -10,19 +11,21 @@ export interface IMatch {
   match?: Match
 }
 
-/*export interface IMapEntry {
-    id?: number
-
-}*/
+export interface IMapEntry {
+  id?: string
+  entry: MapEntry
+}
 
 class MatchViewerDatabase extends Dexie {
   matches: Dexie.Table<IMatch, string>
+  mapEntries: Dexie.Table<IMapEntry, number>
 
   constructor() {
     super('MatchViewerDatabase')
 
     this.version(1).stores({
       matches: 'id, name, online, updated_date, data',
+      mapEntries: 'id, entry',
     })
 
     /*this.version(2).stores({
@@ -31,6 +34,7 @@ class MatchViewerDatabase extends Dexie {
         })*/
 
     this.matches = this.table('matches')
+    this.mapEntries = this.table('mapEntries')
   }
 }
 

@@ -1,5 +1,7 @@
 import levenshtein from 'js-levenshtein'
+import { createContext, useContext } from 'react'
 import { crc32 } from '../crc32'
+import { db } from '../db'
 import { mapRecords, sheetMapEntries } from './map-registry'
 
 export interface MapIdentifiers {
@@ -30,7 +32,6 @@ export type MapVersion = {
 export type MapGuess = {
   map: MapRecord
   version?: MapVersion
-  unseenVersions?: MapVersion[]
 }
 
 export type MapInfo = MapIdentifiers & Partial<MapGuess>
@@ -38,17 +39,37 @@ export type MapInfo = MapIdentifiers & Partial<MapGuess>
 export type MapEntry = Omit<MapRecord, 'versions'> & MapVersion
 
 export class MapFinder {
+  static SPECIAL_CODES = {
+    '[In Game]': /included/i,
+    '[Unknown]': /unknown/i,
+  }
+
+  static INITIAL_VERSION = '[Initial version]'
+
+  private static init(){
+    return db.mapEntries.toCollection().toArray().then(ientries => {
+      const mapFinder = new MapFinder(mapRecords, ientries.map(i => i.entry))
+      console.log(mapFinder)
+      return mapFinder
+    })
+  }
+
+  private static INSTANCE: Promise<MapFinder>
+
+  static getInstance(){
+    return MapFinder.INSTANCE = MapFinder.INSTANCE || MapFinder.init()
+  }
+
+  maps: MapRecord[]
   byTileHash: {
-    [tileHash: string]: [
-      map: MapRecord,
-      tileString: string,
-      unseenVersions: MapVersion[]
-    ]
+    [tileHash: string]: [map: MapRecord, tileString: string]
   }
   unseenMaps: { [name: string]: MapRecord }
   byCode: { [code: string]: [MapRecord, MapVersion] }
 
-  constructor(private maps: MapRecord[]) {
+  constructor(maps: MapRecord[], entries: MapEntry[] = []) {
+    this.maps = JSON.parse(JSON.stringify(maps))
+    this.mergeEntries(entries)
     this.makeIndexes()
   }
 
@@ -68,31 +89,34 @@ export class MapFinder {
     return d
   }
 
+  private updateIndex(map: MapRecord) {
+    const allVersions = Object.values(map.versions)
+    const unseenVersions = allVersions.filter((v) => !v.tileHash)
+
+    allVersions.forEach((version) => {
+      let { tileHash, tileString, code } = version
+      if (!code.startsWith('[')) {
+        this.byCode[code] = [map, version]
+      }
+
+      if (tileHash) {
+        this.byTileHash[tileHash] = [map, tileString]
+      }
+    })
+
+    if (unseenVersions.length === allVersions.length) {
+      const name = this.normalizeName(map.name)
+      this.unseenMaps[name] = map
+    }
+  }
+
   private makeIndexes() {
     this.byTileHash = {}
     this.unseenMaps = {}
     this.byCode = {}
 
     for (let map of this.maps) {
-      const allVersions = Object.values(map.versions)
-      const unseenVersions = allVersions.filter((v) => !v.tileHash)
-
-      allVersions.forEach((version) => {
-        let { tileHash, tileString, code } = version
-        if (!code.startsWith('[')) {
-          this.byCode[code] = [map, version]
-        }
-
-        if (tileHash) {
-          this.byTileHash[tileHash] = [map, tileString, unseenVersions]
-        }
-      })
-
-      if (unseenVersions.length === allVersions.length) {
-        const name = this.normalizeName(map.name)
-        this.unseenMaps[name] = map
-        continue
-      }
+      this.updateIndex(map)
     }
   }
 
@@ -110,13 +134,13 @@ export class MapFinder {
   }
 
   private find(tileHash?: string, stateHash?: string): MapGuess | undefined {
-    let [map, str, unseenVersions] = this.byTileHash[tileHash] || []
+    let [map, str] = this.byTileHash[tileHash] || []
     let version = Object.values(map?.versions || {}).find(
       ({ stateHash: shash, tileHash: thash }) =>
         shash == stateHash && tileHash == thash
     )
     if (map) {
-      return { map, ...(version ? { version } : { unseenVersions }) }
+      return { map, version }
     }
   }
 
@@ -127,18 +151,17 @@ export class MapFinder {
     let minMap: MapRecord
     let minUnseen: MapVersion[]
 
-    Object.values(this.byTileHash).forEach(([map, str, unseenVersions]) => {
+    Object.values(this.byTileHash).forEach(([map, str]) => {
       if (!str) return
       const dist = this.getTileStrDistance(tileString, str)
       if (dist < minDist) {
         minDist = dist
         minMap = map
-        minUnseen = unseenVersions
       }
     })
 
     if (minDist < tileString?.length * 0.1) {
-      return { map: minMap, unseenVersions: minUnseen }
+      return { map: minMap }
     }
   }
 
@@ -152,7 +175,8 @@ export class MapFinder {
   }
 
   searchByName(search: string) {
-    return this.searchListByName(search)[0]
+    const [map, dist] = this.searchListByName(search)[0]
+    if(dist < 2) return map
   }
 
   searchListByName(search: string) {
@@ -165,7 +189,7 @@ export class MapFinder {
       })
       .filter(([name, dist]) => dist < 5)
       .sort(([n1, d1], [n2, d2]) => d1 - d2)
-      .map(([name]) => this.unseenMaps[name])
+      .map(([name, dist]) => [this.unseenMaps[name], dist] as [MapRecord, number])
   }
 
   private makeMapFromEntry({
@@ -184,13 +208,13 @@ export class MapFinder {
     stateString,
   }: MapEntry): [MapRecord, MapVersion] {
     let key = code
-    let [isGeneric, included, unknown] =
-      key.match(/(included)|(unknown)/i) || []
-    if (isGeneric) {
-      key = Math.random().toString(36).substr(2)
-      code = included ? '[In game]' : '[Unknown]'
-    }
 
+    Object.entries(MapFinder.SPECIAL_CODES).forEach(([specialCode, regex]) => {
+      if (key.match(regex)) {
+        key = Math.random().toString(36).substr(2)
+        code = specialCode
+      }
+    })
     let map = {
       name,
       author,
@@ -216,28 +240,42 @@ export class MapFinder {
     return [map, map.versions[code]]
   }
 
-  mergeFromEntries(entries: MapEntry[]) {
-    for (let entry of entries) {
-      let [eMap, eVersion] = this.makeMapFromEntry(entry)
-      let { map, version } = this.guess(entry)
+  private mergeEntry(entry: MapEntry) {
+    let [eMap, eVersion] = this.makeMapFromEntry(entry)
+    let { map, version } = this.guess(entry)
 
-      if (version) {
-        Object.assign(version, eVersion)
-      }
-
-      if (!map) {
-        map = this.searchByName(eMap.name)
-      }
-
-      if (map) {
-        const versions = Object.assign(eMap.versions, map.versions)
-        Object.assign(map, eMap, { versions })
-        continue
-      }
-      this.maps.push(eMap)
+    if (version) {
+      Object.assign(version, eVersion)
     }
 
-    this.makeIndexes()
+    if (!map) {
+      map = this.searchByName(eMap.name)
+    }
+
+    if (map) {
+      const versions = Object.assign(eMap.versions, map.versions)
+      Object.assign(map, eMap, { versions })
+      return map
+    }
+    this.maps.push(eMap)
+    return eMap
+  }
+
+  private mergeEntries(entries: MapEntry[]) {
+    entries.forEach((e) => this.mergeEntry(e))
+  }
+
+  addEntry(entry: MapEntry) {
+    const { tileHash, stateHash } = entry
+    const id = [tileHash, stateHash].join(':')
+
+    let map = this.mergeEntry(entry)
+    this.updateIndex(map)
+
+    return db.mapEntries.put({
+      id,
+      entry,
+    })
   }
 
   getMaps() {
@@ -260,10 +298,36 @@ export class MapFinder {
 
     return info
   }
+
+  makeMapEntry({
+    tileHash,
+    tileString,
+    stateHash,
+    stateString,
+    map: { name = '', author } = {} as MapRecord,
+    version: { v = '', code = '', notes = '' } = {} as MapVersion,
+  }: MapInfo): MapEntry {
+    return {
+      name,
+      author,
+      v,
+      code,
+      notes,
+      tileHash,
+      tileString,
+      stateHash,
+      stateString,
+      isLocal: true,
+    }
+  }
+}
+
+export const MapFinderContext = createContext<MapFinder>(null)
+
+
+
+export function useMapFinder(){
+  let mapFinder = useContext(MapFinderContext)
 }
 
 export const mapFinder = new MapFinder(mapRecords)
-
-mapFinder.mergeFromEntries(sheetMapEntries)
-
-console.log(mapFinder)

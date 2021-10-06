@@ -72,7 +72,7 @@ function loadMatch(matchId: string) {
 export default function MatchRoute() {
   const [, params] = useRoute<{ id: string }>('/match/:id')
   const [, setLocation] = useLocation()
-  const { id: matchId } = params
+  const { id: matchId } = params || {}
 
   const [match, setMatch] = useState<Match>()
 

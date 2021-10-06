@@ -29,7 +29,7 @@ export default function WargrooveGame({
     <PhaserGame
       parentId="phaser-wargroove-game"
       gameClass={PhaserWargrooveGame}
-      gameParams={[{ updateUI: onSelected, match, onReady }]}
+      gameParams={[{ updateUI: onSelected, onReady }]}
       onGameCreated={onGameCreatedInernal}
     />
   )
