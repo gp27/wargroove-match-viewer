@@ -16,7 +16,7 @@ export default function SearchField(props: Omit<TextFieldProps,'onChange'> & { o
         type="search"
         variant="outlined"
         {...props}
-        onChange={(ev) => props.onChange(ev.target.value || '')}
+        onChange={(ev) => props.onChange?.(ev.target.value || '')}
       />
     )
 }

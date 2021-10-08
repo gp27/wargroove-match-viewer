@@ -3,11 +3,11 @@ import { MapEntry } from './wg/map-utils'
 import { Match, MatchData } from './wg/match'
 
 export interface IMatch {
-  id?: string
+  id: string
   name?: string
   online: boolean
   updated_date: Date
-  data?: MatchData
+  data: MatchData
   match?: Match
 }
 
@@ -25,13 +25,12 @@ class MatchViewerDatabase extends Dexie {
 
     this.version(1).stores({
       matches: 'id, name, online, updated_date, data',
+      
+    })
+    this.version(2).stores({
+      matches: 'id, name, online, updated_date, data',
       mapEntries: 'id, entry',
     })
-
-    /*this.version(2).stores({
-            matches: 'id, name, online, updated_date, data',
-
-        })*/
 
     this.matches = this.table('matches')
     this.mapEntries = this.table('mapEntries')
@@ -48,16 +47,26 @@ db.on('populate', () => {
     })*/
 })
 
+const matchCache = new Map<string,IMatch>()
+
 db.matches.hook('reading', (imatch) => {
   if(!imatch) return imatch
 
-  let r = { ...imatch }
-  if (imatch.data) {
-    try {
-      r.match = new Match(imatch.data)
-    } catch (e) {
-      console.error(e)
+  try {
+    let r = matchCache.get(imatch.id)
+    if(r){
+      if(r.updated_date.getTime() == imatch.updated_date.getTime()){
+        imatch.match = r.match
+        return imatch
+      }
     }
+    
+    imatch.match = new Match(imatch.data)
+    console.log(imatch.match)
+  
+  } catch (e) {
+    console.error(e)
   }
-  return r
+  matchCache.set(imatch.id, imatch)
+  return imatch
 })

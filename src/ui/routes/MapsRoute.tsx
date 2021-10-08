@@ -6,7 +6,7 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import MapTable from '../common/map/MapTable'
 import { MapCard } from '../common/map/MapCard'
 import SearchField from '../common/generic/SearchField'
-import { mapFinder } from '../../wg/map-utils'
+import { useMapFinder } from '../context/MapFinderContext'
 import { useLocalStorage } from '../../utils'
 
 export default function MapsRoute() {
@@ -14,7 +14,9 @@ export default function MapsRoute() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [showCards, setShowCards] = useLocalStorage('maps_showCards', false)
 
-  const allMaps = mapFinder.getMaps()
+  const mapFinder = useMapFinder()
+
+  const allMaps = mapFinder?.getMaps()
 
   let [maps, setMaps] = React.useState(allMaps)
 
@@ -25,7 +27,7 @@ export default function MapsRoute() {
       .filter((A) => A)
 
     if (searches.length) {
-      maps = allMaps.filter(({ name, author, versions }) => {
+      maps = allMaps?.filter(({ name, author, versions }) => {
         const vs = Object.values(versions)
           .map((v) => v.v)
           .join(' ')
@@ -57,8 +59,9 @@ export default function MapsRoute() {
           />
         )}
       </Box>
+      
 
-      {isMobile || showCards ? (
+      {maps && (isMobile || showCards ? (
         <Box
           sx={{
             display: 'flex',
@@ -74,7 +77,7 @@ export default function MapsRoute() {
         </Box>
       ) : (
         <MapTable maps={maps} />
-      )}
+      ))}
     </React.Fragment>
   )
 }

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import {
   MapInfo,
-  mapFinder,
   MapEntry,
   MapRecord,
   MapVersion,
@@ -24,6 +23,7 @@ import {
 } from '@mui/material'
 import { Info } from '@mui/icons-material'
 import { useLocalStorage } from '../../../utils'
+import { useMapFinder } from '../../context/MapFinderContext'
 
 type EntryState = { entry: MapEntry; map?: MapRecord; version?: MapVersion }
 
@@ -33,6 +33,9 @@ export function MapEntryEditor({ mapInfo }: { mapInfo: MapInfo }) {
     'mapEntryEditor_versionInfoOpen',
     true
   )*/
+
+  const mapFinder = useMapFinder()
+  if(!mapFinder) return null
 
   const { map, version } = mapInfo
 
@@ -71,19 +74,33 @@ export function MapEntryEditor({ mapInfo }: { mapInfo: MapInfo }) {
     setState({ ...state })
   }
 
+  function putEntry(){
+    let { entry, map, version } = state
+    let e = { ...entry, ...map, ...version, isLocal: true }
+    delete e.versions
+    if(!version?.code) e.code = entry.code // format code
+
+    console.log(e)
+    mapFinder?.addEntry(e)
+    
+  }
+
   const isLocal = version?.isLocal
-  const canEditMap = isLocal || !map
+  const canEditMap = !map || (isLocal && Object.keys(map.versions).length === 1)
   const canEditVersion = isLocal || !version
-  const canEditCode = isLocal || (!version?.code && !state.version?.code)
+  const canEditCode =
+    isLocal ||
+    (!version?.code && !state.version?.code) ||
+    [version?.code, state.version?.code].includes('[Unknown]')
 
   const maps = canEditMap ? mapFinder.getUnseenMaps() : [map]
   const versions = Object.values<(MapVersion | string)>(
     state.map?.versions || {}
-  ).concat(MapFinder.INITIAL_VERSION)
+  ).concat({v:'', code: ''})
 
   const codeVersions = version
     ? [version]
-    : state.version
+    : state.version?.code
     ? [state.version]
     : Object.keys(MapFinder.SPECIAL_CODES)
 
@@ -150,9 +167,10 @@ export function MapEntryEditor({ mapInfo }: { mapInfo: MapInfo }) {
       />
 
       <ObjectCreateAutocomplete
-        value={state.version || state.entry.code}
+        value={state.version?.code ? state.version : state.entry.code}
         keyName="code"
         options={codeVersions}
+        defaultLabel=""
         inputLabel="Map Code (required)"
         disabled={!canEditCode}
         onChange={(label) => setEntryField(label, 'code')}
@@ -199,7 +217,7 @@ export function MapEntryEditor({ mapInfo }: { mapInfo: MapInfo }) {
         label="Share this Map *"
       />
 
-      <Button variant="contained" sx={{ mb: 2 }}>
+      <Button variant="contained" sx={{ mb: 2 }} onClick={putEntry}>
         {isLocal ? 'Update' : 'Create'} Map
       </Button>
 

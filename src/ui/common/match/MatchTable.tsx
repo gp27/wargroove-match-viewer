@@ -17,31 +17,37 @@ import SkeletonRow from '../generic/SkeletonRow'
 import { MapCardDialog } from '../map/MapCard'
 import MatchActions from './MatchActions'
 import { useModal } from 'mui-modal-provider'
+import { useMapInfo } from '../../context/MapFinderContext'
+import { MapInfo } from '../../../wg/map-utils'
 
 function MatchRow({ imatch }: { imatch: IMatch }) {
   let { id, online, data, updated_date, match } = imatch
+  if(!match) return null
 
   let [name, setName] = React.useState(imatch.name)
 
   const { showModal } = useModal()
 
   function updateName(ev: any) {
-    let name = ev.target.value
+    name = name?.trim() || undefined
+    if(name == imatch.name) return
     imatch.name = name
-    setName(name)
-
     db.matches.update(id, { name })
   }
 
   const entries = match.getEntries()
   const players = match.getPlayers()
+
+  const mapInfo = useMapInfo(match)
+  if(!mapInfo) return <SkeletonRow length={6} />
+
   let {
     map: { name: mapName = '' } = {},
     version: { v: vName, code } = { v: '?' },
-  } = match.mapInfo
+  } = mapInfo
 
   function openMapDialog() {
-    const { map, version } = match.mapInfo
+    const { map, version } = mapInfo as MapInfo
     if (map) {
       showModal(MapCardDialog, { map, version })
     }
@@ -59,8 +65,9 @@ function MatchRow({ imatch }: { imatch: IMatch }) {
         <TextField
           placeholder="Unnamed"
           variant="standard"
-          value={name}
-          onChange={updateName}
+          value={name||''}
+          onChange={(ev) => setName(ev.target.value)}
+          onBlur={updateName}
         />
       </TableCell>
       <TableCell>
@@ -91,9 +98,7 @@ function MatchRow({ imatch }: { imatch: IMatch }) {
   )
 }
 
-export default function MatchTable({ matches }: { matches: IMatch[] }) {
-  const [dialogContent, setDialogContent] = React.useState<React.ReactElement>()
-
+export default function MatchTable({ matches }: { matches?: IMatch[] }) {
   return (
     <TableContainer
       component={Paper}

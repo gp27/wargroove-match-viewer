@@ -9,7 +9,7 @@ export const initialUrlParams = {
 const cleanUrl = new URL(initialUrl.href)
 cleanUrl.search = ''
 
-history?.replaceState(null, null, cleanUrl.href)
+history?.replaceState(null, '', cleanUrl.href)
 
 export function useLocalStorage<T>(propName: string, initialVal?: T) {
   try {
@@ -19,7 +19,7 @@ export function useLocalStorage<T>(propName: string, initialVal?: T) {
     }
   } catch (e) {}
 
-  let [val, setVal] = useState<T>(initialVal)
+  let [val, setVal] = useState(initialVal)
 
   return [
     val,

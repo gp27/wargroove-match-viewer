@@ -101,7 +101,7 @@ export function MapCard({
           loading="lazy"
           sx={{ maxWidth: 151, maxHeight: 151, cursor: 'pointer' }}
           image={version.imgSrc}
-          onClick={() => window.open(version.imgSrc)}
+          onClick={() => { version?.imgSrc && window.open(version.imgSrc) }}
         />
       </Box>
       {version.notes ? (

@@ -12,11 +12,13 @@ export function generatePalette(
     canvas = document.createElement('canvas')
     canvas.width = image.width
     canvas.height = image.height
+    // @ts-ignore: Object is possibly 'null'
     canvas.getContext('2d').drawImage(image, 0, 0)
   }
 
   let { width, height } = canvas
 
+  // @ts-ignore: Object is possibly 'null'
   let pixels = canvas.getContext('2d').getImageData(0, 0, width, height).data
 
   let palette: Palette = {}
@@ -77,7 +79,7 @@ export function applyPalette(
   canvas.width = source.width
   canvas.height = source.height
 
-  let ctx = canvas.getContext('2d')
+  let ctx = canvas.getContext('2d') as CanvasRenderingContext2D 
   ctx.drawImage(source, 0, 0)
 
   let imageData = ctx.getImageData(0, 0, source.width, source.height)

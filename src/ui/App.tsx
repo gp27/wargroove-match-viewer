@@ -21,6 +21,7 @@ import { PhaserWargrooveGame } from '../phaser/phaser-wagroove-game'
 import { Close, Menu, Map, SportsEsports, AltRoute } from '@mui/icons-material'
 import { SnackbarProvider } from 'notistack'
 import ModalProvider from 'mui-modal-provider'
+import { MapFinderProvider } from './context/MapFinderContext'
 
 import { useLocation, Route, Switch, Redirect } from 'wouter'
 import { initialUrlParams } from '../utils'
@@ -83,11 +84,13 @@ export default function App() {
 
   return (
     <ThemeProvider theme={mdTheme}>
-      <SnackbarProvider maxSnack={3}>
-        <ModalProvider>
-          <AppContent />
-        </ModalProvider>
-      </SnackbarProvider>
+      <MapFinderProvider>
+        <SnackbarProvider maxSnack={3}>
+          <ModalProvider>
+            <AppContent />
+          </ModalProvider>
+        </SnackbarProvider>
+      </MapFinderProvider>
     </ThemeProvider>
   )
 }
@@ -98,8 +101,8 @@ function AppContent() {
     setOpen(!open)
   }
 
-  const [match, setMatch] = useState<Match>(null)
-  const [game, setGame] = useState<PhaserWargrooveGame>(null)
+  const [match, setMatch] = useState<Match>()
+  const [game, setGame] = useState<PhaserWargrooveGame>()
   const [location, setLocation] = useLocation()
 
   function navigate(url: string) {

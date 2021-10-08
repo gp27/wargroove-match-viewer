@@ -1,4 +1,4 @@
-const crcTable = []
+const crcTable: number[] = []
 let c: number
 
 for (var n = 0; n < 256; n++) {

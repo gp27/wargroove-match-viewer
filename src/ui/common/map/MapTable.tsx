@@ -75,7 +75,7 @@ function MapRow({ map }: { map: MapRecord }) {
     map,
     version,
   }))
-  const mainRowProps = rowPropsList.shift()
+  const mainRowProps = rowPropsList.shift() as typeof rowPropsList[0]
 
   const expandButton = (
     <IconButton
@@ -91,7 +91,7 @@ function MapRow({ map }: { map: MapRecord }) {
     <VersionRow
       key={0}
       {...mainRowProps}
-      firstCellEle={rowPropsList.length ? expandButton : null}
+      firstCellEle={rowPropsList.length ? expandButton : undefined}
       showBorder={!open}
     />,
     ...(open

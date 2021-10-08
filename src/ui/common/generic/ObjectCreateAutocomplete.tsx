@@ -107,6 +107,9 @@ export function ObjectCreateAutocomplete<
       )}
       disabled={disabled}
       isOptionEqualToValue={(opt, val) => {
+        if(!val) val = ''
+        if(!opt) opt = ''
+
         if (typeof val == 'string') {
           val = { label: normalizeWhiteSpace(val) }
         }
@@ -116,7 +119,7 @@ export function ObjectCreateAutocomplete<
         return opt.label == val.label
       }}
       getOptionDisabled={getOptionDisabled}
-      filterOptions={(options, params) => {
+      filterOptions={(options: AutocompletOptionWithData<T>[], params) => {
         const filtered = filter(options, params)
 
         let { inputValue } = params

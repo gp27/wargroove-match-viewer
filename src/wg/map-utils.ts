@@ -1,8 +1,8 @@
 import levenshtein from 'js-levenshtein'
-import { createContext, useContext } from 'react'
 import { crc32 } from '../crc32'
 import { db } from '../db'
 import { mapRecords, sheetMapEntries } from './map-registry'
+import { Match } from './match'
 
 export interface MapIdentifiers {
   tileHash: string
@@ -48,28 +48,28 @@ export class MapFinder {
 
   private static init(){
     return db.mapEntries.toCollection().toArray().then(ientries => {
-      const mapFinder = new MapFinder(mapRecords, ientries.map(i => i.entry))
+      const mapFinder = new MapFinder(mapRecords)
+      mapFinder.mergeEntries(ientries.map((i) => i.entry))
       console.log(mapFinder)
       return mapFinder
     })
   }
 
-  private static INSTANCE: Promise<MapFinder>
+  private static INSTANCE: Promise<MapFinder> = MapFinder.init()
 
   static getInstance(){
-    return MapFinder.INSTANCE = MapFinder.INSTANCE || MapFinder.init()
+    return MapFinder.INSTANCE
   }
 
   maps: MapRecord[]
   byTileHash: {
-    [tileHash: string]: [map: MapRecord, tileString: string]
+    [tileHash: string]: [map: MapRecord, tileString?: string]
   }
   unseenMaps: { [name: string]: MapRecord }
   byCode: { [code: string]: [MapRecord, MapVersion] }
 
-  constructor(maps: MapRecord[], entries: MapEntry[] = []) {
+  private constructor(maps: MapRecord[]) {
     this.maps = JSON.parse(JSON.stringify(maps))
-    this.mergeEntries(entries)
     this.makeIndexes()
   }
 
@@ -118,6 +118,7 @@ export class MapFinder {
     for (let map of this.maps) {
       this.updateIndex(map)
     }
+    this.mapsInfo = new WeakMap<Match, MapInfo>()
   }
 
   guess({
@@ -134,6 +135,7 @@ export class MapFinder {
   }
 
   private find(tileHash?: string, stateHash?: string): MapGuess | undefined {
+    if(!tileHash) return
     let [map, str] = this.byTileHash[tileHash] || []
     let version = Object.values(map?.versions || {}).find(
       ({ stateHash: shash, tileHash: thash }) =>
@@ -148,8 +150,7 @@ export class MapFinder {
     if (!tileString) return
 
     let minDist = Infinity
-    let minMap: MapRecord
-    let minUnseen: MapVersion[]
+    let minMap: MapRecord | undefined
 
     Object.values(this.byTileHash).forEach(([map, str]) => {
       if (!str) return
@@ -160,12 +161,13 @@ export class MapFinder {
       }
     })
 
-    if (minDist < tileString?.length * 0.1) {
+    if (minMap && minDist < tileString.length * 0.1) {
       return { map: minMap }
     }
   }
 
   private findByCode(code?: string): MapGuess | undefined {
+    if(!code) return
     const [map, version] = this.byCode[code] || []
     if (map)
       return {
@@ -197,6 +199,7 @@ export class MapFinder {
     author,
     archived,
     isNew,
+    isLocal,
     footer,
     code,
     v,
@@ -231,6 +234,7 @@ export class MapFinder {
           tileString,
           stateHash,
           stateString,
+          isLocal
         },
       },
     }
@@ -242,7 +246,7 @@ export class MapFinder {
 
   private mergeEntry(entry: MapEntry) {
     let [eMap, eVersion] = this.makeMapFromEntry(entry)
-    let { map, version } = this.guess(entry)
+    let { map, version } = this.guess(entry) || {}
 
     if (version) {
       Object.assign(version, eVersion)
@@ -263,6 +267,7 @@ export class MapFinder {
 
   private mergeEntries(entries: MapEntry[]) {
     entries.forEach((e) => this.mergeEntry(e))
+    this.makeIndexes()
   }
 
   addEntry(entry: MapEntry) {
@@ -286,9 +291,16 @@ export class MapFinder {
     return Object.values(this.unseenMaps)
   }
 
-  getMapInfo(width: number, tileString: string, stateString: string) {
-    let info: MapInfo = {
-      tileHash: `${width}_${crc32(tileString)}`,
+  private mapsInfo = new WeakMap<Match,MapInfo>()
+
+  getMapInfo(match: Match) {
+    let info = this.mapsInfo.get(match)
+    if(info) return info
+
+    const { tileString, stateString, w } = match.getMap()
+
+    info = {
+      tileHash: `${w}_${crc32(tileString)}`,
       tileString,
       stateString,
       stateHash: '' + crc32(stateString),
@@ -296,8 +308,12 @@ export class MapFinder {
 
     Object.assign(info, this.guess(info))
 
+    this.mapsInfo.set(match, info)
+
     return info
   }
+  
+
 
   makeMapEntry({
     tileHash,
@@ -321,13 +337,3 @@ export class MapFinder {
     }
   }
 }
-
-export const MapFinderContext = createContext<MapFinder>(null)
-
-
-
-export function useMapFinder(){
-  let mapFinder = useContext(MapFinderContext)
-}
-
-export const mapFinder = new MapFinder(mapRecords)

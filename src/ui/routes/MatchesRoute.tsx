@@ -15,6 +15,7 @@ import FileInputWrapper from '../common/generic/FileInputWrapper'
 import MatchTable from '../common/match/MatchTable'
 import { Match, MatchData } from '../../wg/match'
 import { useLocalStorage } from '../../utils'
+import { useLiveQuery } from 'dexie-react-hooks'
 
 const matchLoggerInfo = (
   <React.Fragment>
@@ -33,11 +34,13 @@ export default function MatchesRoute() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [showCards, setShowCards] = useLocalStorage('matches_showCards', false)
 
-  const [matches, setMatches] = React.useState<IMatch[]>(null)
+  //const [matches, setMatches] = React.useState<IMatch[]>()
 
-  function loadMatches() {
+  const matches = useLiveQuery(() => db.matches.toCollection().reverse().sortBy('updated_date'))
+
+  /*function loadMatches() {
     db.matches.toCollection().reverse().sortBy('updated_date').then(setMatches)
-  }
+  }*/
 
   function loadMatchFiles(rawData: string[]) {
     let matchesData = rawData
@@ -46,7 +49,7 @@ export default function MatchesRoute() {
           return JSON.parse(text) as MatchData
         } catch (e) {}
       })
-      .filter((a) => a?.match_id && Match.isValid(a))
+      .filter((a) => a?.match_id && Match.isValid(a)) as MatchData[]
 
     const promises = matchesData.map(async (matchData) => {
       let { name, online } = (await db.matches.get(matchData.match_id)) || {}
@@ -59,12 +62,12 @@ export default function MatchesRoute() {
       })
     })
 
-    Promise.all(promises).then(loadMatches)
+    //Promise.all(promises).then(loadMatches)
   }
 
-  React.useEffect(() => {
+  /*React.useEffect(() => {
     loadMatches()
-  }, [])
+  }, [])*/
 
   const [search, setSearch] = React.useState<string>('')
 
@@ -81,14 +84,14 @@ export default function MatchesRoute() {
         ({
           id,
           name,
-          match: {
+          /*match: {
             mapInfo: {
               map: { name: mapName = '' } = {},
               version: { v = '' } = {},
-            },
-          },
+            } = {},
+          } = {},*/
         }) => {
-          const t = `${id} ${name} ${mapName} ${v}`.toLowerCase()
+          const t = `${id} ${name}`.toLowerCase() // ${mapName} ${v}
           return searches.some((s) => t.includes(s))
         }
       )
@@ -168,7 +171,7 @@ export default function MatchesRoute() {
               .map((_, i) => <MatchCardSkeleton key={i} />)}
         </Box>
       ) : (
-        <MatchTable matches={matches ? filteredMatches : null} />
+        <MatchTable matches={matches ? filteredMatches : undefined} />
       )}
     </React.Fragment>
   )

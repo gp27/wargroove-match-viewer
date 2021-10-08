@@ -16,6 +16,8 @@ import { useLocalStorage } from '../../utils'
 import { FormControlLabel, Switch } from '@mui/material'
 import { useModal } from 'mui-modal-provider'
 import { MapEntryEditorModal } from '../common/map/MapEntryEditor'
+import Chart from 'chart.js'
+import { useMapInfo } from '../context/MapFinderContext'
 
 function loadMatchData(id: string): Promise<MatchData | undefined> {
   let matchUrl = `https://firebasestorage.googleapis.com/v0/b/wargroove-match-storage.appspot.com/o/matches%2F${id}.json?alt=media`
@@ -45,7 +47,7 @@ function loadMatch(matchId: string) {
   return db.matches.get(matchId).then((imatch) => {
     if (!imatch || imatch.online) {
       return loadMatchData(matchId).then((matchData) => {
-        let match: Match
+        let match: Match | undefined
 
         if (matchData) {
           match = new Match(matchData)
@@ -74,7 +76,12 @@ export default function MatchRoute() {
   const [, setLocation] = useLocation()
   const { id: matchId } = params || {}
 
-  const [match, setMatch] = useState<Match>()
+  if (!matchId) {
+    setLocation('/')
+    return null
+  }
+
+  const [match, setMatch] = useState<Match>()  
 
   useEffect(() => {
     loadMatch(matchId).then((match) => {
@@ -105,9 +112,11 @@ function MatchDashboard({ match }: { match: Match }) {
 
   const [game, setGame] = useState<PhaserWargrooveGame>()
 
+  const mapInfo = useMapInfo(match)
+
   useEffect(() => {
-    showModal(MapEntryEditorModal, { mapInfo: match.mapInfo })
-  }, [])
+    mapInfo && showModal(MapEntryEditorModal, { mapInfo })
+  }, [mapInfo])
 
   return (
     <Box
@@ -202,7 +211,7 @@ function Charts({ match }: { match: Match }) {
           sx={{ p: 1, maxHeight: 400, minHeight: 250, height: '50%' }}
         >
           <Line
-            data={chart.data}
+            data={chart.data as Chart.ChartData}
             options={Object.assign(chart.options || {}, {
               maintainAspectRatio: false,
             })}

@@ -19,7 +19,7 @@ export default function MatchActions({ imatch }: { imatch: IMatch }) {
   const { showModal } = useModal()
   const [, setLocation] = useLocation()
 
-  let { id, online, data, name } = imatch
+  let { id = '', online, data, name } = imatch
 
   function openMatch() {
     setLocation('/match/' + id)
@@ -61,9 +61,7 @@ export default function MatchActions({ imatch }: { imatch: IMatch }) {
           <Button
             color="primary"
             onClick={() => {
-              deleteMatch().then(() => {
-                location.reload()
-              })
+              deleteMatch()
               close()
             }}
           >
