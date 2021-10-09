@@ -31,6 +31,7 @@ export function ObjectCreateAutocomplete<
   onChange,
   getOptionDisabled,
   startAdornment,
+  error,
 }: {
   value: T | string
   keyName: P
@@ -40,7 +41,8 @@ export function ObjectCreateAutocomplete<
   defaultLabel?: string
   onChange?: onChangeCb<T>
   getOptionDisabled?: (opt: AutocompletOptionWithData<T> | string) => boolean
-  startAdornment?: React.ReactNode
+  startAdornment?: React.ReactNode,
+  error?: string
 }) {
   function labelize(data: T | string): AutocompletOptionWithData<T> {
     if (typeof data == 'string') {
@@ -103,6 +105,8 @@ export function ObjectCreateAutocomplete<
           {...params}
           placeholder={inputLabel}
           label={inputLabel}
+          error={!!error}
+          helperText={error}
         />
       )}
       disabled={disabled}

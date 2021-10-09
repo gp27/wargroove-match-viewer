@@ -24,7 +24,7 @@ import ModalProvider from 'mui-modal-provider'
 import { MapFinderProvider } from './context/MapFinderContext'
 
 import { useLocation, Route, Switch, Redirect } from 'wouter'
-import { initialUrlParams } from '../utils'
+import { initialUrlParams, useSessionId } from '../utils'
 
 import Maps from './routes/MapsRoute'
 import MatchesRoute from './routes/MatchesRoute'
@@ -76,6 +76,7 @@ const mdTheme = createTheme({
 export default function App() {
   const [location, setLocation] = useLocation()
   const [matchId, setMatchId] = useState(initialUrlParams.match_id)
+  const sessionId = useSessionId()
 
   if (matchId) {
     setLocation('/match/' + matchId, { replace: true })

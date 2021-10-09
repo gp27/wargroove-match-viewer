@@ -46,18 +46,21 @@ export class MapFinder {
 
   static INITIAL_VERSION = '[Initial version]'
 
-  private static init(){
-    return db.mapEntries.toCollection().toArray().then(ientries => {
-      const mapFinder = new MapFinder(mapRecords)
-      mapFinder.mergeEntries(ientries.map((i) => i.entry))
-      console.log(mapFinder)
-      return mapFinder
-    })
+  private static init() {
+    return db.mapEntries
+      .toCollection()
+      .toArray()
+      .then((ientries) => {
+        const mapFinder = new MapFinder(mapRecords)
+        mapFinder.mergeEntries(ientries.map((i) => i.entry))
+        console.log(mapFinder)
+        return mapFinder
+      })
   }
 
   private static INSTANCE: Promise<MapFinder> = MapFinder.init()
 
-  static getInstance(){
+  static getInstance() {
     return MapFinder.INSTANCE
   }
 
@@ -68,7 +71,7 @@ export class MapFinder {
   unseenMaps: { [name: string]: MapRecord }
   byCode: { [code: string]: [MapRecord, MapVersion] }
 
-  private constructor(maps: MapRecord[]) {
+  constructor(maps: MapRecord[]) {
     this.maps = JSON.parse(JSON.stringify(maps))
     this.makeIndexes()
   }
@@ -126,16 +129,17 @@ export class MapFinder {
     stateHash,
     tileString,
     code,
-  }: Partial<MapIdentifiers> & { code?: string }): MapGuess | undefined {
+    v
+  }: Partial<MapVersion>): MapGuess | undefined {
     return (
       this.find(tileHash, stateHash) ||
-      this.findSimiliar(tileString) ||
+      this.findSimiliar(tileString, v, code) ||
       this.findByCode(code)
     )
   }
 
   private find(tileHash?: string, stateHash?: string): MapGuess | undefined {
-    if(!tileHash) return
+    if (!tileHash) return
     let [map, str] = this.byTileHash[tileHash] || []
     let version = Object.values(map?.versions || {}).find(
       ({ stateHash: shash, tileHash: thash }) =>
@@ -146,7 +150,7 @@ export class MapFinder {
     }
   }
 
-  private findSimiliar(tileString?: string): MapGuess | undefined {
+  private findSimiliar(tileString?: string, v?: string, code?: string): MapGuess | undefined {
     if (!tileString) return
 
     let minDist = Infinity
@@ -162,12 +166,15 @@ export class MapFinder {
     })
 
     if (minMap && minDist < tileString.length * 0.1) {
-      return { map: minMap }
+      return {
+        map: minMap,
+        version: Object.values(minMap.versions).find((ver) => ver.v == v || ver.code == code),
+      }
     }
   }
 
   private findByCode(code?: string): MapGuess | undefined {
-    if(!code) return
+    if (!code) return
     const [map, version] = this.byCode[code] || []
     if (map)
       return {
@@ -178,7 +185,7 @@ export class MapFinder {
 
   searchByName(search: string) {
     const [map, dist] = this.searchListByName(search)[0]
-    if(dist < 2) return map
+    if (dist < 2) return map
   }
 
   searchListByName(search: string) {
@@ -191,7 +198,9 @@ export class MapFinder {
       })
       .filter(([name, dist]) => dist < 5)
       .sort(([n1, d1], [n2, d2]) => d1 - d2)
-      .map(([name, dist]) => [this.unseenMaps[name], dist] as [MapRecord, number])
+      .map(
+        ([name, dist]) => [this.unseenMaps[name], dist] as [MapRecord, number]
+      )
   }
 
   private makeMapFromEntry({
@@ -234,7 +243,7 @@ export class MapFinder {
           tileString,
           stateHash,
           stateString,
-          isLocal
+          isLocal,
         },
       },
     }
@@ -265,7 +274,7 @@ export class MapFinder {
     return eMap
   }
 
-  private mergeEntries(entries: MapEntry[]) {
+  mergeEntries(entries: MapEntry[]) {
     entries.forEach((e) => this.mergeEntry(e))
     this.makeIndexes()
   }
@@ -283,6 +292,11 @@ export class MapFinder {
     })
   }
 
+  deleteEntry(entry: Partial<MapIdentifiers>) {
+    const { tileHash = '', stateHash = '' } = entry
+    db.mapEntries.delete([tileHash, stateHash].join(':'))
+  }
+
   getMaps() {
     return Array.from(this.maps)
   }
@@ -291,11 +305,11 @@ export class MapFinder {
     return Object.values(this.unseenMaps)
   }
 
-  private mapsInfo = new WeakMap<Match,MapInfo>()
+  private mapsInfo = new WeakMap<Match, MapInfo>()
 
   getMapInfo(match: Match) {
     let info = this.mapsInfo.get(match)
-    if(info) return info
+    if (info) return info
 
     const { tileString, stateString, w } = match.getMap()
 
@@ -312,15 +326,13 @@ export class MapFinder {
 
     return info
   }
-  
-
 
   makeMapEntry({
     tileHash,
     tileString,
     stateHash,
     stateString,
-    map: { name = '', author } = {} as MapRecord,
+    map: { name = '', author = '' } = {} as MapRecord,
     version: { v = '', code = '', notes = '' } = {} as MapVersion,
   }: MapInfo): MapEntry {
     return {

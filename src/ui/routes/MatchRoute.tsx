@@ -15,7 +15,7 @@ import { PhaserWargrooveGame } from '../../phaser/phaser-wagroove-game'
 import { useLocalStorage } from '../../utils'
 import { FormControlLabel, Switch } from '@mui/material'
 import { useModal } from 'mui-modal-provider'
-import { MapEntryEditorModal } from '../common/map/MapEntryEditor'
+import { MapEntryEditorModal, MapEntrySuggestion } from '../common/map/MapEntryEditor'
 import Chart from 'chart.js'
 import { useMapInfo } from '../context/MapFinderContext'
 
@@ -114,10 +114,6 @@ function MatchDashboard({ match }: { match: Match }) {
 
   const mapInfo = useMapInfo(match)
 
-  useEffect(() => {
-    mapInfo && showModal(MapEntryEditorModal, { mapInfo })
-  }, [mapInfo])
-
   return (
     <Box
       sx={{
@@ -136,6 +132,10 @@ function MatchDashboard({ match }: { match: Match }) {
           height: { xs: '60%', md: '100%' } as any,
         }}
       >
+        <Box sx={{ position: 'absolute', width: '100%', right: 0 }}>
+          {mapInfo && <MapEntrySuggestion mapInfo={mapInfo} />}
+        </Box>
+
         {!isGameReady && (
           <Skeleton
             variant="rectangular"

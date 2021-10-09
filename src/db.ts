@@ -18,7 +18,7 @@ export interface IMapEntry {
 
 class MatchViewerDatabase extends Dexie {
   matches: Dexie.Table<IMatch, string>
-  mapEntries: Dexie.Table<IMapEntry, number>
+  mapEntries: Dexie.Table<IMapEntry, string>
 
   constructor() {
     super('MatchViewerDatabase')

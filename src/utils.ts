@@ -32,3 +32,12 @@ export function useLocalStorage<T>(propName: string, initialVal?: T) {
     },
   ] as [T, (v: T) => void]
 }
+
+
+export function useSessionId(){
+  const [sessionId] = useLocalStorage(
+    'wgmv_anon_session_id',
+    'wgmv.1.' + Date.now() + '.' + Math.random().toString().substr(2)
+  )
+  return sessionId
+}
