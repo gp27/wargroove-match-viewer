@@ -10,29 +10,34 @@ import Skeleton from '@mui/material/Skeleton'
 
 import Typography from '@mui/material/Typography'
 
-import { IMatch, db } from '../../db'
-import PlayerChips from './PlayerChips'
+import { IMatch, db } from '../../../db'
+import PlayerChips from '../PlayerChips'
 import MatchActions from './MatchActions'
-import { MapCardDialog } from './MapCard'
+import { MapCardDialog } from '../map/MapCard'
 import { useModal } from 'mui-modal-provider'
+import { useMapInfo } from '../../context/MapFinderContext'
+import { MapInfo } from '../../../wg/map-utils'
 
 export default function MatchCard({ imatch }: { imatch: IMatch }) {
   let { id, online, updated_date, match } = imatch
+  if(!match) return null
+
+  const mapInfo = useMapInfo(match)
+  if(!mapInfo) return null
 
   let [name, setName] = React.useState(imatch.name)
 
   function updateName(ev: any) {
-    let name = ev.target.value
+    name = name?.trim() || undefined
+    if(name == imatch.name) return
     imatch.name = name
-    setName(name)
-
     db.matches.update(id, { name })
   }
 
   const { showModal } = useModal()
-  
+
   function openMapDialog() {
-    const { map, version } = match.mapInfo
+    const { map, version } = mapInfo as MapInfo
     if (map) {
       showModal(MapCardDialog, { map, version })
     }
@@ -43,7 +48,7 @@ export default function MatchCard({ imatch }: { imatch: IMatch }) {
   let {
     map: { name: mapName = '' } = {},
     version: { v: vName, code } = { v: '?' },
-  } = match.mapInfo
+  } = mapInfo
 
   return (
     <Card sx={{ width: 250, m: 2, boxShadow: 2 }}>
@@ -81,8 +86,9 @@ export default function MatchCard({ imatch }: { imatch: IMatch }) {
           sx={{ m: 2, width: '100%' }}
           placeholder="Unnamed"
           variant="standard"
-          value={name}
-          onChange={updateName}
+          value={name||''}
+          onChange={(ev) => setName(ev.target.value)}
+          onBlur={updateName}
         />
         <PlayerChips
           players={players}

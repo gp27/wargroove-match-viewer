@@ -136,7 +136,7 @@ export class PhaserWargrooveScene extends Phaser.Scene {
 
   getFrameCanvas(colorName: string, frameNames: string[]) {
     let frames = this.getFrames(colorName, frameNames)
-    if (!frames.length) return
+    if (!frames?.length) return
     let {
       cutHeight: height,
       cutWidth: width,
@@ -149,7 +149,7 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     c.width = width * 2
     c.height = height * 2
 
-    let ctx = c.getContext('2d')
+    let ctx = c.getContext('2d') as CanvasRenderingContext2D
     ctx.imageSmoothingEnabled = false
     ctx.scale(2, 2)
     ctx.drawImage(
@@ -167,11 +167,11 @@ export class PhaserWargrooveScene extends Phaser.Scene {
   }
 
   makeUi() {
-    let board = (this.ui.board = new PhaserWargrooveBoard(this))
-    if (this.match) {
+    this.ui.board = new PhaserWargrooveBoard(this)
+    /*if (this.match) {
       board.setMap(this.match.getMap())
       this.reloadMatchEntry()
-    }
+    }*/
   }
 
   loadMatch(match: Match) {
@@ -192,7 +192,7 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     return this.match
   }
 
-  currentEntry: Entry = null
+  currentEntry: Entry | undefined
 
   reloadMatchEntry() {
     if (!this.match || !this.loaded) return

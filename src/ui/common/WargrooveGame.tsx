@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { PhaserWargrooveGame } from '../../phaser/phaser-wagroove-game'
-import PhaserGame from './PhaserGame'
+import PhaserGame from './generic/PhaserGame'
 import { Match } from '../../wg/match'
 
 export default function WargrooveGame({
@@ -29,7 +29,7 @@ export default function WargrooveGame({
     <PhaserGame
       parentId="phaser-wargroove-game"
       gameClass={PhaserWargrooveGame}
-      gameParams={[{ updateUI: onSelected, match, onReady }]}
+      gameParams={[{ updateUI: onSelected, onReady }]}
       onGameCreated={onGameCreatedInernal}
     />
   )

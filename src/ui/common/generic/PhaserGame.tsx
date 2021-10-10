@@ -14,7 +14,7 @@ export default function PhaserGame<T extends Phaser.Game, P extends GameParams<T
   ...boxProps
 }: {
   gameClass: new(...a: P) => T,
-  gameParams?: P,
+  gameParams: P,
   onGameCreated?: (game: T) => void,
   parentId?: string
 } & BoxProps) {
@@ -22,7 +22,7 @@ export default function PhaserGame<T extends Phaser.Game, P extends GameParams<T
     parentId || 'game-' + Math.random().toString().substr(2)
   )
   useEffect(() => {
-    const game = new gameClass(...gameParams || [] as P)
+    const game = new gameClass(...gameParams)
     onGameCreated?.(game)
     return () => {
       game.destroy(true)

@@ -8,13 +8,14 @@ import { useTheme } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import IconButton from '@mui/material/IconButton'
 import { Add, Info } from '@mui/icons-material'
-import SearchField from '../common/SearchField'
+import SearchField from '../common/generic/SearchField'
 import { db, IMatch } from '../../db'
-import MatchCard, { MatchCardSkeleton } from '../common/MatchCard'
-import FileInputWrapper from '../common/FileInputWrapper'
-import MatchTable from '../MatchTable'
+import MatchCard, { MatchCardSkeleton } from '../common/match/MatchCard'
+import FileInputWrapper from '../common/generic/FileInputWrapper'
+import MatchTable from '../common/match/MatchTable'
 import { Match, MatchData } from '../../wg/match'
 import { useLocalStorage } from '../../utils'
+import { useLiveQuery } from 'dexie-react-hooks'
 
 const matchLoggerInfo = (
   <React.Fragment>
@@ -33,21 +34,24 @@ export default function MatchesRoute() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [showCards, setShowCards] = useLocalStorage('matches_showCards', false)
 
-  const [matches, setMatches] = React.useState<IMatch[]>(null)
+  //const [matches, setMatches] = React.useState<IMatch[]>()
 
-  function loadMatches(){
+  const matches = useLiveQuery(() => db.matches.toCollection().reverse().sortBy('updated_date'))
+
+  /*function loadMatches() {
     db.matches.toCollection().reverse().sortBy('updated_date').then(setMatches)
-  }
+  }*/
 
-  function loadMatchFiles(rawData: string[]){
-    let matchesData = rawData.map(text => {
-      try {
-        return JSON.parse(text) as MatchData
-      } catch(e){}
-    })
-    .filter(a => a?.match_id && Match.isValid(a))
-    
-    const promises = matchesData.map(async matchData => {
+  function loadMatchFiles(rawData: string[]) {
+    let matchesData = rawData
+      .map((text) => {
+        try {
+          return JSON.parse(text) as MatchData
+        } catch (e) {}
+      })
+      .filter((a) => a?.match_id && Match.isValid(a)) as MatchData[]
+
+    const promises = matchesData.map(async (matchData) => {
       let { name, online } = (await db.matches.get(matchData.match_id)) || {}
       return db.matches.put({
         id: matchData.match_id,
@@ -58,24 +62,39 @@ export default function MatchesRoute() {
       })
     })
 
-    Promise.all(promises).then(loadMatches)
+    //Promise.all(promises).then(loadMatches)
   }
 
-  React.useEffect(() => {
+  /*React.useEffect(() => {
     loadMatches()
-  }, [])
+  }, [])*/
 
   const [search, setSearch] = React.useState<string>('')
 
-  function filterMatches(){
-    if(!search) return matches
-    const searches = search.trim().toLowerCase().split(' ').filter(A => A)
+  function filterMatches() {
+    if (!search) return matches
+    const searches = search
+      .trim()
+      .toLowerCase()
+      .split(' ')
+      .filter((A) => A)
 
     if (searches.length) {
-      return matches?.filter(({ id, name, match: { mapInfo: { map: { name: mapName = '' } = {}, version: { v = '' } = {} } } }) => {
-        const t = `${id} ${name} ${mapName} ${v}`.toLowerCase()
-        return searches.some((s) => t.includes(s))
-      })
+      return matches?.filter(
+        ({
+          id,
+          name,
+          /*match: {
+            mapInfo: {
+              map: { name: mapName = '' } = {},
+              version: { v = '' } = {},
+            } = {},
+          } = {},*/
+        }) => {
+          const t = `${id} ${name}`.toLowerCase() // ${mapName} ${v}
+          return searches.some((s) => t.includes(s))
+        }
+      )
     }
 
     return matches
@@ -152,7 +171,7 @@ export default function MatchesRoute() {
               .map((_, i) => <MatchCardSkeleton key={i} />)}
         </Box>
       ) : (
-        <MatchTable matches={matches ? filteredMatches : null} />
+        <MatchTable matches={matches ? filteredMatches : undefined} />
       )}
     </React.Fragment>
   )

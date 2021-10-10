@@ -71,7 +71,8 @@ export class PhaserWargrooveGame extends Phaser.Game {
 
   getFrameCanvas(colorName: string, frameNames: string[]) {
     let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
-    return scene?.getFrameCanvas(colorName, frameNames)
+    if(!scene?.loaded) return
+    return scene.getFrameCanvas(colorName, frameNames)
   }
 
   getUnitFrame(match: Match, { playerId, unitClassId }: UnitData){

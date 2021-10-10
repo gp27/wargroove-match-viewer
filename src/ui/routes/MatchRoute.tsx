@@ -14,6 +14,10 @@ import { Line } from 'react-chartjs-2'
 import { PhaserWargrooveGame } from '../../phaser/phaser-wagroove-game'
 import { useLocalStorage } from '../../utils'
 import { FormControlLabel, Switch } from '@mui/material'
+import { useModal } from 'mui-modal-provider'
+import { MapEntryEditorModal, MapEntrySuggestion } from '../common/map/MapEntryEditor'
+import Chart from 'chart.js'
+import { useMapInfo } from '../context/MapFinderContext'
 
 function loadMatchData(id: string): Promise<MatchData | undefined> {
   let matchUrl = `https://firebasestorage.googleapis.com/v0/b/wargroove-match-storage.appspot.com/o/matches%2F${id}.json?alt=media`
@@ -43,7 +47,7 @@ function loadMatch(matchId: string) {
   return db.matches.get(matchId).then((imatch) => {
     if (!imatch || imatch.online) {
       return loadMatchData(matchId).then((matchData) => {
-        let match: Match
+        let match: Match | undefined
 
         if (matchData) {
           match = new Match(matchData)
@@ -70,9 +74,14 @@ function loadMatch(matchId: string) {
 export default function MatchRoute() {
   const [, params] = useRoute<{ id: string }>('/match/:id')
   const [, setLocation] = useLocation()
-  const { id: matchId } = params
+  const { id: matchId } = params || {}
 
-  const [match, setMatch] = useState<Match>()
+  if (!matchId) {
+    setLocation('/')
+    return null
+  }
+
+  const [match, setMatch] = useState<Match>()  
 
   useEffect(() => {
     loadMatch(matchId).then((match) => {
@@ -89,6 +98,8 @@ export default function MatchRoute() {
 }
 
 function MatchDashboard({ match }: { match: Match }) {
+  const { showModal } = useModal()
+
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
@@ -100,6 +111,8 @@ function MatchDashboard({ match }: { match: Match }) {
   }
 
   const [game, setGame] = useState<PhaserWargrooveGame>()
+
+  const mapInfo = useMapInfo(match)
 
   return (
     <Box
@@ -119,6 +132,10 @@ function MatchDashboard({ match }: { match: Match }) {
           height: { xs: '60%', md: '100%' } as any,
         }}
       >
+        <Box sx={{ position: 'absolute', width: '100%', right: 0 }}>
+          {mapInfo && <MapEntrySuggestion mapInfo={mapInfo} />}
+        </Box>
+
         {!isGameReady && (
           <Skeleton
             variant="rectangular"
@@ -194,7 +211,7 @@ function Charts({ match }: { match: Match }) {
           sx={{ p: 1, maxHeight: 400, minHeight: 250, height: '50%' }}
         >
           <Line
-            data={chart.data}
+            data={chart.data as Chart.ChartData}
             options={Object.assign(chart.options || {}, {
               maintainAspectRatio: false,
             })}

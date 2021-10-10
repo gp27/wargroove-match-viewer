@@ -173,7 +173,7 @@ export const mapRecords: MapRecord[] = [
         tileHash: '19_1509164971',
         tileString:
           'ssssssssssspFpsssssssbbbbpFrrrprrrpsssssbppppprppppprpppsssbpprrrrpfppFrrrppssbpprppFpMWppMprppssprpFpppppWpMpprppssprpMppfpWWWrpFrppspFrpprrppFWrrpprpssprrpfrppppprfprrpssprpprrWFpprrpprFpspprFprWWWpfppMprpsspprppMpWpppppFprpsspprpMppWMpFpprppbsspprrrFppfprrrrppbsssppprppppprpppppbsssssprrrprrrFpbbbbssssssspFpsssssssssss',
-        stateHash: '19_1509164971',
+        stateHash: '3749090847',
         stateString:
           'p_0-300g,p_1-100g,barracks.0.0.13.100.0,barracks.0.5.16.100.0,barracks.1.13.0.100.0,barracks.1.18.3.100.0,city.-1.1.10.100.0,city.-1.10.14.100.0,city.-1.14.8.100.0,city.-1.15.13.100.0,city.-1.15.2.100.0,city.-1.17.6.100.0,city.-1.3.14.100.0,city.-1.3.3.100.0,city.-1.4.8.100.0,city.-1.8.2.100.0,city.0.11.10.100.0,city.1.7.6.100.0,commander.0.3.15.100.0,commander.1.15.1.100.0,hq.0.7.13.100.0,hq.1.11.3.100.0,soldier.1.17.3.100.0,tower.0.1.7.100.0,tower.1.17.9.100.0',
         notes: 'Unit Bans: Trebuchet, Wagon, Ballista',

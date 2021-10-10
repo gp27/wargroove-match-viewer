@@ -1,45 +1,49 @@
-import * as React from "react";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import { Box, Switch, Stack } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import MapTable from "../MapTable";
-import { MapCard } from "../common/MapCard";
-import SearchField from "../common/SearchField";
-import { mapFinder } from "../../wg/map-utils";
-import { useLocalStorage } from "../../utils";
+import * as React from 'react'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import { Box, Switch, Stack } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import MapTable from '../common/map/MapTable'
+import { MapCard } from '../common/map/MapCard'
+import SearchField from '../common/generic/SearchField'
+import { useMapFinder } from '../context/MapFinderContext'
+import { useLocalStorage } from '../../utils'
 
 export default function MapsRoute() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [showCards, setShowCards] = useLocalStorage('maps_showCards', false)
+  const [search, setSearch] = React.useState<string>('')
 
-  const allMaps = mapFinder.getMaps()
+  const mapFinder = useMapFinder()
+  const allMaps = mapFinder?.getMaps()
 
-  let [maps, setMaps] = React.useState(allMaps)
+  function filterMaps() {
+    const searches = search
+      .toLowerCase()
+      .split(' ')
+      .filter((A) => A)
 
-  function filterMaps(search: string){
-    const searches = search.toLowerCase().split(' ').filter(A => A)
-
-    if(searches.length){
-      maps = allMaps.filter(({ name, author, versions }) => {
-        const vs = Object.values(versions).map(v => v.v).join(' ')
+    if (searches.length) {
+      return allMaps?.filter(({ name, author, versions }) => {
+        const vs = Object.values(versions)
+          .map((v) => v.v)
+          .join(' ')
         const t = `${name} ${author} ${vs}`.toLowerCase()
-        return searches.some(s => t.includes(s))
+        return searches.some((s) => t.includes(s))
       })
     }
-    else{
-      maps = allMaps
-    }
 
-    setMaps(maps)
+    return allMaps
   }
+
+  const maps = filterMaps()
 
   return (
     <React.Fragment>
       <Box sx={{ p: 2, display: 'flex' }}>
         <span style={{ flex: 1 }} />
-        <SearchField onChange={filterMaps} />
+        <SearchField onChange={setSearch} />
         {!isMobile && (
           <FormControlLabel
             sx={{ ml: 2 }}
@@ -53,8 +57,9 @@ export default function MapsRoute() {
           />
         )}
       </Box>
+      
 
-      {isMobile || showCards ? (
+      {maps && (isMobile || showCards ? (
         <Box
           sx={{
             display: 'flex',
@@ -70,7 +75,7 @@ export default function MapsRoute() {
         </Box>
       ) : (
         <MapTable maps={maps} />
-      )}
+      ))}
     </React.Fragment>
   )
 }

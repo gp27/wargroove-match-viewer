@@ -2,14 +2,12 @@ import * as jsondiffpatch from 'jsondiffpatch'
 import 'chart.js'
 import { ChartConfiguration, ChartDataSets } from 'chart.js'
 import { getCommanderMeta, PlayerColor, playerColors } from './match-utils'
-import { MapInfo, mapFinder } from './map-utils'
 import {
   Biome,
   Terrain,
   terrains,
   tilesFromLinear,
 } from '../phaser/phaser-wargroove-map'
-import { crc32 } from '../crc32'
 
 const diffpatcher = jsondiffpatch.create()
 
@@ -72,7 +70,7 @@ export interface UnitData {
   killedByLosing: boolean
   recruits: LuaArray<string>
   startPos: Pos
-  unitClass?: UnitClass
+  unitClass: UnitClass
 }
 
 export interface UnitClass {
@@ -137,8 +135,8 @@ export interface Entry {
   id: number
   state: State
   status: Status
-  turn?: PlayerTurn
-  moveNumber?: number
+  turn: PlayerTurn
+  moveNumber: number
 }
 
 export interface MatchMap {
@@ -146,19 +144,18 @@ export interface MatchMap {
   h: number
   tiles: Terrain[][]
   biome?: Biome
+  tileString: string
+  stateString: string
 }
 
 export class Match {
-  readonly tags: string[]
-
   private entries: Entry[]
   private turns: PlayerTurn[]
   private players: Player[]
   private map: MatchMap
-  readonly mapInfo: MapInfo
 
-  currentTurn: PlayerTurn | null = null
-  currentEntry: Entry | null = null
+  currentTurn: PlayerTurn
+  currentEntry: Entry
   isFog?: boolean
 
   /*static load(id?: string){
@@ -169,7 +166,7 @@ export class Match {
   }*/
 
   static isValid({ match_id, map, players, state, deltas }: any = {}) {
-    return match_id && map && players && state && deltas
+    return Boolean(match_id && map && players && state && deltas)
   }
 
   constructor(private matchData: MatchData) {
@@ -179,26 +176,16 @@ export class Match {
       id,
       state,
       status: generateStateStatus(state, matchData),
-    }))
+    }) as Entry)
 
     this.players = generatePlayers(this.entries, matchData)
     this.turns = generatePlayerTurns(this.entries, this.getPlayers().length)
-    this.map = generateMap(matchData)
-    this.mapInfo = generateMapInfo(matchData, states[0])
-    this.tags = this.makeTags()
+    this.map = generateMap(matchData, states[0])
     this.isFog = Boolean(matchData.fog_blocks?.length || matchData.is_fog)
 
     this.selectEntry(this.getWinners().length ? 0 : this.entries.length - 1)
 
     //console.log(this)
-  }
-
-  makeTags() {
-    let tags = [
-      `map:${this.mapInfo.tileHash}`,
-      ...this.players.map(({ commander }) => `commander:${commander}`),
-    ]
-    return tags
   }
 
   selectEntry(entryId: number) {
@@ -211,11 +198,11 @@ export class Match {
   }
 
   selectNextEntry() {
-    this.selectEntry(this.currentEntry?.id + 1)
+    this.selectEntry(this.currentEntry.id + 1)
   }
 
   selectPreviousEntry() {
-    this.selectEntry(this.currentEntry?.id - 1)
+    this.selectEntry(this.currentEntry.id - 1)
   }
 
   getCurrentEntry() {
@@ -340,22 +327,25 @@ export class Match {
             label: `P${playerId + 1} Income`,
             borderColor: color,
             pointBackgroundColor,
-          }).data.push(income)
+          }).data?.push(income)
+
           getDataSet(armyValueDataSet, i, {
             label: `P${playerId + 1} Army Value`,
             borderColor: color,
             pointBackgroundColor,
-          }).data.push(armyValue)
+          }).data?.push(armyValue)
+
           getDataSet(unitCountDataSet, i, {
             label: `P${playerId + 1} Unit Count`,
             borderColor: color,
             pointBackgroundColor,
-          }).data.push(unitCount)
+          }).data?.push(unitCount)
+          
           getDataSet(combatUnitCountDataSet, i, {
             label: `P${playerId + 1} Combat U.C.`,
             borderColor: color,
             pointBackgroundColor,
-          }).data.push(combatUnitCount)
+          }).data?.push(combatUnitCount)
         }
       )
     }
@@ -518,7 +508,7 @@ function generatePlayers(entries: Entry[], { players }: MatchData) {
     if (takenColors[color]) {
       color = (Object.keys(playerColors) as PlayerColor[]).find(
         (c) => !takenColors[c]
-      )
+      ) as PlayerColor
     }
     takenColors[color] = true
 
@@ -565,7 +555,7 @@ function getTerrainFromAbbr(code: string): Terrain {
   return terrainAbbrvs[code] || 'plains'
 }
 
-function generateMap(matchData: MatchData): MatchMap {
+function generateMap(matchData: MatchData, state: State): MatchMap {
   let {
     size: { x, y },
     tiles: tileString,
@@ -583,31 +573,9 @@ function generateMap(matchData: MatchData): MatchMap {
     h: y,
     tiles,
     biome,
-  } as Match['map']
-}
-
-function generateMapInfo(
-  {
-    map: {
-      size: { x },
-      tiles: tileString,
-    },
-  }: MatchData,
-  state: State
-): MapInfo {
-  const stateString = generateStateString(state)
-  let info: MapInfo = {
-    tileHash: `${x}_${crc32(tileString)}`,
     tileString,
-    stateString,
-    stateHash: '' + crc32(stateString),
-  }
-
-  let guess = mapFinder.guess(info)
-
-  Object.assign(info, guess)
-
-  return info
+    stateString: generateStateString(state),
+  } as Match['map']
 }
 
 function generateStateString(state: State) {
@@ -634,4 +602,5 @@ function generateStateString(state: State) {
 
 function analyzeDelta(delta: jsondiffpatch.Delta): string[] {
   if (delta.playerId) return ['end_turn']
+  return []
 }
