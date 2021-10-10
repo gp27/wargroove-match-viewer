@@ -13,7 +13,10 @@ import Link from '@mui/material/Link'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import { MapRecord, MapVersion } from '../../../wg/map-utils'
-import { Visibility, VisibilityOff } from '@mui/icons-material'
+import { Visibility, VisibilityOff, Edit, Delete } from '@mui/icons-material'
+import { useModal } from 'mui-modal-provider'
+import { ConfirmDialog } from '../generic/ConfirmDialog'
+import { db } from '../../../db'
 
 function VersionRow({
   version,
@@ -26,6 +29,16 @@ function VersionRow({
   firstCellEle?: React.ReactElement
   showBorder?: boolean
 }) {
+  const { showModal } = useModal()
+
+  function openDeleteDialog() {
+    const modal = showModal(ConfirmDialog, {
+      close: () => modal.destroy(),
+      message: 'Delete this map?',
+      onConfirm: () => db.mapEntries.delete([version.tileHash, version.stateHash].join(':')),
+    })
+  }
+
   return (
     <TableRow
       sx={
@@ -39,15 +52,15 @@ function VersionRow({
         </Typography>
       </TableCell>
       <TableCell>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Box sx={{ mr: 2 }}>
-            {version.tileHash && version.tileString ? (
-              <Visibility color="success" sx={{ verticalAlign: 'middle' }} />
-            ) : (
-              <VisibilityOff color="warning" sx={{ verticalAlign: 'middle' }} />
-            )}
-          </Box>
-          {version.v}
+        <Box sx={{display: 'flex', justifyContent: 'space-between'}}>
+        <Box sx={{ mr: 2, }}>
+          {version.tileHash && version.tileString ? (
+            <Visibility color="success" />
+          ) : (
+            <VisibilityOff color="warning" />
+          )}
+        </Box>
+        {version.v}
         </Box>
       </TableCell>
       <TableCell>
@@ -63,6 +76,12 @@ function VersionRow({
             style={{ maxHeight: '100%', maxWidth: '100%' }}
           />
         </Link>
+      </TableCell>
+      <TableCell>
+        {version.isLocal && (
+            <IconButton onClick={openDeleteDialog}>
+              <Delete />
+            </IconButton>)}
       </TableCell>
     </TableRow>
   )
@@ -125,6 +144,7 @@ export default function MapTable({ maps }: { maps: MapRecord[] }) {
             <TableCell>Info</TableCell>
             <TableCell>Author</TableCell>
             <TableCell>Image</TableCell>
+            <TableCell>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>

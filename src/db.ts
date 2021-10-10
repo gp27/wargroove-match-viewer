@@ -62,7 +62,7 @@ db.matches.hook('reading', (imatch) => {
     }
     
     imatch.match = new Match(imatch.data)
-    console.log(imatch.match)
+    //console.log(imatch.match)
   
   } catch (e) {
     console.error(e)

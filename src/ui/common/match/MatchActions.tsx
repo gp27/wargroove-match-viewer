@@ -13,6 +13,7 @@ import {
   DialogProps,
   DialogTitle,
 } from '@mui/material'
+import { ConfirmDialog } from '../generic/ConfirmDialog'
 
 export default function MatchActions({ imatch }: { imatch: IMatch }) {
   const { enqueueSnackbar } = useSnackbar()
@@ -43,37 +44,12 @@ export default function MatchActions({ imatch }: { imatch: IMatch }) {
     enqueueSnackbar('Link Copied')
   }
 
-  function deleteMatch() {
-    return db.matches.delete(id)
-  }
-
-  function DeleteDialog({
-    close,
-    ...props
-  }: { close: Function } & DialogProps) {
-    return (
-      <Dialog {...props}>
-        <DialogTitle>Delete this match?</DialogTitle>
-        <DialogActions>
-          <Button onClick={() => close()} autoFocus>
-            Cancel
-          </Button>
-          <Button
-            color="primary"
-            onClick={() => {
-              deleteMatch()
-              close()
-            }}
-          >
-            Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
-    )
-  }
-
   function openDeleteDialog() {
-    const modal = showModal(DeleteDialog, { close: () => modal.destroy() })
+    const modal = showModal(ConfirmDialog, {
+      close: () => modal.destroy(),
+      message: 'Delete this match?',
+      onConfirm: () => db.matches.delete(id)
+    })
   }
 
   return (

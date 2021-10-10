@@ -46,25 +46,8 @@ export class MapFinder {
 
   static INITIAL_VERSION = '[Initial version]'
 
-  private static init() {
-    return db.mapEntries
-      .toCollection()
-      .toArray()
-      .then((ientries) => {
-        const mapFinder = new MapFinder(mapRecords)
-        mapFinder.mergeEntries(ientries.map((i) => i.entry))
-        console.log(mapFinder)
-        return mapFinder
-      })
-  }
-
-  private static INSTANCE: Promise<MapFinder> = MapFinder.init()
-
-  static getInstance() {
-    return MapFinder.INSTANCE
-  }
-
   maps: MapRecord[]
+  entries: MapEntry[]
   byTileHash: {
     [tileHash: string]: [map: MapRecord, tileString?: string]
   }
@@ -150,6 +133,10 @@ export class MapFinder {
     }
   }
 
+  /*private findEntry(tileHash?: string, stateHash?: string): MapGuess | undefined {
+    const e = this.entries.find(e => e.tileHash == tileHash && e.stateHash == stateHash)
+  }*/
+
   private findSimiliar(tileString?: string, v?: string, code?: string): MapGuess | undefined {
     if (!tileString) return
 
@@ -168,7 +155,7 @@ export class MapFinder {
     if (minMap && minDist < tileString.length * 0.1) {
       return {
         map: minMap,
-        version: Object.values(minMap.versions).find((ver) => ver.v == v || ver.code == code),
+        version: Object.values(minMap.versions).find((ver) => ver.v == v),
       }
     }
   }
@@ -250,7 +237,7 @@ export class MapFinder {
 
     map = JSON.parse(JSON.stringify(map))
 
-    return [map, map.versions[code]]
+    return [map, map.versions[key]]
   }
 
   private mergeEntry(entry: MapEntry) {
@@ -258,7 +245,17 @@ export class MapFinder {
     let { map, version } = this.guess(entry) || {}
 
     if (version) {
-      Object.assign(version, eVersion)
+      let isOutdated = true
+      Object.keys(eVersion).forEach(key => {
+        if(!(key in version) && key != 'local'){
+          version[key] = eVersion[key]
+          isOutdated = false
+        }
+      })
+
+      if(!isOutdated && 'isLocal' in eVersion){
+        version.isLocal = eVersion.isLocal
+      }
     }
 
     if (!map) {
@@ -275,8 +272,10 @@ export class MapFinder {
   }
 
   mergeEntries(entries: MapEntry[]) {
-    entries.forEach((e) => this.mergeEntry(e))
-    this.makeIndexes()
+    entries.forEach((e) => {
+      let map = this.mergeEntry(e)
+      this.updateIndex(map)
+    })
   }
 
   addEntry(entry: MapEntry) {

@@ -167,11 +167,11 @@ export class PhaserWargrooveScene extends Phaser.Scene {
   }
 
   makeUi() {
-    let board = (this.ui.board = new PhaserWargrooveBoard(this))
-    if (this.match) {
+    this.ui.board = new PhaserWargrooveBoard(this)
+    /*if (this.match) {
       board.setMap(this.match.getMap())
       this.reloadMatchEntry()
-    }
+    }*/
   }
 
   loadMatch(match: Match) {

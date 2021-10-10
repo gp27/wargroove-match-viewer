@@ -17,6 +17,10 @@ export function useLocalStorage<T>(propName: string, initialVal?: T) {
     if (val !== undefined) {
       initialVal = JSON.parse(val)
     }
+    else if(initialVal !== undefined) {
+      localStorage[propName] = JSON.stringify(initialVal)
+    }
+    
   } catch (e) {}
 
   let [val, setVal] = useState(initialVal)

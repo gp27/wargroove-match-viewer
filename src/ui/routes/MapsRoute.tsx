@@ -13,39 +13,37 @@ export default function MapsRoute() {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'))
   const [showCards, setShowCards] = useLocalStorage('maps_showCards', false)
+  const [search, setSearch] = React.useState<string>('')
 
   const mapFinder = useMapFinder()
-
   const allMaps = mapFinder?.getMaps()
 
-  let [maps, setMaps] = React.useState(allMaps)
-
-  function filterMaps(search: string) {
+  function filterMaps() {
     const searches = search
       .toLowerCase()
       .split(' ')
       .filter((A) => A)
 
     if (searches.length) {
-      maps = allMaps?.filter(({ name, author, versions }) => {
+      return allMaps?.filter(({ name, author, versions }) => {
         const vs = Object.values(versions)
           .map((v) => v.v)
           .join(' ')
         const t = `${name} ${author} ${vs}`.toLowerCase()
         return searches.some((s) => t.includes(s))
       })
-    } else {
-      maps = allMaps
     }
 
-    setMaps(maps)
+    return allMaps
   }
+
+  const maps = filterMaps()
 
   return (
     <React.Fragment>
       <Box sx={{ p: 2, display: 'flex' }}>
         <span style={{ flex: 1 }} />
-        <SearchField onChange={filterMaps} />
+        <SearchField onChange={setSearch} />
         {!isMobile && (
           <FormControlLabel
             sx={{ ml: 2 }}

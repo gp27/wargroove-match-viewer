@@ -20,16 +20,11 @@ export function MapFinderProvider(props: React.PropsWithChildren<any>) {
 
   useEffect(() => {
     if(ientries){
-      if(!mapFinder){
-        mapFinder = new MapFinder(mapRecords)
-        mapFinder.mergeEntries(ientries.map((i) => i.entry))
-        setMapFinder(mapFinder)
-      }
+      mapFinder = new MapFinder(mapRecords)
+      mapFinder.mergeEntries(ientries.map((i) => i.entry))
+      setMapFinder(mapFinder)
+      console.log(mapFinder)
     }
-
-      MapFinder.getInstance().then(mapFinder => {
-        setMapFinder(mapFinder)
-      })
   }, [ientries])
   //console.log(mapFinder)
   return <MapFinderContext.Provider {...props} value={mapFinder} />
