@@ -171,7 +171,7 @@ export class MapFinder {
   }
 
   searchByName(search: string) {
-    const [map, dist] = this.searchListByName(search)[0]
+    const [map, dist] = this.searchListByName(search)[0] || []
     if (dist < 2) return map
   }
 
