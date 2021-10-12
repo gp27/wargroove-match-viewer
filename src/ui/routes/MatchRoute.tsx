@@ -13,9 +13,13 @@ import { Match, MatchData } from '../../wg/match'
 import { Line } from 'react-chartjs-2'
 import { PhaserWargrooveGame } from '../../phaser/phaser-wagroove-game'
 import { useLocalStorage } from '../../utils'
-import { FormControlLabel, Switch } from '@mui/material'
+import {
+  FormControlLabel,
+  Switch,
+  ToggleButtonGroup,
+  ToggleButton } from '@mui/material'
 import { useModal } from 'mui-modal-provider'
-import { MapEntryEditorModal, MapEntrySuggestion } from '../common/map/MapEntryEditor'
+import { MapEntrySuggestion } from '../common/map/MapEntryEditor'
 import Chart from 'chart.js'
 import { useMapInfo } from '../context/MapFinderContext'
 
@@ -98,8 +102,6 @@ export default function MatchRoute() {
 }
 
 function MatchDashboard({ match }: { match: Match }) {
-  const { showModal } = useModal()
-
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
@@ -172,9 +174,7 @@ function MatchDashboard({ match }: { match: Match }) {
           <PlayersUnitList match={match} game={game} />
         </Box>
 
-        <Box sx={{ p: 1 }}>
-          <Charts match={match} />
-        </Box>
+        <Charts match={match} />
       </Box>
     </Box>
   )
@@ -185,25 +185,22 @@ function MatchSkeleton() {
 }
 
 function Charts({ match }: { match: Match }) {
-  const [showTurnEndCharts, setsShowTurnEndCharts] = useLocalStorage(
-    'match_showTurnEndCharts',
-    false
-  )
+  const [chartType, setChartsType] = useState<'average'|'turn_end'|'all_moves'>('average')
 
-  let charts = showTurnEndCharts ? match.getTurnEndCharts() : match.getCharts()
+  let charts = chartType == "average" ? match.getAverageCharts() : chartType == 'turn_end' ? match.getTurnEndCharts() : match.getCharts()
+  console.log(charts)
 
   return (
-    <React.Fragment>
-      <FormControlLabel
-        sx={{ ml: 2 }}
-        control={
-          <Switch
-            checked={showTurnEndCharts}
-            onChange={() => setsShowTurnEndCharts(!showTurnEndCharts)}
-          />
-        }
-        label="Show Turn End Charts"
-      />
+    <Box sx={{ p: 1, textAlign: 'center' }}>
+      <ToggleButtonGroup
+      value={chartType}
+        exclusive
+        onChange={(ev, value) => setChartsType(value)}
+      >
+        <ToggleButton value="average">Turn Average</ToggleButton>
+        <ToggleButton value="turn_end">Turn End</ToggleButton>
+        <ToggleButton value="all_moves">All Moves</ToggleButton>
+      </ToggleButtonGroup>
 
       {charts.map((chart, index) => (
         <Box
@@ -218,6 +215,6 @@ function Charts({ match }: { match: Match }) {
           />
         </Box>
       ))}
-    </React.Fragment>
+    </Box>
   )
 }

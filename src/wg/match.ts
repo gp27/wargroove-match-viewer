@@ -283,14 +283,6 @@ export class Match {
   getCharts(
     entryFilter: (entry: Entry) => boolean = () => true
   ): ChartConfiguration[] {
-    function getDataSet(
-      datasets: ChartDataSets[],
-      index: number,
-      dataset: ChartDataSets = {}
-    ): ChartDataSets {
-      return (datasets[index] =
-        datasets[index] || Object.assign({ data: [] }, dataset))
-    }
 
     let labels: string[] = []
 
@@ -407,6 +399,30 @@ export class Match {
         },
       },
     ]
+  }
+
+  getAverageCharts(){
+    return this.getTurnEndCharts().map(chart => {
+      let { data: { datasets } } = chart
+
+      let newDSet = datasets.map(({ data, label, borderColor }) =>{
+        const n = datasets.length
+
+        return {
+          data: data.map((v, i, a) => {
+            if((i % n) != 0 || i + n > a.length) return
+            return (
+              a.slice(i, i + n).reduce((a, b) => a + b, 0) / n
+            )
+          }).filter(A => A !== undefined),
+          label: label + ' Avg',
+          borderColor
+        }
+
+      })
+
+      return { data: { labels: newDSet[0].data.map((_, i) => `Turn ${i+1}`), datasets: newDSet } }
+    })
   }
 
   getTurnEndCharts() {
@@ -600,7 +616,24 @@ function generateStateString(state: State) {
   return g.concat(u).join(',')
 }
 
+interface DeltaInfo {
+  end_turn?: boolean
+  spent_gold?: number
+  lost_gold?: number
+  new_unit?: string
+}
+
 function analyzeDelta(delta: jsondiffpatch.Delta): string[] {
   if (delta.playerId) return ['end_turn']
   return []
+}
+
+
+function getDataSet(
+  datasets: ChartDataSets[],
+  index: number,
+  dataset: ChartDataSets = {}
+): ChartDataSets {
+  return (datasets[index] =
+    datasets[index] || Object.assign({ data: [] }, dataset))
 }
