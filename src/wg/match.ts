@@ -172,11 +172,14 @@ export class Match {
   constructor(private matchData: MatchData) {
     let states = generateStates(matchData)
 
-    this.entries = states.map((state, id) => ({
-      id,
-      state,
-      status: generateStateStatus(state, matchData),
-    }) as Entry)
+    this.entries = states.map(
+      (state, id) =>
+        ({
+          id,
+          state,
+          status: generateStateStatus(state, matchData),
+        } as Entry)
+    )
 
     this.players = generatePlayers(this.entries, matchData)
     this.turns = generatePlayerTurns(this.entries, this.getPlayers().length)
@@ -283,7 +286,6 @@ export class Match {
   getCharts(
     entryFilter: (entry: Entry) => boolean = () => true
   ): ChartConfiguration[] {
-
     let labels: string[] = []
 
     let incomeDataSet: ChartDataSets[] = []
@@ -309,7 +311,10 @@ export class Match {
 
       Object.entries(status).forEach(
         (
-          [playerIdStr, { income, armyValue, unitCount, combatUnitCount }],
+          [
+            playerIdStr,
+            { gold, income, armyValue, unitCount, combatUnitCount },
+          ],
           i
         ) => {
           let playerId = +playerIdStr
@@ -321,18 +326,25 @@ export class Match {
             pointBackgroundColor,
           }).data?.push(income)
 
-          getDataSet(armyValueDataSet, i, {
+          getDataSet(armyValueDataSet, i*2, {
             label: `P${playerId + 1} Army Value`,
             borderColor: color,
             pointBackgroundColor,
           }).data?.push(armyValue)
+
+          getDataSet(armyValueDataSet, i * 2 + 1, {
+            label: `P${playerId + 1} Army Value + Gold`,
+            borderDash: [5],
+            borderColor: color,
+            pointBackgroundColor,
+          }).data?.push(armyValue + gold)
 
           getDataSet(unitCountDataSet, i, {
             label: `P${playerId + 1} Unit Count`,
             borderColor: color,
             pointBackgroundColor,
           }).data?.push(unitCount)
-          
+
           getDataSet(combatUnitCountDataSet, i, {
             label: `P${playerId + 1} Combat U.C.`,
             borderColor: color,
@@ -401,33 +413,47 @@ export class Match {
     ]
   }
 
-  getAverageCharts(){
-    return this.getTurnEndCharts().map(chart => {
-      let { data: { datasets } } = chart
-
-      let newDSet = datasets.map(({ data, label, borderColor }) =>{
-        const n = datasets.length
-
-        return {
-          data: data.map((v, i, a) => {
-            if((i % n) != 0 || i + n > a.length) return
-            return (
-              a.slice(i, i + n).reduce((a, b) => a + b, 0) / n
-            )
-          }).filter(A => A !== undefined),
-          label: label + ' Avg',
-          borderColor
-        }
-
-      })
-
-      return { data: { labels: newDSet[0].data.map((_, i) => `Turn ${i+1}`), datasets: newDSet } }
+  getTurnEndCharts() {
+    let charts = this.getCharts((entry) => {
+      return entry.turn.entries.slice(-1)[0] == entry
     })
+
+    charts.forEach(({ data }) => {
+      data.labels = data.labels.map(str => String(str).match(/^(T[0-9]+-P[0-9]+)/)?.[1])
+    })
+
+    return charts
   }
 
-  getTurnEndCharts() {
-    return this.getCharts((entry) => {
-      return entry.turn.entries.slice(-1)[0] == entry
+  getAverageCharts() {
+    const n = Object.keys(this.players).length
+
+    return this.getTurnEndCharts().map((chart, chartIndex) => {
+      let {
+        data: { datasets },
+      } = chart
+
+      let newDSet = datasets.map(({ data, label, borderColor }, i) => {
+
+        return {
+          data: data
+            .map((v, i, a) => {
+              if (i % n != 0 || i + n > a.length) return
+              return a.slice(i, i + n).reduce((a, b) => a + b, 0) / n
+            })
+            .filter((A) => A !== undefined),
+          label: label + ' Avg',
+          borderColor,
+          borderDash: chartIndex == 1 && (i % 2) == 1 ? [5]: undefined 
+        }
+      })
+
+      return {
+        data: {
+          labels: newDSet[0].data.map((_, i) => `Turn ${i + 1}`),
+          datasets: newDSet,
+        },
+      }
     })
   }
 }

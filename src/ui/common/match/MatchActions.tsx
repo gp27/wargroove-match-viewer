@@ -5,14 +5,8 @@ import { useSnackbar } from 'notistack'
 import { useModal } from 'mui-modal-provider'
 import { useLocation } from 'wouter'
 
-import { Close, Download, Link, Launch } from '@mui/icons-material'
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  DialogProps,
-  DialogTitle,
-} from '@mui/material'
+import { Close, Download, Link, Launch, CloudUpload } from '@mui/icons-material'
+
 import { ConfirmDialog } from '../generic/ConfirmDialog'
 
 export default function MatchActions({ imatch }: { imatch: IMatch }) {
@@ -20,10 +14,27 @@ export default function MatchActions({ imatch }: { imatch: IMatch }) {
   const { showModal } = useModal()
   const [, setLocation] = useLocation()
 
-  let { id = '', online, data, name } = imatch
+  let { id = '', online, data, name, match } = imatch
 
   function openMatch() {
     setLocation('/match/' + id)
+  }
+
+  function upload(){
+    if(!match.getWinners().length){
+      enqueueSnackbar('Only completed local matches can be migrated to the cloud')
+      return
+    }
+
+    fetch('https://worker.wgroove.tk/match_log', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).then(res => {
+      if(res.status == 200){
+        db.matches.update(imatch.id, { online: true })
+      }
+    })
   }
 
   function download() {
@@ -63,9 +74,14 @@ export default function MatchActions({ imatch }: { imatch: IMatch }) {
           <Link />
         </IconButton>
       ) : (
-        <IconButton onClick={download}>
-          <Download />
-        </IconButton>
+        <>
+          <IconButton onClick={download}>
+            <Download />
+          </IconButton>
+          <IconButton onClick={upload}>
+            <CloudUpload />
+          </IconButton>
+        </>
       )}
 
       <IconButton onClick={openDeleteDialog}>

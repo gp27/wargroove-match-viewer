@@ -5,7 +5,7 @@ import CardContent from '@mui/material/CardContent'
 import CardActions from '@mui/material/CardActions'
 import TextField from '@mui/material/TextField'
 import IconButton from '@mui/material/IconButton'
-import { CloudDownload, InsertDriveFile, Map } from '@mui/icons-material'
+import { Cloud, InsertDriveFile, Map } from '@mui/icons-material'
 import Skeleton from '@mui/material/Skeleton'
 
 import Typography from '@mui/material/Typography'
@@ -72,7 +72,7 @@ export default function MatchCard({ imatch }: { imatch: IMatch }) {
             {id}/{online ? 'Online' : 'Local'}
           </Typography>
           <IconButton size="small">
-            {online ? <CloudDownload /> : <InsertDriveFile />}
+            {online ? <Cloud /> : <InsertDriveFile />}
           </IconButton>
         </Box>
         <Typography variant="caption" component="p">

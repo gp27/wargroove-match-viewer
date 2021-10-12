@@ -27,10 +27,12 @@ function loadMatchData(id: string): Promise<MatchData | undefined> {
   let matchUrl = `https://firebasestorage.googleapis.com/v0/b/wargroove-match-storage.appspot.com/o/matches%2F${id}.json?alt=media`
 
   return fetch(matchUrl).then((res) => {
+    if(res.status != 200) return null
+
     return res
       .json()
       .then((data) => {
-        return Match.isValid(data) ? data : null
+        return Match.isValid(data) ? data : undefined
       })
       .catch((err) => undefined)
   })
@@ -80,17 +82,17 @@ export default function MatchRoute() {
   const [, setLocation] = useLocation()
   const { id: matchId } = params || {}
 
-  if (!matchId) {
-    setLocation('/')
-    return null
-  }
-
   const [match, setMatch] = useState<Match>()  
 
   useEffect(() => {
+    if (!matchId) {
+      setLocation('/', { replace: true })
+      return null
+    }
+
     loadMatch(matchId).then((match) => {
       if (match) setMatch(match)
-      else setLocation('/')
+      else setLocation('/', { replace: true })
     })
   }, [matchId])
 

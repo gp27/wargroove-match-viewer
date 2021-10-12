@@ -102,8 +102,6 @@ function AppContent() {
     setOpen(!open)
   }
 
-  const [match, setMatch] = useState<Match>()
-  const [game, setGame] = useState<PhaserWargrooveGame>()
   const [location, setLocation] = useLocation()
 
   function navigate(url: string) {

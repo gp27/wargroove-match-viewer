@@ -9,7 +9,7 @@ import TableRow from '@mui/material/TableRow'
 import Paper from '@mui/material/Paper'
 import Box from '@mui/material/Box'
 import TextField from '@mui/material/TextField'
-import { CloudDownload, InsertDriveFile, Map } from '@mui/icons-material'
+import { Cloud, InsertDriveFile, Map } from '@mui/icons-material'
 
 import { IMatch, db } from '../../../db'
 import PlayerChips from '../PlayerChips'
@@ -57,7 +57,7 @@ function MatchRow({ imatch }: { imatch: IMatch }) {
     <TableRow>
       <TableCell>
         <IconButton>
-          {online ? <CloudDownload /> : <InsertDriveFile />}
+          {online ? <Cloud /> : <InsertDriveFile />}
         </IconButton>
         {id}/{online ? 'Online' : 'Local'}
       </TableCell>
