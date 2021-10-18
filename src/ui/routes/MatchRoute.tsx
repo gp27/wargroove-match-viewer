@@ -26,7 +26,7 @@ import { useMapInfo } from '../context/MapFinderContext'
 function loadMatchData(id: string): Promise<MatchData | undefined> {
   let matchUrl = `https://firebasestorage.googleapis.com/v0/b/wargroove-match-storage.appspot.com/o/matches%2F${id}.json?alt=media`
 
-  return fetch(matchUrl).then((res) => {
+  return fetch(matchUrl, { cache: 'no-cache' }).then((res) => {
     if(res.status != 200) return null
 
     return res
@@ -172,6 +172,7 @@ function MatchDashboard({ match }: { match: Match }) {
         }}
       >
         <Box sx={{ flexGrow: 1 }}>
+          <Box>{match.getCurrentEntry().actionLog?.action}</Box>
           <PlayerStatusTable match={match} />
           <PlayersUnitList match={match} game={game} />
         </Box>
@@ -190,7 +191,7 @@ function Charts({ match }: { match: Match }) {
   const [chartType, setChartsType] = useState<'average'|'turn_end'|'all_moves'>('average')
 
   let charts = chartType == "average" ? match.getAverageCharts() : chartType == 'turn_end' ? match.getTurnEndCharts() : match.getCharts()
-  console.log(charts)
+  //console.log(charts)
 
   return (
     <Box sx={{ p: 1, textAlign: 'center' }}>

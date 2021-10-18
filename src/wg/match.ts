@@ -137,6 +137,7 @@ export interface Entry {
   status: Status
   turn: PlayerTurn
   moveNumber: number
+  actionLog?: ActionLog
 }
 
 export interface MatchMap {
@@ -170,6 +171,7 @@ export class Match {
   }
 
   constructor(private matchData: MatchData) {
+    //console.profile(matchData.match_id)
     let states = generateStates(matchData)
 
     this.entries = states.map(
@@ -178,6 +180,7 @@ export class Match {
           id,
           state,
           status: generateStateStatus(state, matchData),
+          actionLog: analyzeDelta(matchData.deltas[id-1], states[id-1], state)
         } as Entry)
     )
 
@@ -187,7 +190,8 @@ export class Match {
     this.isFog = Boolean(matchData.fog_blocks?.length || matchData.is_fog)
 
     this.selectEntry(this.getWinners().length ? 0 : this.entries.length - 1)
-
+    //new MatchHistory(this)
+    //console.profileEnd(matchData.match_id)
     //console.log(this)
   }
 
@@ -326,7 +330,7 @@ export class Match {
             pointBackgroundColor,
           }).data?.push(income)
 
-          getDataSet(armyValueDataSet, i*2, {
+          getDataSet(armyValueDataSet, i * 2, {
             label: `P${playerId + 1} Army Value`,
             borderColor: color,
             pointBackgroundColor,
@@ -419,7 +423,9 @@ export class Match {
     })
 
     charts.forEach(({ data }) => {
-      data.labels = data.labels.map(str => String(str).match(/^(T[0-9]+-P[0-9]+)/)?.[1])
+      data.labels = data.labels.map(
+        (str) => String(str).match(/^(T[0-9]+-P[0-9]+)/)?.[1]
+      )
     })
 
     return charts
@@ -434,7 +440,6 @@ export class Match {
       } = chart
 
       let newDSet = datasets.map(({ data, label, borderColor }, i) => {
-
         return {
           data: data
             .map((v, i, a) => {
@@ -444,7 +449,7 @@ export class Match {
             .filter((A) => A !== undefined),
           label: label + ' Avg',
           borderColor,
-          borderDash: chartIndex == 1 && (i % 2) == 1 ? [5]: undefined 
+          borderDash: chartIndex == 1 && i % 2 == 1 ? [5] : undefined,
         }
       })
 
@@ -642,18 +647,334 @@ function generateStateString(state: State) {
   return g.concat(u).join(',')
 }
 
-interface DeltaInfo {
-  end_turn?: boolean
-  spent_gold?: number
-  lost_gold?: number
-  new_unit?: string
+interface ActionLog {
+  action:
+    | 'match_start'
+    | 'end_turn'
+    | 'build'
+    | 'capture'
+    | 'attack'
+    | 'kill'
+    | 'suicide'
+    | 'decap'
+    | 'groove'
+    | 'reinforce'
+    | 'wait'
+    | 'move'
+    | 'heal'
+    | 'hex'
+    | 'steal'
+    | 'heist'
+    | 'bypass'
+    | 'deposit'
+    | 'load'
+    | 'unload'
+    | 'reload'
+    | 'reposition'
+    | 'explode'
+    | 'state_change'
+    | 'other'
+  unit?: UnitData
+  otherUnits?: UnitData[]
+  moved?: boolean
+  flags?: ActionFlags
+
+  spentGold?: number
+  lostGold?: number
 }
 
-function analyzeDelta(delta: jsondiffpatch.Delta): string[] {
-  if (delta.playerId) return ['end_turn']
-  return []
+interface ActionFlags {
+  died?: UnitData[]
+  spawned?: UnitData[]
+  grooved?: UnitData[]
+  posChanged?: UnitData[]
+  hadTurn?: UnitData[]
+  damaged?: UnitData[]
+  healed?: UnitData[]
+  captured?: UnitData[]
+  decapped?: UnitData[]
+  load?: UnitData[]
+  loaded?: UnitData[]
+  unload?: UnitData[]
+  unloaded?: UnitData[]
+  reloaded?: UnitData[]
+
+  spent?: number
+  gained?: number
+  stole?: number
 }
 
+function analyzeDelta(
+  delta: jsondiffpatch.Delta | undefined,
+  state: State,
+  nextState: State
+): ActionLog | undefined {
+  if(!delta) return { action: 'match_start', otherUnits: Object.values(nextState.units) }
+
+  const { playerId, turnNumber, units } = state
+
+  if (delta.playerId) return { action: 'end_turn', otherUnits: Object.keys(delta.units || {}).map(uid => state.units[uid]).filter(A => A) }
+
+  let unitsDelta = Object.entries(delta.units || {})
+
+  const flags: ActionFlags = {}
+
+  const setFlag = <
+    T extends { [key in K]: UnitData[] },
+    K extends keyof ActionFlags
+  >(
+    flag: K,
+    value: UnitData
+  ) => {
+    ;(flags[flag] = (flags[flag] as T[K]) || ([] as T[K])).push(value)
+  }
+
+  Object.entries(delta.gold || {}).forEach(([pid, d]) => {
+    let isCurrentPlayer = pid == 'p_' + playerId
+    let [newGold, oldGold] = getDeltaVal(d)
+    let dGold = newGold - oldGold
+    if(dGold < 0){
+      if(isCurrentPlayer) {
+        flags.spent = -dGold
+      }
+      else {
+        flags.stole = -dGold
+      }
+    }
+    if(dGold > 0 && isCurrentPlayer) {
+      flags.gained = dGold
+    }
+  })
+
+  unitsDelta.forEach(([uid, d]) => {
+    const unit = nextState.units[uid] || units[uid]
+    setDeltaUnitFlags([unit, d], setFlag)
+  })
+
+  const withFlags = (log: ActionLog) => Object.assign(log, { flags })
+
+  //console.log(flags)
+
+  if (flags.grooved) {
+    return withFlags({
+      action: 'groove',
+      unit: flags.grooved[0]
+    })
+  }
+
+  if (flags.died && !flags.hadTurn) {
+    let u = units['u_' + flags.died?.[0].id] as UnitData
+    if (u.health <= 35 && u.playerId != playerId) {
+      let sedgeWhoGrooved = Object.values(nextState.units).find(
+        ({ pos, unitClassId }) =>
+          unitClassId == 'commander_sedge' &&
+          Math.abs(pos.x - u.pos.x) + Math.abs(pos.y - u.pos.y) == 1
+      )
+      if (sedgeWhoGrooved) {
+        return withFlags({ action: 'groove', unit: sedgeWhoGrooved })
+      }
+    }
+  }
+
+  if (unitsDelta.length == 1) {
+    if(flags.gained && flags.hadTurn?.[0].unitClassId == 'thief'){
+      return withFlags({ action: 'deposit', unit: flags.hadTurn[0] })
+    }
+  } else if (unitsDelta.length == 2) {
+    if (flags.captured && flags.captured[0].garrisonClassId == 'garrison') {
+      let unit = flags.hadTurn?.find((u) => u.id != flags.captured[0].id)
+      return withFlags({
+        action: 'capture',
+        unit,
+        otherUnits: [flags.captured[0]]
+      })
+    }
+
+    if (flags.spawned) {
+      let builder = flags.hadTurn?.find((u) => u.garrisonClassId)
+      if(builder){
+        return withFlags({
+          action: 'build',
+          unit: flags.spawned[0],
+          otherUnits: [builder],
+          spentGold: flags.spent
+        })
+      }
+    }
+
+    if (
+      flags.stole &&
+      flags.hadTurn?.[0].unitClassId == 'thief_with_gold'
+    ) {
+
+      return withFlags({
+        action: flags.decapped ? 'steal' : 'heist',
+        unit: flags.hadTurn[0],
+        otherUnits: flags.decapped
+        // amount
+      })
+    }
+
+    if(flags.loaded) {
+      return withFlags({ action: 'load', unit: flags.loaded[0], otherUnits: flags.load })
+    }
+  }
+
+  if (
+    flags.spent &&
+    flags.damaged?.[0].garrisonClassId &&
+    flags.healed?.[0].playerId == flags.damaged?.[0].playerId
+  ) {
+    return withFlags({
+      action: 'reinforce',
+      unit: flags.healed[0],
+      otherUnits: flags.damaged
+    })
+  }
+
+  if(flags.decapped) {
+    return withFlags({ action: 'decap', unit: flags.hadTurn?.[0], otherUnits: flags.decapped })
+  }
+
+  if(flags.unloaded){
+    return withFlags({ action: 'unload', unit: flags.unload?.[0], otherUnits: flags.unloaded })
+  }
+
+  if(flags.hadTurn?.length == 1 && flags.hadTurn[0].playerId == playerId){
+    let unit = flags.hadTurn[0]
+
+    if(flags.spent){
+      let classId = unit.unitClassId
+      if(classId == 'witch'){
+        return withFlags({ action: 'hex', unit, otherUnits: (flags.damaged || []).concat(flags.died || []) })
+      }
+      if(classId == 'mage'){
+        return withFlags({ action: 'heal', unit, otherUnits: flags.healed })
+      }
+    }
+
+    if(flags.died) {
+      return withFlags({ action: 'kill', unit, otherUnits: flags.died })
+    }
+
+    if(flags.damaged){
+      return withFlags({ action: 'attack', unit, otherUnits: flags.damaged.filter(a => a.playerId != playerId) })
+    }
+  }
+
+  if (flags.died?.length == 1 && flags.died[0].playerId == playerId) {
+    return withFlags({ action: 'suicide', unit: flags.died[0], otherUnits: flags.damaged })
+  }
+
+  if(flags.posChanged) {
+    let isVine = flags.posChanged[0].unitClassId == 'vine'
+
+    return withFlags({ action: isVine ? 'reposition' : 'move', unit: flags.posChanged[0] })
+  }
+
+  if(flags.reloaded){
+    return withFlags({ action: 'reload', unit: flags.reloaded[0] })
+  }
+
+  if(flags.hadTurn){
+    return withFlags({ action: 'wait', unit: flags.hadTurn[0] })
+  }
+}
+
+function setDeltaUnitFlags(
+  [unit, d]: [UnitData, jsondiffpatch.Delta],
+  setFlag: (flag: keyof ActionFlags, value: UnitData) => void
+) {
+  if(!unit) return
+  let [u, , removedUnit] = getDeltaVal(d)
+
+  if (removedUnit) return setFlag('died', unit)
+  if (u) return setFlag('spawned', unit)
+
+  let [newGroove, oldGroove] = getDeltaVal(d.grooveCharge)
+  if (newGroove < oldGroove) {
+    setFlag('grooved', unit)
+  }
+
+  if (d.pos) {
+    setFlag('posChanged', unit)
+  }
+
+  let [hadTurn] = getDeltaVal(d.hadTurn)
+  if (hadTurn) {
+    setFlag('hadTurn', unit)
+  }
+
+  let [newHealth, prevHealth] = getDeltaVal(d.health)
+  if (newHealth < prevHealth) {
+    setFlag('damaged', unit)
+  }
+  if (newHealth > prevHealth) {
+    setFlag('healed', unit)
+  }
+
+  let [newPlayerId, oldPlayerId] = getDeltaVal(d.playerId)
+  if (oldPlayerId === -1) {
+    setFlag('captured', unit)
+  }
+  if (newPlayerId === -1) {
+    setFlag('decapped', unit)
+  }
+
+  let [newInTransport, oldInTransport] = getDeltaVal(d.inTransport)
+  if (newInTransport === true) {
+    setFlag('loaded', unit)
+  }
+  if (newInTransport === false) {
+    setFlag('unloaded', unit)
+  }
+
+  // loaded units
+  //let [newLoadedUnits, oldLoadedUnits] = getDeltaVal(d.loadedUnits)
+
+  getDeltaArrayVal(d.state).forEach(([i, [newV, oldV, removed]]) => {
+    let { key } = unit.state[i]
+    if (key == 'ammo') {
+      let [newVal, oldVal] = getDeltaVal(newV?.value)
+      if (+newVal > +oldVal) {
+        setFlag('reloaded', unit)
+      }
+    }
+  })
+}
+
+function getDeltaVal(d: jsondiffpatch.Delta): [any, any, boolean] {
+  if (d instanceof Array) {
+    let [oldV, newV, deleted] = d
+    if (d.length == 3 && deleted === 0) return [undefined, oldV, true]
+    else if (d.length == 1) return [oldV, undefined, false]
+    else return [newV, oldV, false]
+  }
+
+  return [undefined, undefined, false]
+}
+
+function getDeltaArrayVal(d: jsondiffpatch.Delta){
+  let changes: [string, [any, any, boolean]][] = []
+
+  if (d?._t == 'a') {
+    for (let i in d) {
+      if (i == '_t') continue
+      if (i.startsWith('_')) {
+        i = i.substr(1)
+        let [oldV, newIndex, op] = d[i]
+        changes.push([i, [undefined, oldV, true]])
+        if (op === 3) {
+          changes.push([newIndex, [oldV, undefined, false]])
+        }
+      } else {
+        changes.push([i, [d[i], undefined, false]])
+      }
+    }
+  }
+
+  return changes
+}
 
 function getDataSet(
   datasets: ChartDataSets[],
@@ -662,4 +983,91 @@ function getDataSet(
 ): ChartDataSets {
   return (datasets[index] =
     datasets[index] || Object.assign({ data: [] }, dataset))
+}
+
+
+interface UnitHistoryLog {
+  log: ActionLog
+  isMain: boolean
+  entry: Entry
+}
+interface UnitHistoryPath { x: number, y: number, captureId?: number | string }
+
+interface UnitHistory {
+  id: string
+  buildId?: string
+  logs: UnitHistoryLog[]
+  path: UnitHistoryPath[]
+}
+
+export class MatchHistory {
+  private unitHistories: UnitHistory[]
+
+  constructor(private match: Match, private depth: number = 4){
+    this.generate()
+    console.log(this.unitHistories)
+  }
+
+  private generate(){
+    this.unitHistories = []
+    let unitHistories: { [id: string]: UnitHistory } = {}
+
+    const getHistory = (id: string | number) => {
+      id = String(id)
+      if (!unitHistories[id]){
+        unitHistories[id] = {
+          id,
+          logs: [],
+          path: [],
+        }
+        this.unitHistories.push(unitHistories[id])
+      }
+      return unitHistories[id]
+    }
+
+    const entries = this.match.getEntries()
+
+    for(let i = 0; i < entries.length; i++){
+      const entry = entries[i]
+      const {
+        state,
+        actionLog,
+        turn: { playerId, turnNumber },
+      } = entry
+
+      if(turnNumber > this.depth) break
+
+      if(!actionLog) continue
+
+      let { action, unit, otherUnits, flags: { died = [], captured = [] } = {} } = actionLog
+
+      const pushHistoryLog = (unit: UnitData, isMain = false) => {
+        let h = getHistory(unit.id)
+        if(action == 'match_start'){
+          h.buildId = 'B0-x'
+        }
+
+        h.logs.push({ log: actionLog, isMain, entry })
+
+        if(isMain) {
+          let captureId = action == 'capture' ? captured[0]?.id : undefined
+          h.path.push({ x: unit.pos.x, y: unit.pos.y, captureId })
+        }
+
+        if(died.includes(unit)){
+          delete unitHistories[unit.id]
+        }
+      }
+
+      if(unit){
+        pushHistoryLog(unit, true)
+      }
+
+      otherUnits?.forEach(unit => { pushHistoryLog(unit) })
+    }
+  }
+
+  getUnitsHistory(){
+    return Array.from(this.unitHistories)
+  }
 }
