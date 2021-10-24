@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import { Chart, LinearScale, PointElement } from 'chart.js'
+import { DendogramController, EdgeLine } from 'chartjs-chart-graph'
+
+Chart.register(DendogramController, EdgeLine, LinearScale, PointElement)
 
 const initialUrl = new URL(location.href)
 

@@ -182,7 +182,7 @@ function AppContent() {
               <AltRoute />
             </ListItemIcon>
             <ListItemText primary="Openings" />
-          </ListItem>}*/}
+          </ListItem>*/}
         </List>
         <Divider />
         {/*<List>{secondaryListItems}</List>*/}

@@ -36,17 +36,21 @@ const config: Phaser.Types.Core.GameConfig = {
 export class PhaserWargrooveGame extends Phaser.Game {
   readonly updateUI: Function
 
-  constructor({ updateUI, match, onReady }: { updateUI?: Function, match?: Match, onReady?: Function } = {}) {
+  constructor({
+    updateUI,
+    match,
+    onReady,
+  }: { updateUI?: Function; match?: Match; onReady?: Function } = {}) {
     super(config)
     this.updateUI = updateUI
-    if(match){
+    if (match) {
       this.setMatch(match)
     }
 
-    if(onReady){
+    if (onReady) {
       this.onReady(() => {
         let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
-        if(scene.loaded) onReady()
+        if (scene.loaded) onReady()
         else scene.events.once('create', onReady)
       })
     }
@@ -56,8 +60,8 @@ export class PhaserWargrooveGame extends Phaser.Game {
     console.log(match)
 
     this.onReady(() => {
-        let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
-        scene.loadMatch(match)
+      let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
+      scene.loadMatch(match)
     })
   }
 
@@ -69,15 +73,20 @@ export class PhaserWargrooveGame extends Phaser.Game {
     }
   }
 
-  getFrameCanvas(colorName: string, frameNames: string[]) {
+  getFrameCanvas(colorName: string, frameNames: string[], scale?: number) {
     let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
-    if(!scene?.loaded) return
-    return scene.getFrameCanvas(colorName, frameNames)
+    if (!scene?.loaded) return
+    return scene.getFrameCanvas(colorName, frameNames, scale)
   }
 
-  getUnitFrame(match: Match, { playerId, unitClassId }: UnitData){
-    let { faction = 'cherrystone', color = 'grey' } = match.getPlayers()[playerId] || {}
+  getUnitFrame(
+    match: Match,
+    { playerId, unitClassId }: UnitData,
+    scale?: number
+  ) {
+    let { faction = 'cherrystone', color = 'grey' } =
+      match.getPlayers()[playerId] || {}
     let frameNames = getUnitFrameNames(unitClassId, faction)
-    return this.getFrameCanvas(color, frameNames)
+    return this.getFrameCanvas(color, frameNames, scale)
   }
 }

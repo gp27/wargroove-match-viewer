@@ -24,11 +24,18 @@ declare module 'phaser3-rex-plugins/plugins/board-components' {
         constructor(...any)
 
         findArea(movingPoints: number): { x: number, y: number, pathCost: number }[]
+        findPath(xy: { x: number, y: number }, movingPoints?: number, isClosest?: boolean): {x: number, y: number}[]
     }
 
     export class FieldOfView extends Phaser.GameObjects.GameObject {
         constructor(...any)
 
         findFOV: Function
+    }
+
+    export class MoveTo extends Phaser.GameObjects.GameObject {
+      constructor(...any)
+
+      moveTo(x: number, y: number): void
     }
 }

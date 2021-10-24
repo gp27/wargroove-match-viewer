@@ -214,12 +214,31 @@ export const mapRecords: MapRecord[] = [
     name: 'Gilgamesh',
     author: 'Fadedsun',
     versions: {
+      '5C42EHKW': {
+        v: '1.9.1',
+        code: '5C42EHKW',
+        notes: 'Unit Bans: Trebuchet, Golem, Rifle',
+        imgSrc:
+          'https://cdn.discordapp.com/attachments/419203803422654475/894309034843308072/Gilgamesh_1.9.1.jpg',
+        tileHash: '17_2976039960',
+        tileString:
+          'ppppppIFIIpppMpIppFpFpFbppIIbIIpbpppFpIbIpppppMIbIpppIIIpppFpppFrrMpprbMpppffppFprFppIbIpppMffpppprrppppppppprrrMppprrFpFpppprrprrFppMrprrpFpprpFprppFprrprMppFrrprrppppFpFrrpppMrrrppppppppprrppppffMpppIbIppFrpFppffpppMbrppMrrFpppFpppIIIpppIbIMpppppIbIpFpppbpIIbIIppbFpFpFppIpMpppIIFIpppppp',
+        stateHash: '2935973708',
+        stateString:
+          'p_0-200g,p_1-100g,barracks.-1.13.14.100.0,barracks.-1.3.2.100.0,barracks.-1.4.16.100.0,barracks.1.12.0.100.0,city.-1.0.12.100.0,city.-1.0.16.100.0,city.-1.0.3.100.0,city.-1.0.8.100.0,city.-1.10.0.100.0,city.-1.10.13.100.0,city.-1.11.3.100.0,city.-1.11.9.100.0,city.-1.12.16.100.0,city.-1.13.6.100.0,city.-1.16.0.100.0,city.-1.16.13.100.0,city.-1.16.4.100.0,city.-1.16.8.100.0,city.-1.3.10.100.0,city.-1.4.0.100.0,city.-1.5.13.100.0,city.-1.5.7.100.0,city.-1.6.16.100.0,city.-1.6.3.100.0,city.-1.7.10.100.0,city.-1.9.6.100.0,commander.0.15.16.30.0,commander.1.1.0.25.0,hideout.-1.0.0.100.0,hideout.-1.16.16.100.0,hq.0.13.11.100.0,hq.1.3.5.100.0,soldier.0.1.16.100.0,soldier.1.13.0.100.0,tower.-1.8.1.100.0,tower.-1.8.15.100.0',
+      },
       M2M52XLE: {
         v: '1.8',
         code: 'M2M52XLE',
         notes: 'Unit Bans: Trebuchet, Ballista, Golem, Dragon, Rifle',
         imgSrc:
           'https://cdn.discordapp.com/attachments/799311155558219827/860716187067219968/Screen_Shot_2021-07-01_at_11.png',
+        tileHash: '17_179959879',
+        tileString:
+          'pMppppIFIIpppMpIpFFpFpFbppIIbIIpbpFpFpIbIpppppMIbIpppIIIpppFpppFrrMpprbMpppffppFprFppIbIpppMffpppprrppppppppprrrMppprrFpFpppprrprrFppMrprrpFpprpFprppFprrprMppFrrprrppppFpFrrpppMrrrppppppppprrppppffMpppIbIppFrpFppffpppMbrppMrrFpppFpppIIIpppIbIMpppppIbIpFpFpbpIIbIIppbFpFpFFpIpMpppIIFIppppMp',
+        stateHash: '2935973708',
+        stateString:
+          'p_0-200g,p_1-100g,barracks.-1.13.14.100.0,barracks.-1.3.2.100.0,barracks.-1.4.16.100.0,barracks.1.12.0.100.0,city.-1.0.12.100.0,city.-1.0.16.100.0,city.-1.0.3.100.0,city.-1.0.8.100.0,city.-1.10.0.100.0,city.-1.10.13.100.0,city.-1.11.3.100.0,city.-1.11.9.100.0,city.-1.12.16.100.0,city.-1.13.6.100.0,city.-1.16.0.100.0,city.-1.16.13.100.0,city.-1.16.4.100.0,city.-1.16.8.100.0,city.-1.3.10.100.0,city.-1.4.0.100.0,city.-1.5.13.100.0,city.-1.5.7.100.0,city.-1.6.16.100.0,city.-1.6.3.100.0,city.-1.7.10.100.0,city.-1.9.6.100.0,commander.0.15.16.30.0,commander.1.1.0.25.0,hideout.-1.0.0.100.0,hideout.-1.16.16.100.0,hq.0.13.11.100.0,hq.1.3.5.100.0,soldier.0.1.16.100.0,soldier.1.13.0.100.0,tower.-1.8.1.100.0,tower.-1.8.15.100.0',
       },
     },
   },
@@ -233,6 +252,12 @@ export const mapRecords: MapRecord[] = [
         notes: 'Unit Bans: Trebuchet, Ballista, Rifle',
         imgSrc:
           'https://cdn.discordapp.com/attachments/419203803422654475/862104991287738398/Cloak_and_Dagger_1.3.1.png.jpg',
+        tileHash: '23_506485458',
+        tileString:
+          'prppFppFppfppppppFFpFFpprrrpppMppfFrrrFrrFFFppFpMrpMpppFMprFrrrMpppppppFrpfpppfpMpfpMppFpFprrrpppffppprpFFfMMpppppprppFppppFprrrrpfpFpppFpppMppppFMppFppMFppppMpppFpppFpfprrrrpFppppFpprppppppMMfFFprpppffppprrrpFpFppMpfpMpfpppfprFpppppppMrrrFrpMFpppMprMpFppFFFrrFrrrFfppMppprrrppFFpFFppppppfppFppFpprp',
+        stateHash: '391611185',
+        stateString:
+          'p_0-300g,p_1-0g,barracks.-1.11.0.100.0,barracks.-1.11.12.100.0,barracks.0.1.9.100.0,barracks.1.21.3.100.0,city.-1.0.12.100.0,city.-1.0.6.100.0,city.-1.10.10.100.0,city.-1.12.2.100.0,city.-1.13.5.100.0,city.-1.14.12.100.0,city.-1.15.7.100.0,city.-1.16.0.100.0,city.-1.16.10.100.0,city.-1.18.5.100.0,city.-1.2.1.100.0,city.-1.20.11.100.0,city.-1.22.0.100.0,city.-1.22.6.100.0,city.-1.4.7.100.0,city.-1.6.12.100.0,city.-1.6.2.100.0,city.-1.7.5.100.0,city.-1.8.0.100.0,city.-1.9.7.100.0,city.0.19.9.15.0,city.0.8.12.30.0,city.1.14.0.20.0,city.1.3.3.5.0,commander.0.7.12.20.0,commander.1.15.0.15.0,hideout.-1.19.0.100.0,hideout.-1.3.12.100.0,hq.0.1.5.100.0,hq.1.21.7.100.0,soldier.1.21.4.100.0,tower.-1.16.3.100.0,tower.-1.6.9.100.0',
       },
     },
   },
@@ -498,6 +523,12 @@ export const mapRecords: MapRecord[] = [
         notes: 'Unit Bans: Trebuchet',
         imgSrc:
           'https://cdn.discordapp.com/attachments/799311155558219827/860732862272766002/Screen_Shot_2021-07-02_at_11.png',
+        tileHash: '20_4067147994',
+        tileString:
+          'pesseppppMMFFMMMIIFFpeesepppppppppFppppMppeesMFppFWWppppppeepFppppppppFMWpppppbeppFMppppppppMMppFpeeppMFFpppppppppprrpFpFppFpFpbIbrrppFprrppppppppffprrpppppprrpppppffpprrppFeeppFpppFppppeepFppebsFppppppppFsbeppFpeeppppFpppFppeeFpprrppffppppprrpppppprrpffpppppppprrpFpprrbIbpFpFppFpFprrppppppppppFFMppeepFppMMppppppppMFppebpppppWMFppppppppFpeeppppppWWFppFMseeppMppppFpppppppppeseepFFIIMMMFFMMppppessep',
+        stateHash: '1365520407',
+        stateString:
+          'p_0-300g,p_1-100g,barracks.0.16.16.100.0,barracks.0.7.18.100.0,barracks.1.12.1.100.0,barracks.1.3.3.100.0,city.-1.1.12.100.0,city.-1.11.11.100.0,city.-1.11.18.100.0,city.-1.11.6.100.0,city.-1.14.14.100.0,city.-1.15.5.100.0,city.-1.17.11.100.0,city.-1.17.2.100.0,city.-1.18.7.100.0,city.-1.2.17.100.0,city.-1.2.8.100.0,city.-1.4.14.100.0,city.-1.5.5.100.0,city.-1.8.1.100.0,city.-1.8.13.100.0,city.-1.8.8.100.0,city.0.0.1.25.0,city.1.19.18.15.0,commander.0.7.17.30.0,commander.1.12.2.25.0,hq.0.11.15.100.0,hq.1.8.4.100.0,soldier.1.3.4.100.0,tower.-1.14.19.100.0,tower.-1.5.0.100.0,water_city.-1.14.9.100.0,water_city.-1.5.10.100.0',
       },
     },
   },
@@ -726,6 +757,12 @@ export const mapRecords: MapRecord[] = [
     author: 'Best Sakuya NA',
     footer: 'Formerly known as Minotaur',
     versions: {
+      '7p0p0s5dxwd': {
+        v: '',
+        code: '[In Game]',
+        imgSrc:
+          'https://cdn.discordapp.com/attachments/419203803422654475/804195089840340992/Oe9Holg.png',
+      },
       ejwrdu6ctqw: {
         v: '',
         code: '[In game]',
@@ -824,7 +861,7 @@ export const mapRecords: MapRecord[] = [
     },
   },
   {
-    name: 'Shifting Sands',
+    name: 'Shifting Sands (Fog)',
     author: 'Fadedsun',
     versions: {
       HC4V7SBY: {
@@ -832,6 +869,19 @@ export const mapRecords: MapRecord[] = [
         code: 'HC4V7SBY',
         imgSrc:
           'https://cdn.discordapp.com/attachments/418611620302946316/827530246353977344/unknown.png',
+      },
+      NBBNVBTP: {
+        v: '2',
+        code: 'NBBNVBTP',
+        notes: 'Unit Bans: Trebuchet, Rifle',
+        imgSrc:
+          'https://cdn.discordapp.com/attachments/419203803422654475/894339074398240798/Shifting_Sands_2.0.jpg',
+        tileHash: '19_2459992731',
+        tileString:
+          'MMpFsppFprpppppFppppppbbrpprrppFpprrbeFppeerrrrFMFppprMrbppprrrppppFMppprrMMpppppppppppppppFrppppppppMFfppppppprrFpppMpppfppppppppppppFpppprbIfppFppppppbppppprrbFfpppppFppIpppFpppppppppFpppIppFpppppfFbrrpppppbppppppFppfIbrppppFppppppppppppfpppMpppFrrpppppppfFMpppppppprFpppppppppppppppMMrrpppMFpppprrrpppbrMrpppFMFrrrreeFpFebrrppFpprrpprbbppppppFppppprpFppsFpMM',
+        stateHash: '2143205246',
+        stateString:
+          'p_0-300g,p_1-100g,barracks.-1.1.16.100.0,barracks.-1.10.0.100.0,barracks.-1.8.18.100.0,barracks.1.17.2.100.0,city.-1.0.14.100.0,city.-1.0.5.100.0,city.-1.1.8.100.0,city.-1.11.8.100.0,city.-1.12.16.100.0,city.-1.13.11.100.0,city.-1.13.2.100.0,city.-1.15.15.100.0,city.-1.15.7.100.0,city.-1.17.10.100.0,city.-1.18.13.100.0,city.-1.18.4.100.0,city.-1.3.11.100.0,city.-1.3.3.100.0,city.-1.5.16.100.0,city.-1.5.7.100.0,city.-1.6.2.100.0,city.-1.7.10.100.0,city.-1.9.13.100.0,city.-1.9.5.100.0,city.0.0.1.15.0,city.1.18.17.5.0,commander.0.5.18.20.0,commander.1.13.0.15.0,hideout.-1.0.18.100.0,hideout.-1.18.0.100.0,hq.0.5.13.100.0,hq.1.13.5.100.0,soldier.0.0.16.100.0,soldier.1.17.3.100.0,tower.-1.10.18.100.0,tower.-1.8.0.100.0',
       },
     },
   },
@@ -851,11 +901,24 @@ export const mapRecords: MapRecord[] = [
     name: 'In Memoriam',
     author: 'Whargarbly',
     versions: {
+      FY4R8UAX: {
+        v: '1.25',
+        code: 'FY4R8UAX',
+        imgSrc:
+          'https://cdn.discordapp.com/attachments/573994751620022297/901132544731398144/In_Memoriam_v1.25.png',
+      },
       '4D2QVNDZ': {
         v: '1.1',
         code: '4D2QVNDZ',
         imgSrc:
           'https://cdn.discordapp.com/attachments/799311155558219827/860715715304751104/In_Memoriam_v1.png',
+        notes: 'Unit Bans: Trebuchet',
+        tileHash: '19_965645443',
+        tileString:
+          'pFFbppfppFFppppppFrMppIIIpFppWppIIIrrrpFepbWpppFMMFFbFrrMpFsbseffppFMMpppppFMppMMFppfppFpppppppFpFWpppppppppMrrppFppppppFpppFpfFMbbpMfpppprrpppFpfppprrFfpMFbbppMbpfpppppppfpFrrFppIIIppFrrFpfpppppppfpbMppbbFMpfFrrpppfpFppprrppppfMpbbMFfpFpppFppppppFpprrMpppppppppWFpFpppppppFppfppFMMppMFpppppMMFppffesbsFpMrrFbFFMMFpppWbpeFprrrIIIppWppFpIIIppMrFppppppFFppfppbFFp',
+        stateHash: '1761813097',
+        stateString:
+          'p_0-400g,p_1-200g,barracks.0.11.1.18.0,barracks.0.3.2.100.0,barracks.1.15.16.100.0,barracks.1.7.17.8.0,city.-1.1.11.100.0,city.-1.1.17.100.0,city.-1.1.6.100.0,city.-1.11.7.100.0,city.-1.12.11.100.0,city.-1.14.5.100.0,city.-1.15.9.100.0,city.-1.17.1.100.0,city.-1.17.12.100.0,city.-1.17.7.100.0,city.-1.3.9.100.0,city.-1.4.13.100.0,city.-1.6.7.100.0,city.-1.7.11.100.0,city.-1.9.1.100.0,city.-1.9.14.100.0,city.-1.9.17.100.0,city.-1.9.4.100.0,city.0.18.18.15.0,city.1.0.0.5.0,commander.0.12.1.21.0,commander.1.6.17.16.0,gate.-2.0.8.50.0,gate.-2.18.10.50.0,hq.0.7.4.100.0,hq.1.11.14.100.0,soldier.1.16.16.100.0,tower.-1.11.18.100.0,tower.-1.7.0.100.0',
       },
     },
   },
@@ -869,6 +932,12 @@ export const mapRecords: MapRecord[] = [
         notes: 'Unit Bans: Trebuchet, Rifle, Thief',
         imgSrc:
           'https://cdn.discordapp.com/attachments/419203803422654475/894309038416875566/Ominous_2.2.jpg',
+        tileHash: '23_1897225397',
+        tileString:
+          'sssspMppppMpFMpppesssepseeppppFFMppppbpppeeeseseFpFprrpFppIIIFpppFpesspppprrpppFpIFfppFppppssFppprfFppppbpppMMFppFsRerFfrrpfpprrfFfpMMppFsserFpppppFppppprrppppesserrpMFppppppppFrrrFesRspFrppppppFbfMppMFrpeesseprrpppFfbIbfFppprrpesseeprFMppMfbFpppppprFpsRseFrrrFppppppppFMprressepppprrpppppFpppppFressFppMMpfFfrrppfprrfFreRsFppFMMpppbppppFfrpppFssppppFppfFIpFppprrppppssepFpppFIIIppFprrpFpFeseseeepppbppppMFFppppeespesssepppMFpMppppMpssss',
+        stateHash: '1888880204',
+        stateString:
+          'p_0-200g,p_1-100g,barracks.0.13.18.100.0,barracks.0.4.16.100.0,barracks.1.18.2.100.0,barracks.1.9.0.100.0,city.-1.1.8.100.0,city.-1.11.13.100.0,city.-1.11.5.100.0,city.-1.13.10.100.0,city.-1.15.16.100.0,city.-1.15.6.100.0,city.-1.16.13.100.0,city.-1.16.2.100.0,city.-1.17.10.100.0,city.-1.19.17.100.0,city.-1.19.6.100.0,city.-1.2.5.100.0,city.-1.20.13.100.0,city.-1.21.10.100.0,city.-1.3.1.100.0,city.-1.3.12.100.0,city.-1.5.8.100.0,city.-1.6.16.100.0,city.-1.6.5.100.0,city.-1.7.12.100.0,city.-1.7.2.100.0,city.-1.9.8.100.0,commander.0.3.16.30.0,commander.1.19.2.25.0,hideout.0.11.16.100.0,hideout.1.11.2.100.0,hq.0.14.14.100.0,hq.1.8.4.100.0,soldier.1.8.0.100.0,thief.0.0.18.100.0,thief.1.22.0.100.0,tower.-1.14.0.100.0,tower.-1.8.18.100.0,travelboat.0.3.0.100.0,travelboat.1.19.18.100.0',
       },
     },
   },
@@ -876,12 +945,25 @@ export const mapRecords: MapRecord[] = [
     name: 'Far Too Near',
     author: 'Fadedsun',
     versions: {
+      TYX6YXJF: {
+        v: '1.2',
+        code: 'TYX6YXJF',
+        notes: 'Unit Bans: Trebuchet, Rifle',
+        imgSrc:
+          'https://cdn.discordapp.com/attachments/573994751620022297/901130584133369897/Far_Too_Near_1.2.png',
+      },
       RJ84Z3PS: {
         v: '1.1',
         code: 'RJ84Z3PS',
         notes: 'Unit Bans: Trebuchet, Rifle',
         imgSrc:
           'https://cdn.discordapp.com/attachments/419203803422654475/894330065742098503/Far_Too_Near_1.1.jpg',
+        tileHash: '17_2933739544',
+        tileString:
+          'FesosssssepppppFpppeeepeseeppppppFppppfpeespppFpppppppppffpbppMMppppbpppppppIFrrrrMppIpFppppIIrrpMrrFpppppppFbrrMpFprppbppppppppppprrrppIppFrppFfFpprFppIpprrrpppppppppppbpprpFpMrrbFpppppppFrrMrrrIIppppFpIppMrrrpFIpppppppbppppMMppbpffpppppppppFpppseepfppppFppppppeesepeeepppFpppppesssssoseF',
+        stateHash: '3784116610',
+        stateString:
+          'p_0-200g,p_1-100g,barracks.0.2.15.100.0,barracks.0.5.15.100.0,barracks.1.11.1.100.0,barracks.1.14.1.100.0,city.-1.0.2.100.0,city.-1.0.9.100.0,city.-1.1.13.100.0,city.-1.1.6.100.0,city.-1.10.12.100.0,city.-1.11.5.100.0,city.-1.12.0.100.0,city.-1.12.9.100.0,city.-1.13.6.100.0,city.-1.15.10.100.0,city.-1.15.3.100.0,city.-1.16.14.100.0,city.-1.16.7.100.0,city.-1.3.10.100.0,city.-1.4.16.100.0,city.-1.4.7.100.0,city.-1.5.11.100.0,city.-1.6.4.100.0,city.-1.7.14.100.0,city.-1.8.10.100.0,city.-1.8.6.100.0,city.-1.9.2.100.0,commander.0.7.16.25.0,commander.1.9.0.20.0,hideout.-1.0.16.100.0,hideout.-1.16.0.100.0,hq.0.13.13.100.0,hq.1.3.3.100.0,soldier.1.14.2.100.0,tower.-1.11.15.100.0,tower.-1.5.1.100.0',
       },
     },
   },
@@ -895,6 +977,12 @@ export const mapRecords: MapRecord[] = [
         notes: 'Unit Bans: Trebuchet, Ballista, All naval except barge',
         imgSrc:
           'https://cdn.discordapp.com/attachments/419203803422654475/894330872772296775/Dragoon_Blood.png',
+        tileHash: '31_2410799101',
+        tileString:
+          'ssssbpbpbFspppMrFpsspprrMssssssssssesbbbbsbsFprppFbbMFrpppesssssssFpMpFeeesserrrpFssprFpppeesssspFFpprrMFeesssrrppserrrrrrrspsMpppMprpppppFeserrpssepppFrpMserrFMrrrMppFpppsssrrpsepppMrpFsFrrppppppppppMrreserFebFppMrpFsFppppppFbpFprrrFpesMpespprrrppppFprFpMseserrprpprsspsspprpMppppMprppsspssrpprprresesMpFrpFpppprrrppsepMsepFrrrpFpbFppppppFsFprMppFbeFreserrMpppppppppprrFsFprMpppesprrssspppFppMrrrMFrresMprFpppessprreseFppppprpMpppMspsrrrrrrrespprrssseeFMrrppFFpsssseepppFrpssFprrresseeeFpMpFssssssseppprFMbbFpprpFsbsbbbbsessssssssssMrrppsspFrMpppsFbpbpbssss',
+        stateHash: '3879341897',
+        stateString:
+          'p_0-300g,p_1-100g,barracks.0.22.0.20.0,barracks.0.5.0.20.0,barracks.1.25.17.10.0,barracks.1.8.17.10.0,city.-1.0.9.100.0,city.-1.1.14.100.0,city.-1.10.11.100.0,city.-1.12.9.100.0,city.-1.13.14.100.0,city.-1.13.7.100.0,city.-1.14.11.100.0,city.-1.16.6.100.0,city.-1.17.10.100.0,city.-1.17.3.100.0,city.-1.18.8.100.0,city.-1.2.11.100.0,city.-1.2.5.100.0,city.-1.20.6.100.0,city.-1.21.14.100.0,city.-1.23.17.100.0,city.-1.24.12.100.0,city.-1.24.7.100.0,city.-1.25.15.100.0,city.-1.26.9.100.0,city.-1.28.12.100.0,city.-1.28.6.100.0,city.-1.29.3.100.0,city.-1.30.8.100.0,city.-1.4.8.100.0,city.-1.5.2.100.0,city.-1.6.10.100.0,city.-1.6.5.100.0,city.-1.7.0.100.0,city.-1.9.3.100.0,city.0.15.0.20.0,city.1.15.17.10.0,commander.0.18.3.15.0,commander.1.12.14.10.0,hq.0.26.2.100.0,hq.1.4.15.100.0,port.-1.10.0.100.0,port.-1.20.17.100.0,soldier.1.26.17.100.0,tower.0.0.4.100.0,tower.1.30.13.100.0,water_city.-1.1.1.100.0,water_city.-1.29.16.100.0',
       },
     },
   },
@@ -908,6 +996,12 @@ export const mapRecords: MapRecord[] = [
         notes: 'Unit Bans: Trebuchet, Rifle',
         imgSrc:
           'https://cdn.discordapp.com/attachments/419203803422654475/894339078093414441/Straining_Frontier_1.2.jpg',
+        tileHash: '20_463717028',
+        tileString:
+          'MppFFMpFIpppFpMFpppMMMFpFpFpIIpFpprrppfMMppfffpppbpppprppppFFFpfprrMpprpFFppFppppppfffppFrpppMpppppppFrppppprrFpppFppFprFppFppFrrppFprpprrrrFpFppFrrfpppfppppppFIIFprprpFprpppFppppppMFpFrrppebpFMrpFpFppFpFprMFpbepprrFpFMppppppFppprpFprprpFIIFppppppfpppfrrFppFpFrrrrpprpFpprrFppFppFrpFppFpppFrrppppprFpppppppMppprFppfffppppppFppFFprppMrrpfpFFFpppprppppbpppfffppMMfpprrppFpIIpFpFpFMMMpppFMpFpppIFpMFFppM',
+        stateHash: '2256191373',
+        stateString:
+          'p_0-300g,p_1-100g,barracks.0.13.19.100.0,barracks.0.18.12.100.0,barracks.1.1.7.100.0,barracks.1.6.0.100.0,city.-1.0.15.100.0,city.-1.1.19.100.0,city.-1.10.7.100.0,city.-1.11.0.100.0,city.-1.12.14.100.0,city.-1.13.10.100.0,city.-1.13.5.100.0,city.-1.15.16.100.0,city.-1.15.2.100.0,city.-1.16.7.100.0,city.-1.18.0.100.0,city.-1.19.4.100.0,city.-1.3.12.100.0,city.-1.4.17.100.0,city.-1.4.3.100.0,city.-1.6.14.100.0,city.-1.6.9.100.0,city.-1.7.5.100.0,city.-1.8.19.100.0,city.-1.9.12.100.0,city.0.1.0.20.0,city.1.18.19.10.0,commander.0.9.16.15.0,commander.1.10.3.20.0,hideout.-1.1.2.100.0,hideout.-1.18.17.100.0,hq.0.10.16.100.0,hq.1.9.3.100.0,soldier.1.2.7.100.0,tower.-1.0.4.100.0,tower.-1.19.15.100.0',
       },
     },
   },
@@ -915,6 +1009,13 @@ export const mapRecords: MapRecord[] = [
     name: 'Shifting Sands',
     author: 'Fadedsun',
     versions: {
+      AVGBVLED: {
+        v: '2.1',
+        code: 'AVGBVLED',
+        notes: 'Unit Bans: Trebuchet, Rifle, no Knights from center barracks',
+        imgSrc:
+          'https://cdn.discordapp.com/attachments/573994751620022297/901131025810333756/Shifting_Sands_2.1.png',
+      },
       NBBNVBTP: {
         v: '2',
         code: 'NBBNVBTP',
@@ -934,6 +1035,12 @@ export const mapRecords: MapRecord[] = [
         notes: 'Unit Bans: Trebuchet, Ballista, Rifle, Warship, Harpoon Ship',
         imgSrc:
           'https://cdn.discordapp.com/attachments/419203803422654475/894339076449243166/Solitik_Valley_1.3.8.jpg',
+        tileHash: '19_287886716',
+        tileString:
+          'FpppreoooRrpIIIMFRoMIbIpesooepFMFIFpeRrbrpfsoRseppppppMeossFMFReeRMFWfMFrreosRpFpppppfppIIbIRsRIFppprrpFpppMprfeeoIbIbIFppIMppFFppMsoIFIrbrIppppppprpFsRReFpppppFbMppMrrpsooeIrpppfIIIfppprIeoosprrMppMbFpppppFeRRsFprpppppppIrbrIFIosMppFFppMIppFIbIbIoeefrpMpppFprrpppFIRsRIbIIppfpppppFpRsoerrFMfWFMReeRFMFssoeMppppppesRosfprbrRepFIFMFpeoosepIbIMoRFMIIIprRoooerpppF',
+        stateHash: '1513194521',
+        stateString:
+          'p_0-200g,p_1-0g,barracks.-1.13.2.100.0,barracks.-1.15.16.100.0,barracks.-1.5.16.100.0,barracks.1.3.2.50.0,city.-1.11.4.100.0,city.-1.11.8.100.0,city.-1.13.13.100.0,city.-1.14.7.100.0,city.-1.15.10.100.0,city.-1.15.18.100.0,city.-1.15.3.100.0,city.-1.16.13.100.0,city.-1.2.5.100.0,city.-1.3.0.100.0,city.-1.3.15.100.0,city.-1.3.8.100.0,city.-1.4.11.100.0,city.-1.5.5.100.0,city.-1.7.10.100.0,city.-1.7.14.100.0,commander.0.6.18.36.0,commander.1.12.0.31.0,hideout.0.2.17.100.0,hideout.1.16.1.100.0,hq.0.8.13.100.0,hq.1.10.5.100.0,port.-1.0.3.100.0,port.-1.18.15.100.0,port.0.1.14.100.0,port.1.17.4.100.0,soldier.0.18.18.100.0,soldier.1.2.2.100.0,tower.0.7.18.11.0,tower.1.11.0.1.0,travelboat.0.9.16.100.0,travelboat.1.9.2.100.0,water_city.-1.0.12.100.0,water_city.-1.10.16.100.0,water_city.-1.18.6.100.0,water_city.-1.8.2.100.0,water_city.0.12.17.100.0,water_city.1.6.1.100.0',
       },
     },
   },
@@ -967,12 +1074,53 @@ export const mapRecords: MapRecord[] = [
     author: 'BarrettRTS',
     footer: 'Based on Dendritic by Fadedsun',
     versions: {
+      U85V3JTY: {
+        v: '1.0.2',
+        code: 'U85V3JTY',
+        notes: 'Unit Bans: Trebuchet, Rifle, all naval but barge/merfolk',
+        imgSrc:
+          'https://cdn.discordapp.com/attachments/573994751620022297/901131760363008000/Denrunaway_1.0.2.png',
+      },
       AQFHGHWT: {
         v: '1.01',
         code: 'AQFHGHWT',
         notes: 'Unit Bans: Trebuchet, Rifle, all naval but barge/merfolk',
         imgSrc:
           'https://cdn.discordapp.com/attachments/418611620302946316/894387504516583475/Denrunaway_1.0.1.png',
+      },
+    },
+  },
+  {
+    name: 'Off Groove',
+    author: 'Fiven',
+    versions: {
+      '8JWYDSXR': {
+        v: '',
+        code: '8JWYDSXR',
+        notes: 'Unit Bans: Trebs',
+        tileHash: '20_3583042111',
+        tileString:
+          'rIFpppppppppppppMMMMrIppppFpprrppprrrrMMrbrrFpppprppMpfppprrIIFppppprrppppfFpppFppFMprrrpppFppFMpppFpppFpppfFpppppMMppppFMpppFppppfffrrMFFppFMFpprrpMppMprrppFMFppFFMrrfffppppFpppMFppppMMpppppFfpppFpppFpppMFppFppprrrpMFppFpppFfpppprrpppppFIIrrpppfpMpprppppFrrbrMMrrrrppprrppFppppIrMMMMpppppppppppppFIr',
+        stateHash: '3441994819',
+        stateString:
+          'p_0-200g,p_1-100g,barracks.0.17.4.100.0,barracks.0.19.14.100.0,barracks.1.0.0.100.0,barracks.1.2.10.100.0,city.-1.0.4.100.0,city.-1.10.13.100.0,city.-1.10.4.100.0,city.-1.13.12.100.0,city.-1.13.2.100.0,city.-1.13.5.100.0,city.-1.13.8.100.0,city.-1.16.14.100.0,city.-1.16.7.100.0,city.-1.17.1.100.0,city.-1.19.10.100.0,city.-1.2.13.100.0,city.-1.3.0.100.0,city.-1.3.7.100.0,city.-1.6.12.100.0,city.-1.6.2.100.0,city.-1.6.6.100.0,city.-1.6.9.100.0,city.-1.9.1.100.0,city.-1.9.10.100.0,commander.0.16.5.15.0,commander.1.3.9.10.0,hq.0.15.10.100.0,hq.1.4.4.100.0,soldier.1.3.10.100.0,tower.-1.0.9.100.0,tower.-1.19.5.100.0',
+      },
+    },
+  },
+  {
+    name: 'Bords de Loire',
+    author: 'kokoado',
+    versions: {
+      KEVHE2YS: {
+        v: '2.0',
+        code: 'KEVHE2YS',
+        notes: 'Bans: Trebs, Rifles',
+        tileHash: '28_3625788576',
+        tileString:
+          'MMpFpppppMMFpFpFpFppppbpppMMMFpppppppppppFppppprpFIpppMMMFpffMrpFpppppFFMpprrrbrrpMMpppffFrrrrppppppppessIIprpFMppppppppppppFpppesseppprrrpFFppprpFppFpppIIsssepFFppFrrpFppMFppppMppfIFrppFppppppprpprrrrpppFMFpfbppppFFppppprrFpppprrFpppppfIIppFMMpFpppprFFpppprppppppprbrrrpMMppppFpMFfffpppppFpppesFprppppppFMMMMMMFpppppprpFsepppFpppppfffFMpFppppMMprrrbrppppppprppppFFrppppFpMMFppIIfpppppFrrppppFrrpppppFFppppbfpFMFppprrrrpprpppppppFpprFIfppMppppFMppFprrFppFFpesssIIpppFppFprpppFFprrrpppessepppFppppppppppppMFprpIIssepppppppprrrrFffpppMMprrbrrrppMFFpppppFprMffpFMMMpppIFprpppppFpppppppppppFMMMpppbppppFpFpFpFMMpppppFpMM',
+        stateHash: '86135316',
+        stateString:
+          'p_0-300g,p_1-100g,p_2-100g,p_3-100g,barracks.0.3.14.100.0,barracks.1.24.7.100.0,barracks.2.11.20.100.0,barracks.2.7.15.100.0,barracks.3.16.1.100.0,barracks.3.20.6.100.0,city.-1.0.3.100.0,city.-1.0.7.100.0,city.-1.1.12.100.0,city.-1.10.3.100.0,city.-1.11.9.100.0,city.-1.12.0.100.0,city.-1.12.17.100.0,city.-1.15.21.100.0,city.-1.15.4.100.0,city.-1.16.12.100.0,city.-1.17.18.100.0,city.-1.18.9.100.0,city.-1.19.0.100.0,city.-1.19.15.100.0,city.-1.2.0.100.0,city.-1.2.9.100.0,city.-1.21.20.100.0,city.-1.22.11.100.0,city.-1.22.4.100.0,city.-1.25.12.100.0,city.-1.25.21.100.0,city.-1.26.9.100.0,city.-1.27.14.100.0,city.-1.27.18.100.0,city.-1.5.10.100.0,city.-1.5.17.100.0,city.-1.6.1.100.0,city.-1.8.21.100.0,city.-1.8.6.100.0,city.-1.9.12.100.0,city.0.0.16.100.0,city.1.27.5.100.0,city.2.2.21.100.0,city.3.25.0.100.0,commander.0.1.20.15.0,commander.1.26.1.20.0,commander.2.5.19.10.0,commander.3.22.2.20.0,hideout.-1.23.1.100.0,hideout.-1.4.20.100.0,hq.0.3.5.100.0,hq.1.24.16.100.0,hq.2.11.15.100.0,hq.3.16.6.100.0,soldier.1.23.7.100.0,soldier.3.15.1.100.0,tower.0.2.19.100.0,tower.1.25.2.100.0',
       },
     },
   },

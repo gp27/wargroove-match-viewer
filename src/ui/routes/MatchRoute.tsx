@@ -5,22 +5,18 @@ import Skeleton from '@mui/material/Skeleton'
 import WargrooveGame from '../common/WargrooveGame'
 import PlayerStatusTable from '../common/PlayerStatusTable'
 import PlayersUnitList from '../common/UnitList'
+import { MatchActionLog } from '../common/match/MatchActionLog'
 import { TurnMoveList, TurnMoveSwipable } from '../common/TurnMoveList'
+import { SideSwitchingBox } from '../common/generic/SideSwitchingBox'
 import { useTheme } from '@mui/material/styles'
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { IMatch, db } from '../../db'
 import { Match, MatchData } from '../../wg/match'
 import { Line } from 'react-chartjs-2'
 import { PhaserWargrooveGame } from '../../phaser/phaser-wagroove-game'
-import { useLocalStorage } from '../../utils'
-import {
-  FormControlLabel,
-  Switch,
-  ToggleButtonGroup,
-  ToggleButton } from '@mui/material'
+import { ToggleButtonGroup, ToggleButton } from '@mui/material'
 import { useModal } from 'mui-modal-provider'
 import { MapEntrySuggestion } from '../common/map/MapEntryEditor'
-import Chart from 'chart.js'
 import { useMapInfo } from '../context/MapFinderContext'
 
 function loadMatchData(id: string): Promise<MatchData | undefined> {
@@ -140,6 +136,10 @@ function MatchDashboard({ match }: { match: Match }) {
           {mapInfo && <MapEntrySuggestion mapInfo={mapInfo} />}
         </Box>
 
+        <SideSwitchingBox align="bottom">
+          <MatchActionLog match={match} game={game} />
+        </SideSwitchingBox>
+
         {!isGameReady && (
           <Skeleton
             variant="rectangular"
@@ -172,7 +172,7 @@ function MatchDashboard({ match }: { match: Match }) {
         }}
       >
         <Box sx={{ flexGrow: 1 }}>
-          <Box>{match.getCurrentEntry().actionLog?.action}</Box>
+          {/*<Box>{match.getCurrentEntry().actionLog?.action}</Box>*/}
           <PlayerStatusTable match={match} />
           <PlayersUnitList match={match} game={game} />
         </Box>
@@ -211,7 +211,7 @@ function Charts({ match }: { match: Match }) {
           sx={{ p: 1, maxHeight: 400, minHeight: 250, height: '50%' }}
         >
           <Line
-            data={chart.data as Chart.ChartData}
+            data={chart.data}
             options={Object.assign(chart.options || {}, {
               maintainAspectRatio: false,
             })}

@@ -67,17 +67,10 @@ function UnitListItem({
     unitClass: { maxGroove },
     } = unit
 
-    const frame = game?.getUnitFrame(match, unit)
-    function setFrame(ele: HTMLElement){
-        if(!ele) return
-        ele.innerHTML = ''
-        ele.append(frame)
-    }
-
   return (
     <ListItem sx={{ minWidth: 220 }}>
         <ListItemAvatar>
-            {frame && <div ref={setFrame}></div>}
+          <UnitFrame match={match} unit={unit} game={game} />
         </ListItemAvatar>
       <ListItemText
         primary={unitClassId.replace('commander_', '') + ` (ID:${id})`}
@@ -98,4 +91,14 @@ function UnitListItem({
       />
     </ListItem>
   )
+}
+
+export function UnitFrame({ match, unit, game, scale }: { match: Match, unit: UnitData, game?: PhaserWargrooveGame, scale?: number }){
+  const frame = game?.getUnitFrame(match, unit, scale)
+  function setFrame(ele: HTMLElement) {
+    if (!ele) return
+    ele.innerHTML = ''
+    ele.append(frame)
+  }
+  return <>{frame && <div ref={setFrame}></div>}</>
 }

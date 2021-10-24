@@ -1,6 +1,6 @@
 import * as jsondiffpatch from 'jsondiffpatch'
 import 'chart.js'
-import { ChartConfiguration, ChartDataSets } from 'chart.js'
+import { ChartConfiguration, ChartDataset } from 'chart.js'
 import { getCommanderMeta, PlayerColor, playerColors } from './match-utils'
 import {
   Biome,
@@ -8,6 +8,7 @@ import {
   terrains,
   tilesFromLinear,
 } from '../phaser/phaser-wargroove-map'
+import { Opening, OpeningsClusters } from './openings'
 
 const diffpatcher = jsondiffpatch.create()
 
@@ -190,6 +191,7 @@ export class Match {
     this.isFog = Boolean(matchData.fog_blocks?.length || matchData.is_fog)
 
     this.selectEntry(this.getWinners().length ? 0 : this.entries.length - 1)
+    //new OpeningsClusters([this, this, this])
     //new MatchHistory(this)
     //console.profileEnd(matchData.match_id)
     //console.log(this)
@@ -289,13 +291,13 @@ export class Match {
 
   getCharts(
     entryFilter: (entry: Entry) => boolean = () => true
-  ): ChartConfiguration[] {
+  ): ChartConfiguration<'line',number[]>[] {
     let labels: string[] = []
 
-    let incomeDataSet: ChartDataSets[] = []
-    let armyValueDataSet: ChartDataSets[] = []
-    let unitCountDataSet: ChartDataSets[] = []
-    let combatUnitCountDataSet: ChartDataSets[] = []
+    let incomeDataSet: ChartDataset<'line',number[]>[] = []
+    let armyValueDataSet: ChartDataset<'line', number[]>[] = []
+    let unitCountDataSet: ChartDataset<'line', number[]>[] = []
+    let combatUnitCountDataSet: ChartDataset<'line', number[]>[] = []
 
     let pointBackgroundColor: string[] = []
 
@@ -363,11 +365,7 @@ export class Match {
         type: 'line',
         options: {
           scales: {
-            yAxes: [
-              {
-                ticks: { stepSize: 100 },
-              },
-            ],
+            yAxes: { ticks: { stepSize: 100 } },
           },
         },
         data: {
@@ -386,11 +384,9 @@ export class Match {
         type: 'line',
         options: {
           scales: {
-            yAxes: [
-              {
-                ticks: { stepSize: 1 },
-              },
-            ],
+            yAxes: {
+              ticks: { stepSize: 1 },
+            },
           },
         },
         data: {
@@ -402,11 +398,9 @@ export class Match {
         type: 'line',
         options: {
           scales: {
-            yAxes: [
-              {
-                ticks: { stepSize: 1 },
-              },
-            ],
+            yAxes: {
+              ticks: { stepSize: 1 },
+            },
           },
         },
         data: {
@@ -515,7 +509,7 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
 
     let playerStatus = status[playerId]
 
-    if (['city', 'hq'].includes(unitClassId)) {
+    if (['city', 'hq', 'water_city'].includes(unitClassId)) {
       playerStatus.income += 100
     }
 
@@ -524,7 +518,7 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
     }
 
     if (
-      !['city', 'hq', 'barracks', 'port', 'tower', 'hideout'].includes(
+      !['city', 'hq', 'barracks', 'port', 'tower', 'hideout', 'water_city'].includes(
         unitClassId
       )
     ) {
@@ -647,7 +641,7 @@ function generateStateString(state: State) {
   return g.concat(u).join(',')
 }
 
-interface ActionLog {
+export interface ActionLog {
   action:
     | 'match_start'
     | 'end_turn'
@@ -683,7 +677,7 @@ interface ActionLog {
   lostGold?: number
 }
 
-interface ActionFlags {
+export interface ActionFlags {
   died?: UnitData[]
   spawned?: UnitData[]
   grooved?: UnitData[]
@@ -712,8 +706,6 @@ function analyzeDelta(
   if(!delta) return { action: 'match_start', otherUnits: Object.values(nextState.units) }
 
   const { playerId, turnNumber, units } = state
-
-  if (delta.playerId) return { action: 'end_turn', otherUnits: Object.keys(delta.units || {}).map(uid => state.units[uid]).filter(A => A) }
 
   let unitsDelta = Object.entries(delta.units || {})
 
@@ -755,6 +747,14 @@ function analyzeDelta(
 
   //console.log(flags)
 
+  if (delta.playerId)
+    return withFlags({
+      action: 'end_turn',
+      otherUnits: Object.keys(delta.units || {})
+        .map((uid) => state.units[uid])
+        .filter((A) => A)
+    })
+
   if (flags.grooved) {
     return withFlags({
       action: 'groove',
@@ -795,8 +795,8 @@ function analyzeDelta(
       if(builder){
         return withFlags({
           action: 'build',
-          unit: flags.spawned[0],
-          otherUnits: [builder],
+          unit: builder,
+          otherUnits: flags.spawned,
           spentGold: flags.spent
         })
       }
@@ -977,25 +977,26 @@ function getDeltaArrayVal(d: jsondiffpatch.Delta){
 }
 
 function getDataSet(
-  datasets: ChartDataSets[],
+  datasets: ChartDataset[],
   index: number,
-  dataset: ChartDataSets = {}
-): ChartDataSets {
+  dataset: Partial<ChartDataset<'line', number[]>>
+): ChartDataset {
   return (datasets[index] =
     datasets[index] || Object.assign({ data: [] }, dataset))
 }
 
 
-interface UnitHistoryLog {
+export interface UnitHistoryLog {
   log: ActionLog
   isMain: boolean
   entry: Entry
 }
-interface UnitHistoryPath { x: number, y: number, captureId?: number | string }
+export interface UnitHistoryPath { x: number, y: number, captureId?: number | string }
 
-interface UnitHistory {
+export interface UnitHistory {
   id: string
-  buildId?: string
+  buildId: string
+  unit: UnitData
   logs: UnitHistoryLog[]
   path: UnitHistoryPath[]
 }
@@ -1005,24 +1006,25 @@ export class MatchHistory {
 
   constructor(private match: Match, private depth: number = 4){
     this.generate()
-    console.log(this.unitHistories)
+    //console.log(this.unitHistories)
   }
 
   private generate(){
     this.unitHistories = []
     let unitHistories: { [id: string]: UnitHistory } = {}
 
-    const getHistory = (id: string | number) => {
-      id = String(id)
+    const makeHistory = (unit: UnitData, buildId: string) => {
+      const id = String(unit.id)
       if (!unitHistories[id]){
         unitHistories[id] = {
           id,
+          buildId,
+          unit,
           logs: [],
           path: [],
         }
         this.unitHistories.push(unitHistories[id])
       }
-      return unitHistories[id]
     }
 
     const entries = this.match.getEntries()
@@ -1030,37 +1032,43 @@ export class MatchHistory {
     for(let i = 0; i < entries.length; i++){
       const entry = entries[i]
       const {
-        state,
+        state: { playerId, turnNumber },
         actionLog,
-        turn: { playerId, turnNumber },
       } = entry
 
       if(turnNumber > this.depth) break
 
       if(!actionLog) continue
 
-      let { action, unit, otherUnits, flags: { died = [], captured = [] } = {} } = actionLog
+      let { action, unit, otherUnits, flags: { died = [], captured = [], spawned = [] } = {} } = actionLog
+      
+      if(action == 'match_start'){
+        otherUnits.forEach((u) => makeHistory(u, `U-T0-B${u.id}`))
+      }
 
-      const pushHistoryLog = (unit: UnitData, isMain = false) => {
-        let h = getHistory(unit.id)
-        if(action == 'match_start'){
-          h.buildId = 'B0-x'
-        }
+      if(spawned.length){
+        spawned.forEach(u => makeHistory(u, `U-T${turnNumber}-B${unit.id}`))
+      }
+
+      const pushHistoryLog = (u: UnitData) => {
+        let isMain = u == unit
+        let h = unitHistories[u.id]
+        if(!h) return
 
         h.logs.push({ log: actionLog, isMain, entry })
 
         if(isMain) {
           let captureId = action == 'capture' ? captured[0]?.id : undefined
-          h.path.push({ x: unit.pos.x, y: unit.pos.y, captureId })
+          h.path.push({ x: u.pos.x, y: u.pos.y, captureId })
         }
 
-        if(died.includes(unit)){
-          delete unitHistories[unit.id]
+        if(died.includes(u)){
+          delete unitHistories[u.id]
         }
       }
 
       if(unit){
-        pushHistoryLog(unit, true)
+        pushHistoryLog(unit)
       }
 
       otherUnits?.forEach(unit => { pushHistoryLog(unit) })

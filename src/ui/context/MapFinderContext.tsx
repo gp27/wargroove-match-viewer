@@ -3,7 +3,7 @@ import { MapFinder } from '../../wg/map-utils'
 import { Match } from '../../wg/match'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../db'
-import { mapRecords } from '../../wg/map-registry'
+import { mapRecords, sheetMapEntries } from '../../wg/map-registry'
 
 const MapFinderContext = createContext<MapFinder|undefined>(undefined)
 
@@ -21,6 +21,7 @@ export function MapFinderProvider(props: React.PropsWithChildren<any>) {
   useEffect(() => {
     if(ientries){
       mapFinder = new MapFinder(mapRecords)
+      //mapFinder.mergeEntries(sheetMapEntries)
       mapFinder.mergeEntries(ientries.map((i) => i.entry))
       setMapFinder(mapFinder)
       console.log(mapFinder)

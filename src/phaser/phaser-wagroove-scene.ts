@@ -92,12 +92,16 @@ export class PhaserWargrooveScene extends Phaser.Scene {
 
   zoom(scale: number) {
     const camera = this.cameras.main
-
+    let oldZoom = camera.zoom
     camera.zoom *= scale
 
-    if (camera.zoom < 0.2) {
-      camera.zoom = 0.2
+    console.log(camera.width, camera.getBounds().width, camera)
+    let bounds = camera.getBounds()
+
+    if(scale < 1 && camera.worldView.width > bounds.width && camera.worldView.width > bounds.width){
+      camera.zoom = oldZoom
     }
+
     if (camera.zoom > 2) {
       camera.zoom = 2
     }
@@ -134,7 +138,7 @@ export class PhaserWargrooveScene extends Phaser.Scene {
       .sort((a, b) => frameNames.indexOf(a.name) - frameNames.indexOf(b.name))
   }
 
-  getFrameCanvas(colorName: string, frameNames: string[]) {
+  getFrameCanvas(colorName: string, frameNames: string[], scale = 2) {
     let frames = this.getFrames(colorName, frameNames)
     if (!frames?.length) return
     let {
@@ -146,12 +150,12 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     } = frames[0]
 
     let c = document.createElement('canvas')
-    c.width = width * 2
-    c.height = height * 2
+    c.width = width * scale
+    c.height = height * scale
 
     let ctx = c.getContext('2d') as CanvasRenderingContext2D
     ctx.imageSmoothingEnabled = false
-    ctx.scale(2, 2)
+    ctx.scale(scale, scale)
     ctx.drawImage(
       texture.getSourceImage() as HTMLImageElement,
       x,
