@@ -929,6 +929,15 @@ function setDeltaUnitFlags(
     setFlag('unloaded', unit)
   }
 
+  if(d.loadedUnits){
+    if(d.hadTurn){
+      setFlag('unload', unit)
+    }
+    else {
+      setFlag('load', unit)
+    }
+  }
+
   // loaded units
   //let [newLoadedUnits, oldLoadedUnits] = getDeltaVal(d.loadedUnits)
 
