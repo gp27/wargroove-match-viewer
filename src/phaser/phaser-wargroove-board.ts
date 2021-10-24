@@ -280,8 +280,8 @@ export class PhaserWargrooveBoard extends Board {
     return this.map?.tiles?.[y]?.[x]
   }
 
-  getUnitAt(x: number, y: number): WargrooveUnit {
-    return this.tileXYZToChess(x, y, getDepth('unit'))
+  getUnitAt(x: number, y: number, z?: number | string): WargrooveUnit {
+    return this.tileXYZToChess(x, y, z ?? getDepth('unit'))
   }
 
   setMoveArea(
@@ -440,6 +440,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
   info: any
 
   private buffs: Phaser.GameObjects.Group
+  private moveTo: MoveTo
 
   constructor(board: PhaserWargrooveBoard, unit: UnitData) {
     super(board)
@@ -447,6 +448,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
     this.info = makeLabel(board.scene)
     this.info.setOrigin(-0.2, -0.2)
     this.buffs = this.scene.add.group()
+    this.moveTo = new MoveTo(this, { speed: 800, sneak: true })
   }
 
   getUnit() {
@@ -492,10 +494,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
       const camera = this.scene.cameras.main
       camera.startFollow(this, true, 0.2, 0.2)
       let path = pathFinder.findPath({ x, y }, moveRange)
-      console.log(path)
-      this.moveAlongPath(
-        new MoveTo(this, { speed: 800, sneak: true }),
-        path,
+      this.moveAlongPath(path,
         () => {
           camera.stopFollow()
         }
@@ -503,17 +502,25 @@ export class WargrooveUnit extends WargrooveBoardElement {
     }
     else{
       this.board.addChess(this, x, y, z)
+      this.moveTo.stop()
     }
     this.setDepth(depth)
   }
 
-  moveAlongPath(mt: MoveTo, path: { x: number, y: number }[], cb?: Function){
+  moveAlongPath(path: { x: number, y: number }[], cb?: Function){
     if(!path.length) return cb?.()
-    mt.once('complete', ()=> {
-      this.moveAlongPath(mt, path.slice(1))
-    })
     const { x, y } = path[0]
-    mt.moveTo(x, y)
+    this.moveTo.once('complete', ()=> {
+      let z = (this as any).rexChess?.tileXYZ?.z
+      let u = this.board.getUnitAt(x, y, z)
+      if(z === undefined || u == this){
+        this.moveAlongPath(path.slice(1))
+      }
+    })
+    setTimeout(() => {
+      this.moveTo.moveTo(x, y)
+    })
+    
   }
 
   setUnitFrame() {

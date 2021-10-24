@@ -37,5 +37,6 @@ declare module 'phaser3-rex-plugins/plugins/board-components' {
       constructor(...any)
 
       moveTo(x: number, y: number): void
+      stop(): void
     }
 }
