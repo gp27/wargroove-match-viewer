@@ -36,7 +36,6 @@
     "chartjs-chart-graph": "^3.5.0",
     "dexie": "^v3.2.0-beta.1",
     "dexie-react-hooks": "^1.0.7",
-    "grommet-icons": "^4.5.0",
     "js-levenshtein": "^1.1.6",
     "jsondiffpatch": "^0.4.1",
     "minhash": "^0.0.9",

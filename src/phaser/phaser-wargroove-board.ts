@@ -3,7 +3,7 @@ import {
   Shape,
   FieldOfView,
   PathFinder,
-  MoveTo
+  MoveTo,
 } from 'phaser3-rex-plugins/plugins/board-components'
 import {
   Label,
@@ -93,7 +93,7 @@ export class PhaserWargrooveBoard extends Board {
     camera.centerOn(w / 2, h / 2)
     camera.zoom = 0.8
 
-    camera.setBounds(0-64, 0-64, w+128, h+128)
+    camera.setBounds(0 - 64, 0 - 64, w + 128, h + 128)
 
     this.w = x
     this.h = y
@@ -118,11 +118,22 @@ export class PhaserWargrooveBoard extends Board {
   sightMap: ReturnType<PhaserWargrooveBoard['generateSightMap']>
   fog: Phaser.GameObjects.GameObject[] = []
 
-  loadEntry(entry: Entry) {
-    //this.removeAllChess(true)
+  private destroyUnit(id: number) {
+    let unit = this.unitsCache[id]
+    this.scene.children.remove(unit)
+    unit.destroy()
+    delete this.touchedUnits[id]
+    delete this.unitsCache[id]
+  }
+
+  loadEntry(entry: Entry, oldEntry?: Entry) {
     this.setMoveArea([])
 
-    let { unit: liveUnit } = entry.actionLog || {}
+    const stepByOne = entry.id - (oldEntry || entry).id == 1
+
+    let { unit: mainUnit, otherUnits } = entry.actionLog || {}
+    let actingUnits = [mainUnit].concat(otherUnits).filter((A) => A)
+    //let actingUnitIds: number[] = actingUnits.map((u) => u.id)
 
     for (let id in this.touchedUnits) {
       this.touchedUnits[id] = false
@@ -134,23 +145,67 @@ export class PhaserWargrooveBoard extends Board {
 
     let units = Object.values(u)
 
+    let toBeUpdated: WargrooveUnit[] = []
+    let toBeRemoved: WargrooveUnit[] = []
+
     for (let unit of units) {
       let chess = (this.unitsCache[unit.id] =
         this.unitsCache[unit.id] || new WargrooveUnit(this, unit))
-      chess.update(unit.id == liveUnit?.id)
       this.touchedUnits[unit.id] = true
       this.chessUnits.add(chess)
+
+      let actingU = actingUnits.find((u) => u.id == unit.id)
+
+      if (actingU && stepByOne) {
+        toBeUpdated.push(chess)
+        chess.beforeAct(actingU)
+      } else {
+        chess.update()
+      }
     }
 
     for (let id in this.touchedUnits) {
       if (!this.touchedUnits[id]) {
-        let unit = this.unitsCache[id]
-        this.scene.children.remove(unit)
-        unit.destroy()
-        delete this.touchedUnits[id]
-        delete this.unitsCache[id]
+        let u = this.unitsCache[id]
+        let actingU = actingUnits.find((au) => u.id == au.id)
+
+        if (actingU && stepByOne) {
+          toBeRemoved.push(u)
+        } else {
+          this.destroyUnit(u.id)
+        }
       }
     }
+
+    const entryChanged = () => entry != this.scene.currentEntry
+
+    const next = () => {
+      if (entryChanged()) return
+
+      // act order determined by position in actingUnits
+      let actUnit = actingUnits.shift()
+      if (!actUnit) {
+        this.updateFog(playerId)
+        return
+      }
+
+      let chess = toBeUpdated.find((chess) => chess.id == actUnit.id)
+      if (chess) {
+        chess.act(actUnit, chess.getUnit(), next)
+        return
+      }
+
+      chess = toBeRemoved.find((chess) => chess.id == actUnit.id)
+      if (chess) {
+        chess.die(actUnit, next)
+        this.destroyUnit(chess.id)
+        return
+      }
+
+      next()
+    }
+
+    next()
 
     //this.chessUnits.children.entries.sort()
 
@@ -159,6 +214,15 @@ export class PhaserWargrooveBoard extends Board {
         })*/
 
     //console.log(this.scene.children)
+
+    //console.log('fog', this.scene.match.validateFogOfWar(this.sightMap), this.sightMap)
+
+    return this
+  }
+
+  private updateActingUnits(entry: Entry, oldEntry?: Entry) {}
+
+  private updateFog(playerId: number) {
     let match = this.scene.getMatch()
     if (match.isFog) {
       this.sightMap = this.generateSightMap()
@@ -190,13 +254,9 @@ export class PhaserWargrooveBoard extends Board {
         })
       })
     }
-
-    //console.log('fog', this.scene.match.validateFogOfWar(this.sightMap), this.sightMap)
-
-    return this
   }
 
-  private getUnit(id: number) {
+  getUnit(id: number) {
     return this.unitsCache[id]
   }
 
@@ -293,11 +353,8 @@ export class PhaserWargrooveBoard extends Board {
     })
   }
 
-  getUnitPathFinder(unit: WargrooveUnit){
-    let {
-      playerId,
-      unitClassId
-    } = unit.getUnit()
+  getUnitPathFinder(unit: WargrooveUnit) {
+    let { playerId, unitClassId } = unit.getUnit()
 
     const pathFinder = new PathFinder(unit, {
       pathMode: 'A*',
@@ -329,10 +386,12 @@ export class PhaserWargrooveBoard extends Board {
 
   getUnitMoveArea(x: number, y: number) {
     let unit = this.getUnitAt(x, y)
-    if(!unit) return []
+    if (!unit) return []
     let pathFinder = this.getUnitPathFinder(unit)
 
-    let { unitClass: { moveRange } } = unit.getUnit()
+    let {
+      unitClass: { moveRange },
+    } = unit.getUnit()
 
     return [{ x, y, color: 0xffffff }].concat(
       pathFinder
@@ -441,6 +500,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
 
   private buffs: Phaser.GameObjects.Group
   private moveTo: MoveTo
+  private isActing: boolean = false
 
   constructor(board: PhaserWargrooveBoard, unit: UnitData) {
     super(board)
@@ -457,16 +517,15 @@ export class WargrooveUnit extends WargrooveBoardElement {
     ).find((u) => u.id == this.id)
   }
 
-  getPlayer() {
-    let unit = this.getUnit()
+  getPlayer(unit: UnitData = this.getUnit()) {
     return this.scene.getMatch().getPlayers()[unit.playerId]
   }
 
-  update(isMain = false) {
+  updateTo(unit: UnitData) {
     let {
       pos: { x, y },
       health,
-    } = this.getUnit()
+    } = unit
 
     let outOfBoard = x < 0 || y < 0
     this.visible = !outOfBoard
@@ -479,58 +538,96 @@ export class WargrooveUnit extends WargrooveBoardElement {
       this.board.addChess(this.info, x, y)
     }
 
-    this.setBuffs()
-    this.setUnitFrame()
-    this.move(x, y, getDepth('unit'), isMain)
-  }
-
-  move(x: number, y: number, z?: number, animate = false) {
+    this.setBuffs(unit)
+    this.setUnitFrame(unit)
+    this.moveTo.stop()
+    this.board.addChess(this, x, y)
     const depth = getDepth('unit', (y - this.originY) * cellSize)
-
-    if(animate){
-      let { unitClass: { moveRange } } = this.getUnit()
-      let pathFinder = this.board.getUnitPathFinder(this)
-      
-      const camera = this.scene.cameras.main
-      camera.startFollow(this, true, 0.2, 0.2)
-      let path = pathFinder.findPath({ x, y }, moveRange)
-      this.moveAlongPath(path,
-        () => {
-          camera.stopFollow()
-        }
-      )
-    }
-    else{
-      this.board.addChess(this, x, y, z)
-      this.moveTo.stop()
-    }
     this.setDepth(depth)
+    this.isActing = false
   }
 
-  moveAlongPath(path: { x: number, y: number }[], cb?: Function){
-    if(!path.length) return cb?.()
+  update() {
+    let unit = this.getUnit()
+    this.updateTo(unit)
+  }
+
+  beforeAct(before: UnitData) {
+    this.updateTo(before)
+  }
+
+  act(before: UnitData, after: UnitData, cb: Function) {
+    if (!this.visible) {
+      this.updateTo(after)
+      cb()
+      return
+    }
+
+    let {
+      pos: { x: ox, y: oy },
+      unitClass: { moveRange },
+    } = before
+    let {
+      pos: { x, y },
+      transportedBy,
+    } = after
+    if (x < 0 || y < 0) {
+      let transport = this.board.getUnit(transportedBy)?.getUnit()
+      if (transport) {
+        x = transport.pos.x
+        y = transport.pos.y
+      } else {
+        x = ox
+        y = oy
+      }
+    }
+
+    this.isActing = true
+
+    this.move(x, y, moveRange, () => {
+      this.updateTo(after)
+      cb()
+    })
+  }
+
+  move(x: number, y: number, moveRange: number, cb: Function) {
+    let path = this.board.getUnitPathFinder(this).findPath({ x, y }, moveRange)
+
+    const camera = this.scene.cameras.main
+    camera.startFollow(this, true, 0.2, 0.2)
+    this.moveAlongPath(path, () => {
+      camera.stopFollow()
+      cb()
+    })
+  }
+
+  die(unit: UnitData, cb: Function) {
+    //this.updateTo(unit)
+    cb()
+    // die animation
+  }
+
+  moveAlongPath(path: { x: number; y: number }[], cb?: Function) {
+    if (!path.length) return cb?.()
     const { x, y } = path[0]
-    this.moveTo.once('complete', ()=> {
-      let z = (this as any).rexChess?.tileXYZ?.z
-      let u = this.board.getUnitAt(x, y, z)
-      if(z === undefined || u == this){
-        this.moveAlongPath(path.slice(1))
+    this.moveTo.once('complete', () => {
+      if (this.isActing) {
+        this.moveAlongPath(path.slice(1), cb)
+      } else {
+        cb?.()
       }
     })
-    setTimeout(() => {
-      this.moveTo.moveTo(x, y)
-    })
-    
+    this.moveTo.moveTo(x, y)
   }
 
-  setUnitFrame() {
+  setUnitFrame(unit: UnitData) {
     let {
       pos: { x, y, facing },
       unitClassId,
       unitClass: { isStructure },
       hadTurn,
-    } = this.getUnit()
-    let { color = 'grey', faction = 'cherrystone' } = this.getPlayer() || {}
+    } = unit
+    let { color = 'grey', faction = 'cherrystone' } = this.getPlayer(unit) || {}
 
     if (hadTurn) {
       this.tint = 0x999999
@@ -621,9 +718,9 @@ export class WargrooveUnit extends WargrooveBoardElement {
     return this.board.fieldOfView.findUnitFieldOfView(this)
   }
 
-  setBuffs() {
+  setBuffs(unit = this.getUnit()) {
     this.buffs.clear(true)
-    let { pos, unitClassId, state } = this.getUnit()
+    let { pos, unitClassId, state } = unit
     let s = Object.values(state).reduce((s, { key, value }) => {
       s[key] = value
       return s

@@ -95,10 +95,13 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     let oldZoom = camera.zoom
     camera.zoom *= scale
 
-    console.log(camera.width, camera.getBounds().width, camera)
     let bounds = camera.getBounds()
 
-    if(scale < 1 && camera.worldView.width > bounds.width && camera.worldView.width > bounds.width){
+    if (
+      scale < 1 &&
+      camera.worldView.width > bounds.width &&
+      camera.worldView.width > bounds.width
+    ) {
       camera.zoom = oldZoom
     }
 
@@ -202,8 +205,9 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     if (!this.match || !this.loaded) return
     let entry = this.match.getCurrentEntry()
     if (entry != this.currentEntry) {
+      let oldEntry = this.currentEntry
       this.currentEntry = entry
-      this.ui.board.loadEntry(entry)
+      this.ui.board.loadEntry(entry, oldEntry)
       ;(this.game as any).updateUI?.()
     }
   }
