@@ -18,6 +18,7 @@ import { ToggleButtonGroup, ToggleButton } from '@mui/material'
 import { useModal } from 'mui-modal-provider'
 import { MapEntrySuggestion } from '../common/map/MapEntryEditor'
 import { useMapInfo } from '../context/MapFinderContext'
+import { SliderControls } from '../common/generic/SliderControls'
 
 function loadMatchData(id: string): Promise<MatchData | undefined> {
   let matchUrl = `https://firebasestorage.googleapis.com/v0/b/wargroove-match-storage.appspot.com/o/matches%2F${id}.json?alt=media`
@@ -110,9 +111,21 @@ function MatchDashboard({ match }: { match: Match }) {
     setState({})
   }
 
+  const [speed, setSpeed] = useState(0)
+  const [isPlaying, setIsPlaying] = useState(false)
+
   const [game, setGame] = useState<PhaserWargrooveGame>()
 
   const mapInfo = useMapInfo(match)
+
+  useEffect(() => {
+    if(!game || isPlaying || !speed) return
+    setIsPlaying(true)
+    game.playNextEntry(speed == 100 ? 'fast' : 'normal', () => {
+      setIsPlaying(false)
+    })    
+  },
+  [game, speed, isPlaying])
 
   return (
     <Box
@@ -172,6 +185,7 @@ function MatchDashboard({ match }: { match: Match }) {
         }}
       >
         <Box sx={{ flexGrow: 1 }}>
+          <SliderControls onSpeedChange={setSpeed} />
           {/*<Box>{match.getCurrentEntry().actionLog?.action}</Box>*/}
           <PlayerStatusTable match={match} />
           <PlayersUnitList match={match} game={game} />

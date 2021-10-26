@@ -61,18 +61,22 @@ export class PhaserWargrooveGame extends Phaser.Game {
 
     if (onReady) {
       this.onReady(() => {
-        let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
+        let scene = this.getMatchScene()
         if (scene.loaded) onReady()
         else scene.events.once('create', onReady)
       })
     }
   }
 
+  getMatchScene(){
+    return this.scene.getScene('MatchScene') as PhaserWargrooveScene
+  }
+
   setMatch(match: Match) {
     console.log(match)
 
     this.onReady(() => {
-      let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
+      let scene = this.getMatchScene()
       scene.loadMatch(match)
     })
   }
@@ -86,9 +90,19 @@ export class PhaserWargrooveGame extends Phaser.Game {
   }
 
   getFrameCanvas(colorName: string, frameNames: string[], scale?: number) {
-    let scene = this.scene.getScene('MatchScene') as PhaserWargrooveScene
+    let scene = this.getMatchScene()
     if (!scene?.loaded) return
     return scene.getFrameCanvas(colorName, frameNames, scale)
+  }
+
+  playNextEntry(speed: 'normal' | 'fast' = 'normal', cb: Function){
+    let scene = this.getMatchScene()
+    scene.playSpeed = speed == 'normal' ? 300 : 600
+    scene.events.once('entry.played', () => {
+      scene.time.delayedCall(speed == 'normal' ? 500 : 100, cb)
+    })
+    scene.match.selectNextEntry()
+    //this.updateUI()
   }
 
   getUnitFrame(

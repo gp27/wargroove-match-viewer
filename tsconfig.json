@@ -9,5 +9,5 @@
     "lib": ["es6", "dom"],
     "strictNullChecks": false
   },
-  "include": ["src/*", "desc.d.ts"]
+  "include": ["src/*"]
 }

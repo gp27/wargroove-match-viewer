@@ -23,6 +23,7 @@ export class PhaserWargrooveScene extends Phaser.Scene {
 
   ui: Record<string, any> = {}
   loaded = false
+  playSpeed: number = 400
 
   constructor() {
     super({ key: 'MatchScene' })

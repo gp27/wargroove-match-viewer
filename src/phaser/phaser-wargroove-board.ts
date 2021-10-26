@@ -197,6 +197,7 @@ export class PhaserWargrooveBoard extends Board {
       let actUnit = actingUnits.shift()
       if (!actUnit) {
         this.updateFog(playerId)
+        this.scene.events.emit('entry.played')
         return
       }
 
@@ -522,7 +523,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
     this.info = makeLabel(board.scene)
     this.info.setOrigin(-0.2, -0.2)
     this.buffs = this.scene.add.group()
-    this.moveTo = new MoveTo(this, { speed: 800, sneak: true })
+    this.moveTo = new MoveTo(this, { speed: 400, sneak: true })
   }
 
   getUnit() {
@@ -654,6 +655,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
         cb?.()
       }
     })
+    this.moveTo.setSpeed(this.scene.playSpeed)
     this.moveTo.moveTo(x, y)
   }
 
