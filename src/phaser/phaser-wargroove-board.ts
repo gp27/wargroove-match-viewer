@@ -191,6 +191,8 @@ export class PhaserWargrooveBoard extends Board {
     const entryChanged = () => entry != this.scene.currentEntry
 
     const next = () => {
+      const camera = this.scene.cameras.main
+      camera.stopFollow()
       if (entryChanged()) return
 
       // act order determined by position in actingUnits
@@ -201,11 +203,16 @@ export class PhaserWargrooveBoard extends Board {
         return
       }
 
+      let cameraShouldFollow = actUnit == mainUnit
+
       let chess = toBeUpdated.find((chess) => chess.id == actUnit.id)
       if (chess) {
         //console.log('act', chess.id)
         try {
           let after = chess.getUnit()
+          if(cameraShouldFollow){
+            camera.startFollow(chess, true, 0.2, 0.2)
+          }
           chess.act(actUnit, after, next)
         } catch(e){
           console.log(chess)
@@ -609,12 +616,8 @@ export class WargrooveUnit extends WargrooveBoardElement {
   move(x: number, y: number, unitData: UnitData = undefined, cb: Function) {
     let ud = unitData || this.getUnit()
     let path = this.board.getUnitPathFinder(this, ud).findPath({ x, y }, ud.unitClass.moveRange)
-
-    const camera = this.scene.cameras.main
-    camera.startFollow(this, true, 0.2, 0.2)
     this.info.visible = false
     this.moveAlongPath(path, () => {
-      camera.stopFollow()
       cb()
     })
   }
