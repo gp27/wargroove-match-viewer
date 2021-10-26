@@ -17,16 +17,16 @@ export const terrainColors: Record<Terrain, number> = {
 }
 
 export const playerColors = {
-  red: { hex: '#b41c10' },
-  blue: { hex: '#3969a4' },
-  green: { hex: '#5da21a' },
-  yellow: { hex: '#cc9212' },
-  purple: { hex: '#a434b4' },
-  teal: { hex: '#31ae8b' },
-  pink: { hex: '#e62cac' },
-  orange: { hex: '#cd5d10' },
-  black: { hex: '#5c465e' },
-  grey: { hex: '#737288' },
+  red: { hex: '#b41c10', val: 0xb41c10 },
+  blue: { hex: '#3969a4', val: 0x3969a4 },
+  green: { hex: '#5da21a', val: 0x5da21a },
+  yellow: { hex: '#cc9212', val: 0xcc9212 },
+  purple: { hex: '#a434b4', val: 0xa434b4 },
+  teal: { hex: '#31ae8b', val: 0x31ae8b },
+  pink: { hex: '#e62cac', val: 0xe62cac },
+  orange: { hex: '#cd5d10', val: 0xcd5d10 },
+  black: { hex: '#5c465e', val: 0x5c465e },
+  grey: { hex: '#737288', val: 0x737288 },
 }
 
 /*export const playerColors = {

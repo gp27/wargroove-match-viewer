@@ -757,6 +757,16 @@ function analyzeDelta(
 
   //console.log(flags)
 
+  const mergeUnits = (...list: (UnitData[]|undefined)[]) => {
+    let units: UnitData[] = []
+    for(let e of list){
+      if(e){
+        units.push(...e)
+      }
+    }
+    return units
+  }
+
   if (delta.playerId)
     return withFlags({
       action: 'end_turn',
@@ -766,9 +776,18 @@ function analyzeDelta(
     })
 
   if (flags.grooved) {
+    let groover = flags.grooved[0]
+
     return withFlags({
       action: 'groove',
-      unit: flags.grooved[0],
+      unit: groover,
+      otherUnits: mergeUnits(
+        flags.posChanged,
+        flags.damaged,
+        flags.died,
+        flags.decapped,
+        flags.spawned
+      ).filter((a) => a != groover),
     })
   }
 
@@ -781,7 +800,7 @@ function analyzeDelta(
           Math.abs(pos.x - u.pos.x) + Math.abs(pos.y - u.pos.y) == 1
       )
       if (sedgeWhoGrooved) {
-        return withFlags({ action: 'groove', unit: sedgeWhoGrooved })
+        return withFlags({ action: 'groove', unit: units['u_'+sedgeWhoGrooved.id], otherUnits: mergeUnits(flags.died, flags.damaged) })
       }
     }
   }

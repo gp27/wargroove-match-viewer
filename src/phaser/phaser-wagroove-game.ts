@@ -1,5 +1,7 @@
 import Phaser from 'phaser'
 import AwaitLoaderPlugin from 'phaser3-rex-plugins/plugins/awaitloader-plugin.js'
+import GlowFilterPipelinePlugin from 'phaser3-rex-plugins/plugins/glowfilter2pipeline-plugin.js'
+import OutlinePipelinePlugin from 'phaser3-rex-plugins/plugins/outlinepipeline-plugin.js'
 import { PhaserWargrooveScene } from './phaser-wagroove-scene'
 
 import { Match, UnitData } from '../wg/match'
@@ -19,16 +21,26 @@ const config: Phaser.Types.Core.GameConfig = {
     autoCenter: Phaser.Scale.CENTER_BOTH,
     zoom: Phaser.Scale.MAX_ZOOM,
   },
-  input :{
-		activePointers: 2,
-	},
+  input: {
+    activePointers: 2,
+  },
   plugins: {
     global: [
+      {
+        key: 'rexGlowFilterPipeline',
+        plugin: GlowFilterPipelinePlugin,
+        start: true,
+      },
+      {
+        key: 'rexOutlinePipeline',
+        plugin: OutlinePipelinePlugin,
+        start: true,
+      },
       /*{
         key: 'rexAwaitLoader',
         plugin: AwaitLoaderPlugin,
         start: true,
-      }*/,
+      }*/
     ],
   },
 }

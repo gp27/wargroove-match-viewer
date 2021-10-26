@@ -1,4 +1,4 @@
-declare module 'phaser3-rex-plugins/plugins/board-components' {
+/*declare module 'phaser3-rex-plugins/plugins/board-components' {
     import 'phaser'
     export class Board extends Phaser.GameObjects.GameObject {
         constructor(scene: Phaser.Scene, config: any)
@@ -40,3 +40,4 @@ declare module 'phaser3-rex-plugins/plugins/board-components' {
       stop(): void
     }
 }
+*/

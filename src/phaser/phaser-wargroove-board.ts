@@ -7,10 +7,12 @@ import {
 } from 'phaser3-rex-plugins/plugins/board-components'
 import {
   Label,
-  RoundRectangle,
+  RoundRectangle
 } from 'phaser3-rex-plugins/templates/ui/ui-components'
+import FadeOutDestroy from 'phaser3-rex-plugins/plugins/fade-out-destroy.js'
+import PopUp from 'phaser3-rex-plugins/plugins/popup.js'
 import { MatchData, Entry, UnitData, Match } from '../wg/match'
-import { getUnitFrameNames, terrainColors } from '../wg/match-utils'
+import { getUnitFrameNames, playerColors, terrainColors } from '../wg/match-utils'
 import {
   movementMappings,
   MovementType,
@@ -54,7 +56,6 @@ export class PhaserWargrooveBoard extends Board {
       },
     })
 
-    scene.add.existing(this)
     this.chessUnits = this.scene.add.group()
     this.elements = this.scene.add.group()
     this.gridOverlay = new Phaser.GameObjects.Grid(
@@ -119,11 +120,19 @@ export class PhaserWargrooveBoard extends Board {
   fog: Phaser.GameObjects.GameObject[] = []
 
   private destroyUnit(id: number) {
+    //console.log('destroy', id)
     let unit = this.unitsCache[id]
     this.scene.children.remove(unit)
-    unit.destroy()
+    unit?.destroy()
     delete this.touchedUnits[id]
     delete this.unitsCache[id]
+  }
+
+  private makeUnit(unit: UnitData) {
+    //console.log('make', unit.id)
+    let chess = this.unitsCache[unit.id] = new WargrooveUnit(this, unit)
+    this.chessUnits.add(chess)
+    return chess
   }
 
   loadEntry(entry: Entry, oldEntry?: Entry) {
@@ -131,7 +140,7 @@ export class PhaserWargrooveBoard extends Board {
 
     const stepByOne = entry.id - (oldEntry || entry).id == 1
 
-    let { unit: mainUnit, otherUnits } = entry.actionLog || {}
+    let { unit: mainUnit, otherUnits, action, flags } = entry.actionLog || {}
     let actingUnits = [mainUnit].concat(otherUnits).filter((A) => A)
     //let actingUnitIds: number[] = actingUnits.map((u) => u.id)
 
@@ -149,16 +158,17 @@ export class PhaserWargrooveBoard extends Board {
     let toBeRemoved: WargrooveUnit[] = []
 
     for (let unit of units) {
-      let chess = (this.unitsCache[unit.id] =
-        this.unitsCache[unit.id] || new WargrooveUnit(this, unit))
+      let chess = this.unitsCache[unit.id] || this.makeUnit(unit)
       this.touchedUnits[unit.id] = true
-      this.chessUnits.add(chess)
 
       let actingU = actingUnits.find((u) => u.id == unit.id)
 
       if (actingU && stepByOne) {
         toBeUpdated.push(chess)
-        chess.beforeAct(actingU)
+        chess.updateTo(actingU)
+        if(flags?.spawned?.includes(actingU)){
+          chess.visible = false
+        }
       } else {
         chess.update()
       }
@@ -166,13 +176,14 @@ export class PhaserWargrooveBoard extends Board {
 
     for (let id in this.touchedUnits) {
       if (!this.touchedUnits[id]) {
-        let u = this.unitsCache[id]
-        let actingU = actingUnits.find((au) => u.id == au.id)
-
+        let chess = this.unitsCache[id]
+        let actingU = actingUnits.find((au) => chess.id == au.id)
         if (actingU && stepByOne) {
-          toBeRemoved.push(u)
+          toBeRemoved.push(chess)
+          chess.updateTo(actingU)
         } else {
-          this.destroyUnit(u.id)
+          chess.isActing = false
+          this.destroyUnit(chess.id)
         }
       }
     }
@@ -191,36 +202,40 @@ export class PhaserWargrooveBoard extends Board {
 
       let chess = toBeUpdated.find((chess) => chess.id == actUnit.id)
       if (chess) {
-        chess.act(actUnit, chess.getUnit(), next)
+        //console.log('act', chess.id)
+        try {
+          let after = chess.getUnit()
+          chess.act(actUnit, after, next)
+        } catch(e){
+          console.log(chess)
+          console.error(e)
+        }
         return
       }
 
       chess = toBeRemoved.find((chess) => chess.id == actUnit.id)
       if (chess) {
-        chess.die(actUnit, next)
-        this.destroyUnit(chess.id)
+        //console.log('die', chess.id)
+        let pos = actUnit.pos
+        if(action == 'suicide'){
+          pos = otherUnits?.[0].pos
+        }
+
+        chess.die(actUnit, pos, () => {
+          if (!entryChanged()){
+            this.destroyUnit(chess.id)
+          }
+          next()
+        })
         return
       }
-
       next()
     }
 
     next()
 
-    //this.chessUnits.children.entries.sort()
-
-    /*this.scene.children.sort('depth', (e1, e2) => {
-            return (e2.depth < e1.depth) || (e2.y < e1.y)
-        })*/
-
-    //console.log(this.scene.children)
-
-    //console.log('fog', this.scene.match.validateFogOfWar(this.sightMap), this.sightMap)
-
     return this
   }
-
-  private updateActingUnits(entry: Entry, oldEntry?: Entry) {}
 
   private updateFog(playerId: number) {
     let match = this.scene.getMatch()
@@ -280,7 +295,7 @@ export class PhaserWargrooveBoard extends Board {
     if (strokeColor != undefined)
       shape.setStrokeStyle(2, strokeColor, strokeAlpha)
     this.scene.add.existing(shape)
-    this.addChess(shape, x, y)
+    this.addChess(shape, x, y, undefined)
     shape.setDepth(getDepth(depth))
     return shape
   }
@@ -301,7 +316,6 @@ export class PhaserWargrooveBoard extends Board {
     const ele = new WargrooveBoardElement(this)
     ele.setCurrentFrame(frame)
     ele.setOrigin(originX, originY)
-    this.addChess(x, y)
     ele.setBoardPosition(x, y)
     ele.setScale(2)
     this.elements.add(ele)
@@ -332,7 +346,7 @@ export class PhaserWargrooveBoard extends Board {
     )
     shadow.setOrigin(originX, originY - 0.8)
     shadow.setScale(2)
-    this.addChess(shadow, x, y)
+    this.addChess(shadow, x, y, undefined)
     this.scene.add.existing(shadow)
   }
 
@@ -340,8 +354,8 @@ export class PhaserWargrooveBoard extends Board {
     return this.map?.tiles?.[y]?.[x]
   }
 
-  getUnitAt(x: number, y: number, z?: number | string): WargrooveUnit {
-    return this.tileXYZToChess(x, y, z ?? getDepth('unit'))
+  getUnitAt(x: number, y: number): WargrooveUnit {
+    return this.tileXYZToChess(x, y, getDepth('unit')) as WargrooveUnit
   }
 
   setMoveArea(
@@ -353,8 +367,8 @@ export class PhaserWargrooveBoard extends Board {
     })
   }
 
-  getUnitPathFinder(unit: WargrooveUnit) {
-    let { playerId, unitClassId } = unit.getUnit()
+  getUnitPathFinder(unit: WargrooveUnit, unitData?: UnitData) {
+    let { playerId, unitClassId } = unitData || unit.getUnit() 
 
     const pathFinder = new PathFinder(unit, {
       pathMode: 'A*',
@@ -485,7 +499,7 @@ export class WargrooveBoardElement extends WargrooveSprite {
     board.scene.add.existing(this)
   }
 
-  setBoardPosition(x: number, y: number, z?: number, isMain = false) {
+  setBoardPosition(x: number, y: number, z?: number) {
     const depth = getDepth('unit', (y - this.originY) * cellSize)
     this.board.addChess(this, x, y, z)
     this.setDepth(depth)
@@ -500,7 +514,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
 
   private buffs: Phaser.GameObjects.Group
   private moveTo: MoveTo
-  private isActing: boolean = false
+  isActing: boolean = false
 
   constructor(board: PhaserWargrooveBoard, unit: UnitData) {
     super(board)
@@ -535,15 +549,13 @@ export class WargrooveUnit extends WargrooveBoardElement {
       (!Number.isInteger(health) || health == 100 ? false : true)
     if (this.info.visible) {
       this.info.setText(health).layout()
-      this.board.addChess(this.info, x, y)
+      this.board.addChess(this.info, x, y, undefined)
     }
 
     this.setBuffs(unit)
     this.setUnitFrame(unit)
     this.moveTo.stop()
-    this.board.addChess(this, x, y)
-    const depth = getDepth('unit', (y - this.originY) * cellSize)
-    this.setDepth(depth)
+    this.setBoardPosition(x, y, getDepth('unit'))
     this.isActing = false
   }
 
@@ -552,20 +564,21 @@ export class WargrooveUnit extends WargrooveBoardElement {
     this.updateTo(unit)
   }
 
-  beforeAct(before: UnitData) {
-    this.updateTo(before)
-  }
-
   act(before: UnitData, after: UnitData, cb: Function) {
-    if (!this.visible) {
+    // spawned
+    if(before == after){
+      this.spawn(after, cb)
+      return
+    }
+
+    if (!this.visible) { // in transport
       this.updateTo(after)
       cb()
       return
     }
 
     let {
-      pos: { x: ox, y: oy },
-      unitClass: { moveRange },
+      pos: { x: ox, y: oy }
     } = before
     let {
       pos: { x, y },
@@ -584,27 +597,51 @@ export class WargrooveUnit extends WargrooveBoardElement {
 
     this.isActing = true
 
-    this.move(x, y, moveRange, () => {
+    this.move(x, y, before, () => {
+      if (!this.isActing) return
+      this.isActing = false
       this.updateTo(after)
       cb()
     })
   }
 
-  move(x: number, y: number, moveRange: number, cb: Function) {
-    let path = this.board.getUnitPathFinder(this).findPath({ x, y }, moveRange)
+  move(x: number, y: number, unitData: UnitData = undefined, cb: Function) {
+    let ud = unitData || this.getUnit()
+    let path = this.board.getUnitPathFinder(this, ud).findPath({ x, y }, ud.unitClass.moveRange)
 
     const camera = this.scene.cameras.main
     camera.startFollow(this, true, 0.2, 0.2)
+    this.info.visible = false
     this.moveAlongPath(path, () => {
       camera.stopFollow()
       cb()
     })
   }
 
-  die(unit: UnitData, cb: Function) {
-    //this.updateTo(unit)
-    cb()
-    // die animation
+  die(unit: UnitData, pos: { x: number, y: number} = undefined, cb: Function) {
+    if(!pos){
+      pos = unit.pos
+    }
+    this.isActing = true
+    this.move(pos.x, pos.y, unit, () => {
+      const fade = FadeOutDestroy(this, 200, false)
+      fade.once('complete', () => {
+        if(!this.isActing) return
+        this.isActing = false
+        cb()
+      })
+    })
+  }
+
+  spawn(unit: UnitData, cb: Function) {
+    this.isActing = true
+    this.visible = true
+    PopUp(this, 200).setScaleRange(0, 2).once('complete', () => {
+      if (!this.isActing) return
+      this.isActing = false
+      this.updateTo(unit)
+      cb()
+    })
   }
 
   moveAlongPath(path: { x: number; y: number }[], cb?: Function) {
@@ -624,8 +661,9 @@ export class WargrooveUnit extends WargrooveBoardElement {
     let {
       pos: { x, y, facing },
       unitClassId,
-      unitClass: { isStructure },
+      unitClass: { isStructure, maxGroove },
       hadTurn,
+      grooveCharge
     } = unit
     let { color = 'grey', faction = 'cherrystone' } = this.getPlayer(unit) || {}
 
@@ -659,6 +697,22 @@ export class WargrooveUnit extends WargrooveBoardElement {
     if (this.currentFrame) {
       this.displayOriginY = this.currentFrame.height - 8 - (isStructure ? 6 : 0)
     }
+
+    let outline = this.scene.plugins.get('rexOutlinePipeline') as any
+    let glow = this.scene.plugins.get('rexGlowFilterPipeline') as any
+    outline.remove(this)
+    glow.remove(this)
+    if (maxGroove > 0 && grooveCharge >= maxGroove) {
+      glow.add(this, {
+        outerStrength: 3,
+        glowColor: playerColors[color].val,
+      })
+      outline.add(this, {
+        thickness: 2,
+        outlineColor: 0x0,
+      })
+    }
+
   }
 
   getSprite() {
@@ -782,7 +836,9 @@ function getDepth(type: string, y: number = 0) {
 }
 
 export function makeLabel(scene: Phaser.Scene) {
-  let background = new RoundRectangle(scene, 0, 0, 0, 0, 5, 0x888888)
+  let background = new RoundRectangle(scene, 0, 0, 0, 0, 5, 0x333333, 0.9)
+  background.setStrokeStyle(2, 0x222222)
+  background.isFilled = true
   background.setFillStyle(0x333333, 0.9)
 
   let text = new Phaser.GameObjects.Text(scene, 0, 0, '', {
@@ -792,6 +848,7 @@ export function makeLabel(scene: Phaser.Scene) {
   })
 
   const label = new Label(scene, {
+    orientation: 0,
     width: 18,
     height: 18,
     background,
@@ -810,9 +867,9 @@ export function makeLabel(scene: Phaser.Scene) {
   background.setDepth(uiDepth)
   text.setDepth(uiDepth)
 
-  scene.add.existing(label)
   scene.add.existing(background)
   scene.add.existing(text)
+  scene.add.existing(label)
 
   label.layout()
 
@@ -886,9 +943,9 @@ class WargrooveFieldOfView {
     this.sightBoard.removeAllChess()
 
     let { x: xv, y: yv } = this.xyToSightXY({ x, y })
-    let shape = new Shape(this.sightBoard)
+    let shape = new Shape(this.sightBoard, xv, yv)
     this.sightBoard.scene.add.existing(shape)
-    this.sightBoard.addChess(shape, xv, yv)
+    this.sightBoard.addChess(shape, xv, yv, undefined)
     return shape
   }
 
@@ -901,6 +958,7 @@ class WargrooveFieldOfView {
     let sightChess = this.setViewChess(x, y)
 
     const fow = new FieldOfView(sightChess, {
+      preTestCallback: undefined, 
       costCallback: ({ x, y }, fieldOfView, tileXYArray) => {
         let { x: ox, y: oy } = this.sightXYToXY({ x, y })
 
