@@ -518,7 +518,7 @@ let moveArea: Phaser.GameObjects.GameObject[] = []
 
 export class WargrooveUnit extends WargrooveBoardElement {
   public readonly id: number
-  info: any
+  info: Label
 
   private buffs: Phaser.GameObjects.Group
   private moveTo: MoveTo
@@ -528,7 +528,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
     super(board)
     this.id = unit.id
     this.info = makeLabel(board.scene)
-    this.info.setOrigin(-0.2, -0.2)
+    this.info.setOrigin(0, 0)
     this.buffs = this.scene.add.group()
     this.moveTo = new MoveTo(this, { speed: 400, sneak: true })
   }
@@ -556,7 +556,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
       this.visible &&
       (!Number.isInteger(health) || health == 100 ? false : true)
     if (this.info.visible) {
-      this.info.setText(health).layout()
+      this.info.setText(health+' ').layout()
       this.board.addChess(this.info, x, y, undefined)
     }
 
@@ -843,27 +843,30 @@ function getDepth(type: string, y: number = 0) {
 export function makeLabel(scene: Phaser.Scene) {
   let background = new RoundRectangle(scene, 0, 0, 0, 0, 5, 0x333333, 0.9)
   background.setStrokeStyle(2, 0x222222)
-  background.isFilled = true
-  background.setFillStyle(0x333333, 0.9)
 
-  let text = new Phaser.GameObjects.Text(scene, 0, 0, '', {
-    fontSize: '12px',
-    strokeThickness: 1.1,
-    resolution: 4,
-  })
+  let text = new Phaser.GameObjects.BitmapText(
+    scene,
+    0,
+    0,
+    'wg_health_digits',
+    '00',
+    175
+  )
+
+  text.setTintFill(0xffffff)
+  text.setCenterAlign()
 
   const label = new Label(scene, {
-    orientation: 0,
-    width: 18,
-    height: 18,
+    orientation: 'y',
+    width: 24,
+    height: 24,
     background,
     text,
     align: 'center',
     space: {
-      text: 0,
-      bottom: 0,
-      right: 0,
-    },
+      bottom: 5,
+      text: 0
+    }
   })
 
   let uiDepth = getDepth('ui')

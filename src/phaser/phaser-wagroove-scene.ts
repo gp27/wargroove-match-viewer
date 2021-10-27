@@ -37,6 +37,11 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     this.load.json('terrains', '/assets/terrains.json')
     this.load.atlas('trees', '/assets/trees.png', '/assets/trees.json')
     this.load.tilemapTiledJSON('map', '/assets/map.json')
+    this.load.bitmapFont(
+      'wg_health_digits',
+      '/assets/wg_health_digits.png',
+      '/assets/wg_health_digits.xml'
+    )
   }
 
   create() {
