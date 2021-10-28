@@ -1,6 +1,5 @@
 import * as jsondiffpatch from 'jsondiffpatch'
-import 'chart.js'
-import { ChartConfiguration, ChartDataset } from 'chart.js'
+import type { ChartConfiguration, ChartDataset } from 'chart.js'
 import { getCommanderMeta, PlayerColor, playerColors } from './match-utils'
 import {
   Biome,
@@ -434,6 +433,8 @@ export class Match {
 
     return this.getTurnEndCharts().map((chart, chartIndex) => {
       let {
+        type,
+        options,
         data: { datasets },
       } = chart
 
@@ -452,11 +453,13 @@ export class Match {
       })
 
       return {
+        type,
+        options,
         data: {
           labels: newDSet[0].data.map((_, i) => `Turn ${i + 1}`),
           datasets: newDSet,
         },
-      }
+      } as ChartConfiguration<'line', number[]>
     })
   }
 }

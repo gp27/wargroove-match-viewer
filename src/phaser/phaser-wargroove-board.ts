@@ -406,7 +406,7 @@ export class PhaserWargrooveBoard extends Board {
     return pathFinder
   }
 
-  getUnitMoveArea(x: number, y: number) {
+  getUnitMoveArea(x: number, y: number, mult = 1) {
     let unit = this.getUnitAt(x, y)
     if (!unit) return []
     let pathFinder = this.getUnitPathFinder(unit)
@@ -417,7 +417,7 @@ export class PhaserWargrooveBoard extends Board {
 
     return [{ x, y, color: 0xffffff }].concat(
       pathFinder
-        .findArea(moveRange)
+        .findArea(moveRange * mult)
         .map(({ x, y }) => ({ x, y, color: 0x000000 }))
     )
   }
