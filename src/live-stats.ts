@@ -17,6 +17,8 @@ reloadMatchScript()
 const sp = new URL(location.href).searchParams
 
 const show = (sp.get('show') || '').split(',')
+const hide_on_match_end = Boolean(sp.get('hide_on_match_end'))
+
 if(!show.length){
   show.push('current_stats')
 }
@@ -55,7 +57,7 @@ function readMatchData(match: Match) {
   }
 
   let isFinished = match.getWinners().length > 0
-  if (isFinished) return data
+  if (isFinished && hide_on_match_end) return data
 
   let charts: {
     [chart_type: string]: ChartConfiguration<'line', number[]>[]
@@ -127,9 +129,11 @@ function showMatchData(data: ReturnType<typeof readMatchData>){
 
   for(let type in data.charts){
     if(!elements[type]){
-      elements[type] = document.createElement('canvas')
-      elements[type].id = type
-      document.body.append(elements[type])
+      let ele = elements[type] = document.createElement('canvas')
+      ele.id = type
+      ele.classList.add('wg_box')
+
+      document.body.append(ele)
     }
 
     let canvas = elements[type] as HTMLCanvasElement
