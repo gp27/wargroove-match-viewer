@@ -12,7 +12,7 @@ import {
 import FadeOutDestroy from 'phaser3-rex-plugins/plugins/fade-out-destroy.js'
 import PopUp from 'phaser3-rex-plugins/plugins/popup.js'
 import { MatchData, Entry, UnitData, Match } from '../wg/match'
-import { getUnitFrameNames, playerColors, terrainColors } from '../wg/match-utils'
+import { getUnitFrameNames, getXmasHatOriginByClass, playerColors, terrainColors } from '../wg/match-utils'
 import {
   movementMappings,
   MovementType,
@@ -519,6 +519,7 @@ let moveArea: Phaser.GameObjects.GameObject[] = []
 export class WargrooveUnit extends WargrooveBoardElement {
   public readonly id: number
   info: Label
+  hat?: Phaser.GameObjects.Sprite
 
   private buffs: Phaser.GameObjects.Group
   private moveTo: MoveTo
@@ -531,6 +532,9 @@ export class WargrooveUnit extends WargrooveBoardElement {
     this.info.setOrigin(0, 0)
     this.buffs = this.scene.add.group()
     this.moveTo = new MoveTo(this, { speed: 400, sneak: true })
+    this.hat = new Phaser.GameObjects.Sprite(board.scene, 0, 0, '')
+    this.hat.setScale(2)
+    this.scene.add.existing(this.hat)
   }
 
   getUnit() {
@@ -545,8 +549,9 @@ export class WargrooveUnit extends WargrooveBoardElement {
 
   updateTo(unit: UnitData) {
     let {
-      pos: { x, y },
+      pos: { x, y, facing },
       health,
+      hadTurn
     } = unit
 
     let outOfBoard = x < 0 || y < 0
@@ -556,7 +561,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
       this.visible &&
       (!Number.isInteger(health) || health == 100 ? false : true)
     if (this.info.visible) {
-      this.info.setText(health+' ').layout()
+      this.info.setText(health + ' ').layout()
       this.board.addChess(this.info, x, y, undefined)
     }
 
@@ -565,6 +570,26 @@ export class WargrooveUnit extends WargrooveBoardElement {
     this.moveTo.stop()
     this.setBoardPosition(x, y, getDepth('unit'))
     this.isActing = false
+
+    if (this.hat) {
+      this.hat.visible = this.visible && !unit.unitClass.isStructure && (window as any).xmas
+      if (this.hat.visible) {
+        let { color = 'grey', faction = 'cherrystone' } = this.getPlayer(unit) || {}
+        this.hat.frame = this.scene.getXmasHatFrame(color)
+        let flip = facing == 3
+        this.hat.setFlipX(flip)
+        let [ox, oy] = getXmasHatOriginByClass(unit.unitClassId, faction)
+        this.hat.setOrigin(0.5 + (flip ? ox - 0.2 : -ox) , 0.5 - oy)
+        this.board.addChess(this.hat, x, y, undefined)
+        this.hat.setDepth(this.depth + 1)
+
+        if (hadTurn) {
+          this.hat.tint = 0x999999
+        } else {
+          this.hat.tint = 0xffffff
+        }
+      }
+    }
   }
 
   update() {
@@ -574,19 +599,20 @@ export class WargrooveUnit extends WargrooveBoardElement {
 
   act(before: UnitData, after: UnitData, cb: Function) {
     // spawned
-    if(before == after){
+    if (before == after) {
       this.spawn(after, cb)
       return
     }
 
-    if (!this.visible) { // in transport
+    if (!this.visible) {
+      // in transport
       this.updateTo(after)
       cb()
       return
     }
 
     let {
-      pos: { x: ox, y: oy }
+      pos: { x: ox, y: oy },
     } = before
     let {
       pos: { x, y },
@@ -615,22 +641,27 @@ export class WargrooveUnit extends WargrooveBoardElement {
 
   move(x: number, y: number, unitData: UnitData = undefined, cb: Function) {
     let ud = unitData || this.getUnit()
-    let path = this.board.getUnitPathFinder(this, ud).findPath({ x, y }, ud.unitClass.moveRange)
+    let path = this.board
+      .getUnitPathFinder(this, ud)
+      .findPath({ x, y }, ud.unitClass.moveRange)
     this.info.visible = false
+    if(this.hat){
+      this.hat.visible = false
+    }
     this.moveAlongPath(path, () => {
       cb()
     })
   }
 
-  die(unit: UnitData, pos: { x: number, y: number} = undefined, cb: Function) {
-    if(!pos){
+  die(unit: UnitData, pos: { x: number; y: number } = undefined, cb: Function) {
+    if (!pos) {
       pos = unit.pos
     }
     this.isActing = true
     this.move(pos.x, pos.y, unit, () => {
       const fade = FadeOutDestroy(this, 200, false)
       fade.once('complete', () => {
-        if(!this.isActing) return
+        if (!this.isActing) return
         this.isActing = false
         cb()
       })
@@ -640,12 +671,14 @@ export class WargrooveUnit extends WargrooveBoardElement {
   spawn(unit: UnitData, cb: Function) {
     this.isActing = true
     this.visible = true
-    PopUp(this, 200).setScaleRange(0, 2).once('complete', () => {
-      if (!this.isActing) return
-      this.isActing = false
-      this.updateTo(unit)
-      cb()
-    })
+    PopUp(this, 200)
+      .setScaleRange(0, 2)
+      .once('complete', () => {
+        if (!this.isActing) return
+        this.isActing = false
+        this.updateTo(unit)
+        cb()
+      })
   }
 
   moveAlongPath(path: { x: number; y: number }[], cb?: Function) {
@@ -668,7 +701,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
       unitClassId,
       unitClass: { isStructure, maxGroove },
       hadTurn,
-      grooveCharge
+      grooveCharge,
     } = unit
     let { color = 'grey', faction = 'cherrystone' } = this.getPlayer(unit) || {}
 
@@ -717,7 +750,6 @@ export class WargrooveUnit extends WargrooveBoardElement {
         outlineColor: 0x0,
       })
     }
-
   }
 
   getSprite() {
@@ -726,6 +758,7 @@ export class WargrooveUnit extends WargrooveBoardElement {
 
   destroy() {
     this.info?.destroy()
+    this.hat?.destroy()
     this.buffs?.destroy(true)
     super.destroy()
   }

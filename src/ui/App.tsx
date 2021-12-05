@@ -15,7 +15,7 @@ import {
 } from '@mui/material'
 import CssBaseline from '@mui/material/CssBaseline'
 import AppBar from '@mui/material/AppBar'
-import { useState } from 'react'
+import { useState, createContext, useContext } from 'react'
 import { Match } from '../wg/match'
 import { PhaserWargrooveGame } from '../phaser/phaser-wagroove-game'
 import { Close, Menu, Map, SportsEsports, AltRoute } from '@mui/icons-material'
@@ -73,6 +73,10 @@ const mdTheme = createTheme({
   },
 })
 
+const XmasContext = createContext(false)
+
+export const useXmas = () => useContext(XmasContext)
+
 export default function App() {
   const [location, setLocation] = useLocation()
   const [matchId, setMatchId] = useState(initialUrlParams.match_id)
@@ -102,11 +106,17 @@ function AppContent() {
     setOpen(!open)
   }
 
+  
+
   const [location, setLocation] = useLocation()
 
   function navigate(url: string) {
     toggleDrawer()
     setLocation(url)
+  }
+  const [xmas, setXmas] = useState(false)
+  function toggleXmas(){
+    setXmas(!xmas)
   }
 
   return (
@@ -117,6 +127,10 @@ function AppContent() {
           <IconButton onClick={toggleDrawer}>
             <Menu />
           </IconButton>
+
+          {location.startsWith('/match/') && <IconButton onClick={toggleXmas}>
+            <img src="/assets/xmashat.png" style={{position: 'absolute', clip: 'rect(0,19px,9px,0'}}/>
+          </IconButton>}
 
           <Typography
             component="h1"
@@ -209,10 +223,14 @@ function AppContent() {
           <Switch>
             <Route path="/" component={MatchesRoute} />
             <Route path="/maps" component={Maps} />
-            <Route path="/match/:id" component={MatchRoute} />
+            <Route path="/match/:id">
+              <XmasContext.Provider value={xmas}>
+                <MatchRoute />
+              </XmasContext.Provider>
+            </Route>
             <Route path="/openings" component={OpeningsRoute} />
             <Route path="/*">
-              <Redirect to="/"/>
+              <Redirect to="/" />
             </Route>
           </Switch>
         </Box>

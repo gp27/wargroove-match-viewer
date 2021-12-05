@@ -79,3 +79,56 @@ export function getUnitFrameNames(unitClassId: string, faction: string) {
 
   return names
 }
+
+
+const xmashatOriginsByClass = {
+  soldier: [0.1, -0.2],
+  soldier_felheim: [0.12, -0.2],
+  dog: [0.2, -0.15],
+  dog_floran: [0.18, -0.12],
+  spearman: [-0.1, -0.2],
+  mage: [0.15, -0.2],
+  mage_floran: [0.05, -0.2],
+  giant: [0.15, -0.4],
+  harpy: [0.15],
+  witch: [0.15],
+  witch_cherrystone: [0.1, -0.25],
+  balloon: [0.24, -0.45],
+  balloon_heavensong: [0.15, -0.4],
+  balloon_felheim: [0.18, -0.45],
+  dragon: [0.3, -0.05],
+  dragon_heavensong: [0.3, 0],
+  dragon_felheim: [0.32, 0],
+  archer: [0.1],
+  archer_heavensong: [0.12, -0.2],
+  thief: [0.15, -0.25],
+  thief_with_gold: [0.25, -0.25],
+  vine: [0.15],
+  commander_mercia: [0.12],
+  commander_darkmercia: [0.12],
+  commander_wulfar: [0.07, -0.28],
+  commander_twins: [0, -0.1],
+  commander_caesar: [0.18, 0],
+  commander_koji: [-0.05],
+  commander_ragna: [0.12, -0.25],
+  commander_valder: [0.1, -0.25],
+  commander_elodie: [0.15],
+  commander_sigrid: [0.15],
+  commander_sedge: [0.05, -0.2],
+  commander_emeric: [0.1],
+  merman: [0.15, -0.2],
+  rifleman: [0, -0.25],
+  wagon: [0.3, -0.35],
+  trebuchet: [0.32, -0.32],
+}
+
+;(window as any).xmashatOriginsByClass = xmashatOriginsByClass
+
+export function getXmasHatOriginByClass(unitClass: string, faction){
+  let [ox = 0, oy = -0.3] =
+    xmashatOriginsByClass[`${unitClass}_${faction}`] ||
+    xmashatOriginsByClass[unitClass] ||
+    []
+  return [ox, oy]
+}
+

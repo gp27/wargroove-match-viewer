@@ -19,6 +19,7 @@ import { useModal } from 'mui-modal-provider'
 import { MapEntrySuggestion } from '../common/map/MapEntryEditor'
 import { useMapInfo } from '../context/MapFinderContext'
 import { SliderControls } from '../common/generic/SliderControls'
+import { useXmas } from '../App'
 
 function loadMatchData(id: string): Promise<MatchData | undefined> {
   let matchUrl = `https://firebasestorage.googleapis.com/v0/b/wargroove-match-storage.appspot.com/o/matches%2F${id}.json?alt=media`
@@ -106,6 +107,8 @@ function MatchDashboard({ match }: { match: Match }) {
 
   const [isGameReady, setGameReady] = useState(false)
 
+  const xmas = useXmas()
+
   let [_, setState] = useState<any>(0)
   function update() {
     setState({})
@@ -126,6 +129,11 @@ function MatchDashboard({ match }: { match: Match }) {
     })    
   },
   [game, speed, isPlaying])
+
+  useEffect(() => {
+    ;(window as any).xmas = xmas
+    match.selectNextEntry()
+  }, [xmas])
 
   return (
     <Box

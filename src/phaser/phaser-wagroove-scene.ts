@@ -33,8 +33,10 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     this.load.image('palette', '/assets/wargroove_palette_small.png')
     this.load.image('units', '/assets/units.png')
     this.load.image('wg_tilsets', '/assets/tilesets_clean.png')
+    this.load.image('xmashat', '/assets/xmashat.png')
     this.load.json('units', '/assets/units.json')
     this.load.json('terrains', '/assets/terrains.json')
+    this.load.json('xmashat', '/assets/xmashat.json')
     this.load.atlas('trees', '/assets/trees.png', '/assets/trees.json')
     this.load.tilemapTiledJSON('map', '/assets/map.json')
     this.load.bitmapFont(
@@ -53,7 +55,14 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     const unitsCanvas = this.game.textures
       .get('units')
       .getSourceImage() as HTMLCanvasElement
+
     applyPalette(unitsCanvas, 'wg-palette', 'grey', 'grey')
+
+    const xmashatCanvas = this.game.textures
+      .get('xmashat')
+      .getSourceImage() as HTMLCanvasElement
+
+    applyPalette(xmashatCanvas, 'wg-palette', 'grey', 'grey')
 
     this.loaded = true
     this.makeUi()
@@ -116,26 +125,31 @@ export class PhaserWargrooveScene extends Phaser.Scene {
     }
   }
 
-  makeAtlas(colorName: string) {
-    let key = `units-${colorName}`
+  makeAtlas(colorName: string, textureName = 'units') {
+    let key = `${textureName}-${colorName}`
     let canvas = applyPalette(
-      this.game.textures.get('units').getSourceImage() as HTMLCanvasElement,
+      this.game.textures.get(textureName).getSourceImage() as HTMLCanvasElement,
       'wg-palette',
       'grey',
       colorName
     )
-    let json = this.cache.json.get('units')
+    let json = this.cache.json.get(textureName)
     return this.textures.addAtlas(key, canvas, json)
   }
 
-  getAtlasByColor(colorName: string) {
-    let key = `units-${colorName}`
+  getAtlasByColor(colorName: string, textureName = 'units') {
+    let key = `${textureName}-${colorName}`
     let texture = this.textures.get(key)
     if (texture.key == '__MISSING') {
-      texture = this.makeAtlas(colorName)
+      texture = this.makeAtlas(colorName, textureName)
     }
 
     return texture
+  }
+
+  getXmasHatFrame(colorName: string){
+    let texture = this.getAtlasByColor(colorName ,'xmashat')
+    return texture?.getFramesFromTextureSource(0, false)[0]
   }
 
   getFrames(colorName: string, frameNames: string[]) {

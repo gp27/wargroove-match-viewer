@@ -119,6 +119,8 @@ export type Status = Record<
     armyValue: number
     unitCount: number // hq does not count
     combatUnitCount: number
+    groove: number
+    maxGroove: number
     //activeUnitCount: number
   }
 >
@@ -293,14 +295,17 @@ export class Match {
   }
 
   getCharts(
-    entryFilter: (entry: Entry) => boolean = () => true
+    entryFilter: (entry: Entry) => boolean = () => true,
+    //useCommanderName = false,
+    colors = {} as Record<number, string>
   ): ChartConfiguration<'line', number[]>[] {
     let labels: string[] = []
 
     let incomeDataSet: ChartDataset<'line', number[]>[] = []
     let armyValueDataSet: ChartDataset<'line', number[]>[] = []
-    let unitCountDataSet: ChartDataset<'line', number[]>[] = []
+    //let unitCountDataSet: ChartDataset<'line', number[]>[] = []
     let combatUnitCountDataSet: ChartDataset<'line', number[]>[] = []
+    let grooveDataSet: ChartDataset<'line', number[]>[] = []
 
     let pointBackgroundColor: string[] = []
 
@@ -315,19 +320,27 @@ export class Match {
         `T${turnNumber}-P${playerId + 1}-M${tEntries.indexOf(entry) + 1}`
       )
 
-      let color = this.getPlayerColorHex(playerId)
+      let color = colors[playerId] || this.getPlayerColorHex(playerId)
       pointBackgroundColor.push(color)
 
       Object.entries(status).forEach(
         (
           [
             playerIdStr,
-            { gold, income, armyValue, unitCount, combatUnitCount },
+            {
+              gold,
+              income,
+              armyValue,
+              unitCount,
+              combatUnitCount,
+              groove,
+              maxGroove,
+            },
           ],
           i
         ) => {
           let playerId = +playerIdStr
-          let color = this.getPlayerColorHex(playerId)
+          let color = colors[playerId] || this.getPlayerColorHex(playerId)
 
           getDataSet(incomeDataSet, i, {
             label: `P${playerId + 1} Income`,
@@ -348,17 +361,30 @@ export class Match {
             pointBackgroundColor,
           }).data?.push(armyValue + gold)
 
-          getDataSet(unitCountDataSet, i, {
+          /*getDataSet(unitCountDataSet, i, {
             label: `P${playerId + 1} Unit Count`,
             borderColor: color,
             pointBackgroundColor,
-          }).data?.push(unitCount)
+          }).data?.push(unitCount)*/
 
           getDataSet(combatUnitCountDataSet, i, {
             label: `P${playerId + 1} Combat U.C.`,
             borderColor: color,
             pointBackgroundColor,
           }).data?.push(combatUnitCount)
+
+          getDataSet(grooveDataSet, i * 2, {
+            label: `P${playerId + 1} Groove`,
+            borderColor: color,
+            pointBackgroundColor,
+          }).data?.push(groove)
+
+          getDataSet(grooveDataSet, i * 2 + 1, {
+            label: `P${playerId + 1} Max Groove`,
+            borderDash: [5],
+            borderColor: color,
+            pointRadius: 0,
+          }).data?.push(maxGroove)
         }
       )
     }
@@ -383,7 +409,7 @@ export class Match {
           datasets: armyValueDataSet,
         },
       },
-      {
+      /*{
         type: 'line',
         options: {
           scales: {
@@ -396,7 +422,7 @@ export class Match {
           labels,
           datasets: unitCountDataSet,
         },
-      },
+      },*/
       {
         type: 'line',
         options: {
@@ -411,13 +437,27 @@ export class Match {
           datasets: combatUnitCountDataSet,
         },
       },
+      {
+        type: 'line',
+        options: {
+          scales: {
+            yAxes: {
+              ticks: { stepSize: 10 },
+            },
+          },
+        },
+        data: {
+          labels,
+          datasets: grooveDataSet,
+        },
+      },
     ]
   }
 
-  getTurnEndCharts() {
+  getTurnEndCharts(colors = {} as Record<number, string>) {
     let charts = this.getCharts((entry) => {
       return entry.turn.entries.slice(-1)[0] == entry
-    })
+    }, colors)
 
     charts.forEach(({ data }) => {
       data.labels = data.labels.map(
@@ -428,29 +468,33 @@ export class Match {
     return charts
   }
 
-  getAverageCharts() {
+  getAverageCharts(colors = {} as Record<number, string>) {
     const n = Object.keys(this.players).length
 
-    return this.getTurnEndCharts().map((chart, chartIndex) => {
+    return this.getTurnEndCharts(colors).map((chart, chartIndex) => {
       let {
         type,
         options,
         data: { datasets },
       } = chart
 
-      let newDSet = datasets.map(({ data, label, borderColor }, i) => {
-        return {
-          data: data
-            .map((v, i, a) => {
-              if (i % n != 0 || i + n > a.length) return
-              return a.slice(i, i + n).reduce((a, b) => a + b, 0) / n
-            })
-            .filter((A) => A !== undefined),
-          label: label + ' Avg',
-          borderColor,
-          borderDash: chartIndex == 1 && i % 2 == 1 ? [5] : undefined,
+      let newDSet = datasets.map(
+        ({ data, label, borderColor, pointRadius }, i) => {
+          return {
+            data: data
+              .map((v, i, a) => {
+                if (i % n != 0 || i + n > a.length) return
+                return a.slice(i, i + n).reduce((a, b) => a + b, 0) / n
+              })
+              .filter((A) => A !== undefined),
+            label: label + ' Avg',
+            borderColor,
+            pointRadius,
+            borderDash:
+              [1, 3].includes(chartIndex) && i % 2 == 1 ? [5] : undefined,
+          }
         }
-      })
+      )
 
       return {
         type,
@@ -499,6 +543,8 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
       armyValue: 0,
       unitCount: 0,
       combatUnitCount: 0,
+      groove: 0,
+      maxGroove: 0
     }
   })
 
@@ -510,11 +556,15 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
       playerId,
       health,
       unitClassId,
-      unitClass: { cost },
+      unitClass: { cost, maxGroove = 0 },
+      grooveCharge = 0
     } = unit
     if (playerId < 0) continue
 
     let playerStatus = status[playerId]
+
+    playerStatus.groove += grooveCharge
+    playerStatus.maxGroove += maxGroove
 
     if (['city', 'hq', 'water_city'].includes(unitClassId)) {
       playerStatus.income += 100
