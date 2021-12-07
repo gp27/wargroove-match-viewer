@@ -25,7 +25,7 @@ function loadMatchData(id: string): Promise<MatchData | undefined> {
   let matchUrl = `https://firebasestorage.googleapis.com/v0/b/wargroove-match-storage.appspot.com/o/matches%2F${id}.json?alt=media`
 
   return fetch(matchUrl, { cache: 'no-cache' }).then((res) => {
-    if(res.status != 200) return null
+    if (res.status != 200) return null
 
     return res
       .json()
@@ -80,7 +80,7 @@ export default function MatchRoute() {
   const [, setLocation] = useLocation()
   const { id: matchId } = params || {}
 
-  const [match, setMatch] = useState<Match>()  
+  const [match, setMatch] = useState<Match>()
 
   useEffect(() => {
     if (!matchId) {
@@ -122,13 +122,12 @@ function MatchDashboard({ match }: { match: Match }) {
   const mapInfo = useMapInfo(match)
 
   useEffect(() => {
-    if(!game || isPlaying || !speed) return
+    if (!game || isPlaying || !speed) return
     setIsPlaying(true)
     game.playNextEntry(speed == 100 ? 'fast' : 'normal', () => {
       setIsPlaying(false)
-    })    
-  },
-  [game, speed, isPlaying])
+    })
+  }, [game, speed, isPlaying])
 
   useEffect(() => {
     ;(window as any).xmas = xmas
@@ -195,7 +194,7 @@ function MatchDashboard({ match }: { match: Match }) {
         <Box sx={{ flexGrow: 1 }}>
           <SliderControls onSpeedChange={setSpeed} />
           {/*<Box>{match.getCurrentEntry().actionLog?.action}</Box>*/}
-          <PlayerStatusTable match={match} />
+          <PlayerStatusTable match={match} onPlayerColorChange={update} />
           <PlayersUnitList match={match} game={game} />
         </Box>
 
@@ -210,15 +209,22 @@ function MatchSkeleton() {
 }
 
 function Charts({ match }: { match: Match }) {
-  const [chartType, setChartsType] = useState<'average'|'turn_end'|'all_moves'>('average')
+  const [chartType, setChartsType] = useState<
+    'average' | 'turn_end' | 'all_moves'
+  >('average')
 
-  let charts = chartType == "average" ? match.getAverageCharts() : chartType == 'turn_end' ? match.getTurnEndCharts() : match.getCharts()
+  let charts =
+    chartType == 'average'
+      ? match.getAverageCharts()
+      : chartType == 'turn_end'
+      ? match.getTurnEndCharts()
+      : match.getCharts()
   //console.log(charts)
 
   return (
     <Box sx={{ p: 1, textAlign: 'center' }}>
       <ToggleButtonGroup
-      value={chartType}
+        value={chartType}
         exclusive
         onChange={(ev, value) => setChartsType(value)}
       >

@@ -202,6 +202,10 @@ export class Match {
     //console.log(this)
   }
 
+  getMatchData() {
+    return this.matchData
+  }
+
   selectEntry(entryId: number) {
     this.currentEntry =
       this.entries.find((e) => e.id == entryId) ||
@@ -393,6 +397,13 @@ export class Match {
       {
         type: 'line',
         options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Income',
+            },
+          },
+
           scales: {
             yAxes: { ticks: { stepSize: 100 } },
           },
@@ -407,6 +418,14 @@ export class Match {
         data: {
           labels,
           datasets: armyValueDataSet,
+        },
+        options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Army Value',
+            },
+          },
         },
       },
       /*{
@@ -426,6 +445,12 @@ export class Match {
       {
         type: 'line',
         options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Combat Unit Count',
+            },
+          },
           scales: {
             yAxes: {
               ticks: { stepSize: 1 },
@@ -440,6 +465,12 @@ export class Match {
       {
         type: 'line',
         options: {
+          plugins: {
+            title: {
+              display: true,
+              text: 'Groove',
+            },
+          },
           scales: {
             yAxes: {
               ticks: { stepSize: 10 },
@@ -544,7 +575,7 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
       unitCount: 0,
       combatUnitCount: 0,
       groove: 0,
-      maxGroove: 0
+      maxGroove: 0,
     }
   })
 
@@ -557,7 +588,7 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
       health,
       unitClassId,
       unitClass: { cost, maxGroove = 0 },
-      grooveCharge = 0
+      grooveCharge = 0,
     } = unit
     if (playerId < 0) continue
 
@@ -810,10 +841,10 @@ function analyzeDelta(
 
   //console.log(flags)
 
-  const mergeUnits = (...list: (UnitData[]|undefined)[]) => {
+  const mergeUnits = (...list: (UnitData[] | undefined)[]) => {
     let units: UnitData[] = []
-    for(let e of list){
-      if(e){
+    for (let e of list) {
+      if (e) {
         units.push(...e)
       }
     }
@@ -853,7 +884,11 @@ function analyzeDelta(
           Math.abs(pos.x - u.pos.x) + Math.abs(pos.y - u.pos.y) == 1
       )
       if (sedgeWhoGrooved) {
-        return withFlags({ action: 'groove', unit: units['u_'+sedgeWhoGrooved.id], otherUnits: mergeUnits(flags.died, flags.damaged) })
+        return withFlags({
+          action: 'groove',
+          unit: units['u_' + sedgeWhoGrooved.id],
+          otherUnits: mergeUnits(flags.died, flags.damaged),
+        })
       }
     }
   }

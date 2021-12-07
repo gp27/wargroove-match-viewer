@@ -19,12 +19,12 @@ const sp = new URL(location.href).searchParams
 const show = (sp.get('show') || '').split(',')
 const hide_on_match_end = Boolean(sp.get('hide_on_match_end'))
 
-if(!show.length){
+if (!show.length) {
   show.push('current_stats')
 }
 
-function addCss(css: string){
-  let style =  document.createElement('style')
+function addCss(css: string) {
+  let style = document.createElement('style')
   style.innerText = css
   document.head.append(style)
 }
@@ -36,9 +36,19 @@ function reloadMatchScript() {
   s.replaceWith()
 }
 
+function matchDataHasChanged(matchData: MatchData) {
+  if (!window.match) return true
+  let oldData = window.match.getMatchData()
+  return (
+    oldData.match_id != matchData.match_id ||
+    Object.values(oldData.deltas).length !=
+      Object.values(matchData.deltas).length
+  )
+}
+
 function setMatch(matchData: MatchData) {
   try {
-    if(matchData){
+    if (matchData && matchDataHasChanged(matchData)) {
       window.match = new Match(matchData)
       let data = readMatchData(window.match)
       showMatchData(data)
@@ -47,13 +57,18 @@ function setMatch(matchData: MatchData) {
     console.error(e)
   }
 
-  setTimeout(() => { reloadMatchScript() }, matchData ? 2000 : 0)
+  setTimeout(
+    () => {
+      reloadMatchScript()
+    },
+    matchData ? 2000 : 0
+  )
 }
 
 function readMatchData(match: Match) {
   let data = {
-    current_stats: null as (Status[number] & {player: string})[],
-    charts: {} as { [type: string]: ChartConfiguration<'line', number[]>},
+    current_stats: null as (Status[number] & { player: string })[],
+    charts: {} as { [type: string]: ChartConfiguration<'line', number[]> },
   }
 
   let isFinished = match.getWinners().length > 0
@@ -64,11 +79,11 @@ function readMatchData(match: Match) {
   } = {}
 
   const getCharts = (chart_type: string) => {
-    if(chart_type == 'move'){
+    if (chart_type == 'move') {
       return match.getCharts()
     }
 
-    if(chart_type == 'turn'){
+    if (chart_type == 'turn') {
       return match.getTurnEndCharts()
     }
 
@@ -79,27 +94,33 @@ function readMatchData(match: Match) {
     if (type == 'current_stats') {
       const players = match.getPlayers()
       const entry = match.getCurrentEntry()
-      data.current_stats = players.map((player, i) => Object.assign({ player: `P${player.id+1} - ${player.commander}` },entry.status[player.id]))
+      data.current_stats = players.map((player, i) =>
+        Object.assign(
+          { player: `P${player.id + 1} - ${player.commander}` },
+          entry.status[player.id]
+        )
+      )
     }
 
-    if(type.startsWith('chart_')){
-      let [ name, chart_type = 'avg' ] = type.split(':')
-      let [income, army, unit_count, combat_uc] = charts[chart_type] = charts[chart_type] || getCharts(chart_type)
+    if (type.startsWith('chart_')) {
+      let [name, chart_type = 'avg'] = type.split(':')
+      let [income, army, unit_count, groove] = (charts[chart_type] =
+        charts[chart_type] || getCharts(chart_type))
 
-      if(name == 'chart_income'){
+      if (name == 'chart_income') {
         data.charts[type] = income
       }
 
-      if(name == 'chart_army'){
+      if (name == 'chart_army') {
         data.charts[type] = army
       }
 
-      if(name == 'chart_unit_count'){
+      if (name == 'chart_unit_count') {
         data.charts[type] = unit_count
       }
 
-      if(name == 'chart_combat_uc'){
-        data.charts[type] = combat_uc
+      if (name == 'chart_groove') {
+        data.charts[type] = groove
       }
     }
   })
@@ -107,29 +128,27 @@ function readMatchData(match: Match) {
   return data
 }
 
-
 const elements: { [id: string]: HTMLElement } = {}
 
-function showMatchData(data: ReturnType<typeof readMatchData>){
+function showMatchData(data: ReturnType<typeof readMatchData>) {
   removeUnusedElements(data)
 
-  if(data.current_stats){
+  if (data.current_stats) {
     let table = makeStatsTable(data.current_stats)
     table.id = 'current_stats'
 
-    if(!elements.current_stats){
+    if (!elements.current_stats) {
       elements.current_stats = table
       document.body.append(table)
-    }
-    else {
+    } else {
       elements.current_stats.replaceWith(table)
     }
     elements.current_stats = table
   }
 
-  for(let type in data.charts){
-    if(!elements[type]){
-      let ele = elements[type] = document.createElement('canvas')
+  for (let type in data.charts) {
+    if (!elements[type]) {
+      let ele = (elements[type] = document.createElement('canvas'))
       ele.id = type
       ele.classList.add('wg_box')
 
@@ -141,24 +160,26 @@ function showMatchData(data: ReturnType<typeof readMatchData>){
   }
 }
 
-function makeStatsTable(stats: {
+function makeStatsTable(
+  stats: {
     player: string
-    gold: number;
-    income: number;
-    armyValue: number;
-    unitCount: number;
-    combatUnitCount: number;
-}[]): HTMLTableElement{
+    gold: number
+    income: number
+    armyValue: number
+    unitCount: number
+    combatUnitCount: number
+  }[]
+): HTMLTableElement {
   let table = document.createElement('table')
-  table.innerHTML = '<thead><tr><th style="opacity:0"></th><th>Gold</th><th>Income</th><th>Army</th><th>Units</th><th>Combat U.</th></tr></thead>'
+  table.innerHTML =
+    '<thead><tr><th style="opacity:0"></th><th>Gold</th><th>Income</th><th>Army</th><th>Units</th><th>Combat U.</th></tr></thead>'
   let tbody = document.createElement('tbody')
-  for(let stat of stats){
+  for (let stat of stats) {
     tbody.innerHTML += `<tr><td>${stat.player}</td><td>${stat.gold}</td><td>${stat.income}</td><td>${stat.armyValue}</td><td>${stat.unitCount}</td><td>${stat.combatUnitCount}</td></tr>`
   }
   table.append(tbody)
   return table
 }
-
 
 let charts: { [id: string]: Chart } = {}
 
@@ -186,7 +207,7 @@ function removeUnusedElements(data: ReturnType<typeof readMatchData>) {
       elements[type].replaceWith()
       delete elements[type]
 
-      if(charts[type]){
+      if (charts[type]) {
         charts[type].destroy()
         delete charts[type]
       }
