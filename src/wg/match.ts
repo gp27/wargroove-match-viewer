@@ -401,6 +401,9 @@ export class Match {
             title: {
               display: true,
               text: 'Income',
+              font: {
+                size: 20,
+              },
             },
           },
 
@@ -424,6 +427,9 @@ export class Match {
             title: {
               display: true,
               text: 'Army Value',
+              font: {
+                size: 20,
+              },
             },
           },
         },
@@ -449,6 +455,9 @@ export class Match {
             title: {
               display: true,
               text: 'Combat Unit Count',
+              font: {
+                size: 20,
+              },
             },
           },
           scales: {
@@ -469,6 +478,9 @@ export class Match {
             title: {
               display: true,
               text: 'Groove',
+              font: {
+                size: 20,
+              },
             },
           },
           scales: {
