@@ -12,7 +12,7 @@ import IconButton from '@mui/material/IconButton'
 import { AutoAwesome, Cancel } from '@mui/icons-material'
 import { Match } from '../../wg/match'
 
-export default function PlayerStatusTable({
+export default function PlayerStatsTable({
   match,
   onPlayerColorChange,
 }: {
@@ -45,7 +45,7 @@ export default function PlayerStatusTable({
         <TableBody>
           {players.map((player, i) => {
             const { gold, income, unitCount, combatUnitCount, armyValue } =
-              entry.status[player.id]
+              entry.stats[player.id]
 
             return (
               <TableRow key={i}>

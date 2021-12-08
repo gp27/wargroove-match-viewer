@@ -111,7 +111,7 @@ export interface State {
   unitClasses?: Record<string, UnitClass>
 }
 
-export type Status = Record<
+export type Stats = Record<
   number,
   {
     gold: number
@@ -121,6 +121,7 @@ export type Status = Record<
     combatUnitCount: number
     groove: number
     maxGroove: number
+    commanderHealth: number
     //activeUnitCount: number
   }
 >
@@ -136,7 +137,7 @@ export interface PlayerTurn {
 export interface Entry {
   id: number
   state: State
-  status: Status
+  stats: Stats
   turn: PlayerTurn
   moveNumber: number
   actionLog?: ActionLog
@@ -181,7 +182,7 @@ export class Match {
         ({
           id,
           state,
-          status: generateStateStatus(state, matchData),
+          stats: generateStateStats(state, matchData),
           actionLog: analyzeDelta(
             matchData.deltas[id - 1],
             states[id - 1],
@@ -317,7 +318,7 @@ export class Match {
       if (!entryFilter(entry)) continue
 
       let {
-        status,
+        stats,
         turn: { turnNumber, playerId, entries: tEntries },
       } = entry
       labels.push(
@@ -327,7 +328,7 @@ export class Match {
       let color = colors[playerId] || this.getPlayerColorHex(playerId)
       pointBackgroundColor.push(color)
 
-      Object.entries(status).forEach(
+      Object.entries(stats).forEach(
         (
           [
             playerIdStr,
@@ -576,11 +577,11 @@ function generateStates({ state, deltas }: MatchData) {
   return states
 }
 
-function generateStateStatus({ units, gold }: State, { players }: MatchData) {
-  let status: Status = {}
+function generateStateStats({ units, gold }: State, { players }: MatchData) {
+  let stats: Stats = {}
 
   Object.values(players).forEach((_, playerId) => {
-    status[playerId] = {
+    stats[playerId] = {
       gold: gold['p_' + playerId] ?? gold[playerId],
       income: 0,
       armyValue: 0,
@@ -588,6 +589,7 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
       combatUnitCount: 0,
       groove: 0,
       maxGroove: 0,
+      commanderHealth: 0
     }
   })
 
@@ -604,17 +606,17 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
     } = unit
     if (playerId < 0) continue
 
-    let playerStatus = status[playerId]
+    let playerStats = stats[playerId]
 
-    playerStatus.groove += grooveCharge
-    playerStatus.maxGroove += maxGroove
+    playerStats.groove += grooveCharge
+    playerStats.maxGroove += maxGroove
 
     if (['city', 'hq', 'water_city'].includes(unitClassId)) {
-      playerStatus.income += 100
+      playerStats.income += 100
     }
 
     if (unitClassId != 'hq') {
-      playerStatus.unitCount++
+      playerStats.unitCount++
     }
 
     if (
@@ -628,12 +630,12 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
         'water_city',
       ].includes(unitClassId)
     ) {
-      playerStatus.combatUnitCount++
-      playerStatus.armyValue += Math.round((cost * health) / 100)
+      playerStats.combatUnitCount++
+      playerStats.armyValue += Math.round((cost * health) / 100)
     }
   }
 
-  return status
+  return stats
 }
 
 function generatePlayers(entries: Entry[], { players }: MatchData) {

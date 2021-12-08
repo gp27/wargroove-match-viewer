@@ -3,7 +3,7 @@ import { useRoute, useLocation } from 'wouter'
 import Box from '@mui/material/Box'
 import Skeleton from '@mui/material/Skeleton'
 import WargrooveGame from '../common/WargrooveGame'
-import PlayerStatusTable from '../common/PlayerStatusTable'
+import PlayerStatsTable from '../common/PlayerStatsTable'
 import PlayersUnitList from '../common/UnitList'
 import { MatchActionLog } from '../common/match/MatchActionLog'
 import { TurnMoveList, TurnMoveSwipable } from '../common/TurnMoveList'
@@ -194,7 +194,7 @@ function MatchDashboard({ match }: { match: Match }) {
         <Box sx={{ flexGrow: 1 }}>
           <SliderControls onSpeedChange={setSpeed} />
           {/*<Box>{match.getCurrentEntry().actionLog?.action}</Box>*/}
-          <PlayerStatusTable match={match} onPlayerColorChange={update} />
+          <PlayerStatsTable match={match} onPlayerColorChange={update} />
           <PlayersUnitList match={match} game={game} />
         </Box>
 

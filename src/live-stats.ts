@@ -1,6 +1,6 @@
 const css = require('./live-stats.css').default
 import { Chart, ChartConfiguration, registerables } from 'chart.js'
-import { Match, MatchData, Status } from './wg/match'
+import { Match, MatchData, Stats } from './wg/match'
 
 Chart.register(...registerables)
 
@@ -67,7 +67,7 @@ function setMatch(matchData: MatchData) {
 
 function readMatchData(match: Match) {
   let data = {
-    current_stats: null as (Status[number] & { player: string })[],
+    current_stats: null as (Stats[number] & { player: string })[],
     charts: {} as { [type: string]: ChartConfiguration<'line', number[]> },
   }
 
@@ -97,7 +97,7 @@ function readMatchData(match: Match) {
       data.current_stats = players.map((player, i) =>
         Object.assign(
           { player: `P${player.id + 1} - ${player.commander}` },
-          entry.status[player.id]
+          entry.stats[player.id]
         )
       )
     }

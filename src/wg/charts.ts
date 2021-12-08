@@ -1,17 +1,21 @@
 import type { ChartConfiguration, ChartDataset } from 'chart.js'
-import type { Match, Entry, Status } from './match'
+import type { Match, Entry, Stats } from './match'
 
 type ChartsBuilder = {
-  entryFilter?: (entry: Entry) => boolean
-  label: (entry: Entry) => string
+  entryFilter?: (entry: Entry, match: Match) => boolean
+  title?: string,
+  label: (entry: Entry, match: Match) => string
   sets: {
     init: (entry: Entry, playerId: number, match: Match) => ChartDataset<'line', number[]>
     datum: (
-      status: Status[number],
+      stats: Stats[number],
       entry: Entry,
       playerId: number,
+      entryIndex: number,
+      match: Match
     ) => number
   }[]
+  transformFilter?: (datum: number, i: number, data: number[], match: Match) => number | undefined
   stepSize?: number
   options?: ChartConfiguration<'line', number[]>['options']
 }
@@ -27,9 +31,9 @@ export function makeCharts(
 ): ChartConfiguration<'line', number[]> [] {
   const entries = match.getEntries()
 
-  let playerIds = Object.keys(entries[0].status).map(parseInt)
+  let playerIds = Object.keys(entries[0].stats).map(parseInt)
   
-  let charts = builders.map(({ sets, stepSize }) => {
+  let charts = builders.map(({ title, sets, stepSize }) => {
     let labels: string[] = []
 
     let datasets = sets.map(({ init }) => {
@@ -39,29 +43,54 @@ export function makeCharts(
 
     let chart: ChartConfiguration<'line', number[]> = {
       type: 'line',
-      options: { scales: { yAxes: { ticks: { stepSize } } } },
+      options: {
+        plugins: {
+          title: {
+            text: title,
+            font: {
+              size: 20
+            }
+          }
+        },
+        scales: { yAxes: { ticks: { stepSize } } }
+      },
       data: { labels, datasets },
     }
 
     return { chart, labels, datasets }
   })
 
-  for(let entry of entries){
+  entries.forEach((entry, entryIndex) => {
     builders.forEach((builder, i) => {
-      if(!builder.entryFilter(entry)) return
+      if (!builder.entryFilter(entry, match)) return
       let { labels, datasets } = charts[i]
 
-      labels.push(builder.label(entry))
+      labels.push(builder.label(entry, match))
 
       builder.sets.forEach((dset, j) => {
-        for(let playerId of playerIds){
+        for (let playerId of playerIds) {
           let dataset = datasets[j * playerIds.length + playerId]
-          let datum = dset.datum(entry.status[playerId], entry, playerId)
+          let datum = dset.datum(entry.stats[playerId], entry, playerId, entryIndex, match)
           dataset.data.push(datum)
         }
       })
     })
-  }
+  })
+
+  builders.forEach((builder, i) => {
+    if(!builder.transformFilter) return
+    let chart = charts[i]
+
+    chart.datasets.forEach(dset => {
+      dset.data = dset.data.map((d, i) => builder.transformFilter(d, i, dset.data, match))
+    })
+
+    chart.labels = chart.labels.filter((_, i) => chart.datasets[0].data[i] !== undefined)
+    chart.datasets.forEach(dset => {
+      dset.data = dset.data.filter(d => d !== undefined)
+    })
+  })
+
   return charts.map(({ chart }) => chart)
 }
 
@@ -104,13 +133,13 @@ const moveCharts: ChartsBuilderGroup = {
     [
       {
         init: defaultDatasetInit('Income'),
-        datum: (status) => status.income,
+        datum: (stats) => stats.income,
       },
     ],
     [
       {
         init: defaultDatasetInit('Army Value'),
-        datum: (status) => status.armyValue,
+        datum: (stats) => stats.armyValue,
       },
       {
         init: defaultDatasetInit('Army Value + Gold', { borderDash: [5] }),
@@ -119,3 +148,24 @@ const moveCharts: ChartsBuilderGroup = {
     ],
   ],
 }
+const x = 
+[
+  [
+    moveLabel, [
+      [
+        ['Income', stats => stats.income]
+      ],
+      [
+        ['Army Value', stats => stats.armyValue],
+        ['Army Value + Gold', ({ armyValue, gold }) => armyValue + gold, { borderDash: [5] }]
+      ],
+      [
+        ['Combat Unit Count', stats => stats.combatUnitCount]
+      ],
+      [
+        ['Groove', stats => stats.groove],
+        ['Max Groove', stats => stats.maxGroove, { borderDash: [5], pointRadius: 0 }]
+      ]
+    ]
+  ]
+]
