@@ -1,76 +1,108 @@
 import type { ChartConfiguration, ChartDataset } from 'chart.js'
 import type { Match, Entry, Stats } from './match'
 
+type Dataset = ChartDataset<'line', number[]>
+
+type DatumGetter = (
+  stats: Stats[number],
+  entry: Entry,
+  playerId: number,
+  entryIndex: number,
+  match: Match
+) => number
+
+type DataSetInit = (entry: Entry, playerId: number, match: Match) => Dataset
+
+type EntryLabeler = (entry: Entry, match: Match) => string
+
+type EntryFilter = (entry: Entry, match: Match) => boolean
+
+type DatumTransformFilter = (
+  datum: number,
+  i: number,
+  data: number[],
+  playerId: number,
+  playerData: number[][],
+  match: Match
+) => number | undefined
+
+type DatumMerger = (datum: number[], i: number, match: Match) => number[]
+
 type ChartsBuilder = {
-  entryFilter?: (entry: Entry, match: Match) => boolean
-  title?: string,
-  label: (entry: Entry, match: Match) => string
+  entryFilter?: EntryFilter
+  title?: string
+  label: EntryLabeler
   sets: {
-    init: (entry: Entry, playerId: number, match: Match) => ChartDataset<'line', number[]>
-    datum: (
-      stats: Stats[number],
-      entry: Entry,
-      playerId: number,
-      entryIndex: number,
-      match: Match
-    ) => number
+    init: DataSetInit
+    datum: DatumGetter
   }[]
-  transformFilter?: (datum: number, i: number, data: number[], match: Match) => number | undefined
+  transformFilter?: DatumTransformFilter
+  //merger?: DatumMerger
   stepSize?: number
   options?: ChartConfiguration<'line', number[]>['options']
 }
 
-type ChartsBuilderGroup = {
-  label: ChartsBuilder['label']
-  chartSets: ChartsBuilder['sets'][number][][]
-}
-
 export function makeCharts(
   match: Match,
-  builders: ChartsBuilder[],
-): ChartConfiguration<'line', number[]> [] {
+  builders: ChartsBuilder[]
+): ChartConfiguration<'line', number[]>[] {
   const entries = match.getEntries()
 
-  let playerIds = Object.keys(entries[0].stats).map(parseInt)
-  
+  let playerIds = match.getPlayers().map((p) => p.id)
+
   let charts = builders.map(({ title, sets, stepSize }) => {
     let labels: string[] = []
 
-    let datasets = sets.map(({ init }) => {
-      return playerIds.map(pid => init(entries[0], pid, match))
-    }).flat()
-    
+    let datasets: Dataset[] = []
+    let playerDatasets: Dataset[][] = Array(playerIds.length)
+      .fill(0)
+      .map((_) => [])
+
+    sets.forEach(({ init }) => {
+      for (let pid of playerIds) {
+        let dset = init(entries[0], pid, match)
+        datasets.push(dset)
+        playerDatasets[pid].push(dset)
+      }
+    })
 
     let chart: ChartConfiguration<'line', number[]> = {
       type: 'line',
       options: {
         plugins: {
           title: {
+            display: true,
             text: title,
             font: {
-              size: 20
-            }
-          }
+              size: 20,
+            },
+          },
         },
-        scales: { yAxes: { ticks: { stepSize } } }
+        scales: { yAxes: { ticks: { stepSize } } },
       },
       data: { labels, datasets },
     }
 
-    return { chart, labels, datasets }
+    return { chart, labels, datasets, playerDatasets }
   })
 
   entries.forEach((entry, entryIndex) => {
     builders.forEach((builder, i) => {
-      if (!builder.entryFilter(entry, match)) return
-      let { labels, datasets } = charts[i]
+      if (builder.entryFilter && !builder.entryFilter?.(entry, match)) return
+      let { labels, datasets, playerDatasets } = charts[i]
 
       labels.push(builder.label(entry, match))
 
-      builder.sets.forEach((dset, j) => {
+      builder.sets.forEach((dset, i) => {
         for (let playerId of playerIds) {
-          let dataset = datasets[j * playerIds.length + playerId]
-          let datum = dset.datum(entry.stats[playerId], entry, playerId, entryIndex, match)
+          let dataset = playerDatasets[playerId][i]
+          let datum = dset.datum(
+            entry.stats[playerId],
+            entry,
+            playerId,
+            entryIndex,
+            match
+          )
           dataset.data.push(datum)
         }
       })
@@ -78,17 +110,65 @@ export function makeCharts(
   })
 
   builders.forEach((builder, i) => {
-    if(!builder.transformFilter) return
+    if (!builder.transformFilter) return
     let chart = charts[i]
 
-    chart.datasets.forEach(dset => {
-      dset.data = dset.data.map((d, i) => builder.transformFilter(d, i, dset.data, match))
+    let pairs: [Dataset, Dataset['data']][] = []
+
+    builder.sets.forEach((_, i) => {
+      for (let playerId of playerIds) {
+        let dataset = chart.playerDatasets[playerId][i]
+
+        let d = dataset.data.map((d, k) => {
+          let pdata = playerIds.map((pid) => chart.playerDatasets[pid][i].data)
+          return builder.transformFilter(
+            d,
+            k,
+            dataset.data,
+            playerId,
+            pdata,
+            match
+          )
+        })
+
+        pairs.push([dataset, d])
+      }
     })
 
-    chart.labels = chart.labels.filter((_, i) => chart.datasets[0].data[i] !== undefined)
-    chart.datasets.forEach(dset => {
-      dset.data = dset.data.filter(d => d !== undefined)
+    for (let [dataset, data] of pairs) {
+      dataset.data = data
+    }
+
+    chart.chart.data.labels = chart.labels.filter(
+      (_, i) => chart.datasets[0].data[i] !== undefined
+    )
+    chart.datasets.forEach((dset) => {
+      dset.data = dset.data.filter((d) => d !== undefined)
     })
+
+    /*if(builder.merger){
+      let new_sets = builder.sets.reduce((dsets, dset, i) => {
+        let original_sets = playerIds.map((playerId) => chart.playerDatasets[playerId][i])
+        
+        let merged_data: number[][] = []
+
+        for(let i = 0; i < original_sets[0].data.length; i++){
+          let data = original_sets.map((s) => s.data[i])
+          merged_data.push(
+            builder.merger(data, i, match)
+          )
+        }
+
+
+
+
+
+        return dsets.concat(merged_sets)
+      }, [] as Dataset)
+
+    }*/
+
+    console.log(chart)
   })
 
   return charts.map(({ chart }) => chart)
@@ -96,7 +176,7 @@ export function makeCharts(
 
 function defaultDatasetInit(
   name: string,
-  opts?: Partial<ChartDataset<'line', number[]>>
+  opts?: Partial<Dataset>
 ): ChartsBuilder['sets'][number]['init'] {
   return (entry: Entry, playerId: number, match: Match) => {
     let color = match.getPlayerColorHex(playerId)
@@ -118,54 +198,191 @@ const moveLabel = (entry: Entry) => {
 }
 
 const playerTurnLabel = (entry: Entry) => {
-  let { turn: { turnNumber, playerId } } = entry
+  let {
+    turn: { turnNumber, playerId },
+  } = entry
   return `T${turnNumber}-P${playerId + 1}`
 }
 
 const turnLabel = (entry: Entry) => {
-  let { turn: { turnNumber } } = entry
+  let {
+    turn: { turnNumber },
+  } = entry
   return `Turn ${turnNumber}`
 }
 
-const moveCharts: ChartsBuilderGroup = {
-  label: moveLabel,
-  chartSets: [
-    [
+const turnEndFilter = (entry) => entry.turn.entries.slice(-1)[0] == entry
+
+const namedChartDatasets: Record<
+  string,
+  {
+    title: string
+    stepSize?: number
+    sets: {
+      name?: string
+      datum: DatumGetter
+      opts?: Partial<Dataset>
+    }[]
+  }
+> = {
+  income: {
+    title: 'Income',
+    stepSize: 100,
+    sets: [
       {
-        init: defaultDatasetInit('Income'),
         datum: (stats) => stats.income,
       },
     ],
-    [
+  },
+
+  army: {
+    title: 'Army Value',
+    sets: [
       {
-        init: defaultDatasetInit('Army Value'),
         datum: (stats) => stats.armyValue,
       },
       {
-        init: defaultDatasetInit('Army Value + Gold', { borderDash: [5] }),
+        name: 'Army Value + Gold',
         datum: ({ armyValue, gold }) => armyValue + gold,
+        opts: { borderDash: [5] },
       },
     ],
-  ],
+  },
+
+  unit_count: {
+    title: 'Combat Unit Count',
+    sets: [
+      {
+        datum: (stats) => stats.combatUnitCount,
+      },
+    ],
+  },
+
+  groove: {
+    title: 'Groove',
+    stepSize: 10,
+    sets: [
+      {
+        datum: (stats) => stats.groove,
+      },
+      {
+        name: 'Max Groove',
+        datum: (stats) => stats.maxGroove,
+        opts: { borderDash: [5], pointRadius: 0 },
+      },
+    ],
+  },
+
+  commander_health: {
+    title: 'Commander Health',
+    sets: [
+      {
+        datum: (stats) => stats.commanderHealth,
+      },
+    ],
+  },
+
+  potential: {
+    title: 'Potential',
+    sets: [{ datum: (stats) => stats.potential }],
+  },
 }
-const x = 
-[
-  [
-    moveLabel, [
-      [
-        ['Income', stats => stats.income]
-      ],
-      [
-        ['Army Value', stats => stats.armyValue],
-        ['Army Value + Gold', ({ armyValue, gold }) => armyValue + gold, { borderDash: [5] }]
-      ],
-      [
-        ['Combat Unit Count', stats => stats.combatUnitCount]
-      ],
-      [
-        ['Groove', stats => stats.groove],
-        ['Max Groove', stats => stats.maxGroove, { borderDash: [5], pointRadius: 0 }]
-      ]
-    ]
-  ]
-]
+
+const namedChartTransforms: Record<
+  string,
+  {
+    label: EntryLabeler
+    title_suffix?: string
+    entryFilter?: EntryFilter
+    transformFilter?: DatumTransformFilter
+  }
+> = {
+  move: {
+    label: moveLabel,
+  },
+
+  turn: {
+    label: playerTurnLabel,
+    entryFilter: turnEndFilter,
+  },
+
+  avg: {
+    title_suffix: 'Avg',
+    label: turnLabel,
+    entryFilter: turnEndFilter,
+    transformFilter: (v, i, data, playerId, playerData, match) => {
+      let n = playerData.length
+      if (i % n != 0 || i + n > data.length) return
+      return data.slice(i, i + n).reduce((a, b) => a + b, 0) / n
+    },
+  },
+
+  delta: {
+    title_suffix: 'Delta',
+    label: playerTurnLabel,
+    entryFilter: turnEndFilter,
+    transformFilter: (v, i, data) => {
+      return v - (data[i - 1] || v)
+    },
+  },
+
+  zerosum: {
+    title_suffix: 'Zero Sum',
+    label: playerTurnLabel,
+    entryFilter: turnEndFilter,
+    transformFilter: (v, i, data, playerId, playerData, match) => {
+      let enemysum = 0
+
+      let deltas = playerData.map((data, pid) => {
+        let v = data[i]
+        let delta = v - (data[i - 1] || v)
+
+        if (pid != playerId) {
+          enemysum += delta
+        }
+        return delta
+      })
+
+      console.log(deltas, playerData)
+
+      return deltas[playerId] - enemysum / (deltas.length - 1)
+    },
+  },
+}
+
+function generateChartBuilder(
+  dataSetsName: keyof typeof namedChartTransforms,
+  transformName: string
+): ChartsBuilder {
+  let dset = namedChartDatasets[dataSetsName]
+  let transf = namedChartTransforms[transformName]
+
+  if (!dset || !transf) throw 'Invalid chart generator names'
+
+  let { title, stepSize = 1, sets } = dset
+
+  let { label, title_suffix = '', entryFilter, transformFilter } = transf
+
+  if (title_suffix) {
+    title += ' ' + title_suffix
+  }
+
+  return {
+    title,
+    entryFilter,
+    transformFilter,
+    label,
+    stepSize,
+    sets: sets.map(({ datum, name, opts }) => {
+      return {
+        datum,
+        init: defaultDatasetInit(name || title, opts),
+      }
+    }),
+  }
+}
+
+export function getChartsByName(match: Match, names: [string, string][]) {
+  let builders = names.map((n) => generateChartBuilder(...n))
+  return makeCharts(match, builders)
+}

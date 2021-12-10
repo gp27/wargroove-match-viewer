@@ -1,5 +1,6 @@
 const css = require('./live-stats.css').default
 import { Chart, ChartConfiguration, registerables } from 'chart.js'
+import { getChartsByName } from './wg/charts'
 import { Match, MatchData, Stats } from './wg/match'
 
 Chart.register(...registerables)
@@ -104,24 +105,9 @@ function readMatchData(match: Match) {
 
     if (type.startsWith('chart_')) {
       let [name, chart_type = 'avg'] = type.split(':')
-      let [income, army, unit_count, groove] = (charts[chart_type] =
-        charts[chart_type] || getCharts(chart_type))
+      name = name.substr(6)
 
-      if (name == 'chart_income') {
-        data.charts[type] = income
-      }
-
-      if (name == 'chart_army') {
-        data.charts[type] = army
-      }
-
-      if (name == 'chart_unit_count') {
-        data.charts[type] = unit_count
-      }
-
-      if (name == 'chart_groove') {
-        data.charts[type] = groove
-      }
+      data.charts[type] = getChartsByName(match, [[name, chart_type]])[0]
     }
   })
 
