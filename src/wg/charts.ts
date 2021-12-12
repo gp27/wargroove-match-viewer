@@ -1,4 +1,5 @@
 import type { ChartConfiguration, ChartDataset } from 'chart.js'
+import { initialUrlParams } from '../utils'
 import type { Match, Entry, Stats } from './match'
 
 type Dataset = ChartDataset<'line', number[]>
@@ -167,8 +168,6 @@ export function makeCharts(
       }, [] as Dataset)
 
     }*/
-
-    console.log(chart)
   })
 
   return charts.map(({ chart }) => chart)
@@ -212,6 +211,8 @@ const turnLabel = (entry: Entry) => {
 }
 
 const turnEndFilter = (entry) => entry.turn.entries.slice(-1)[0] == entry
+
+const turnStartFilter = (entry) => entry.turn.entries[0] == entry
 
 const namedChartDatasets: Record<
   string,
@@ -280,12 +281,7 @@ const namedChartDatasets: Record<
         datum: (stats) => stats.commanderHealth,
       },
     ],
-  },
-
-  potential: {
-    title: 'Potential',
-    sets: [{ datum: (stats) => stats.potential }],
-  },
+  }
 }
 
 const namedChartTransforms: Record<
@@ -297,13 +293,14 @@ const namedChartTransforms: Record<
     transformFilter?: DatumTransformFilter
   }
 > = {
-  move: {
-    label: moveLabel,
-  },
-
-  turn: {
+  turn_end: {
     label: playerTurnLabel,
     entryFilter: turnEndFilter,
+  },
+
+  turn_start: {
+    label: playerTurnLabel,
+    entryFilter: turnStartFilter,
   },
 
   avg: {
@@ -317,36 +314,8 @@ const namedChartTransforms: Record<
     },
   },
 
-  delta: {
-    title_suffix: 'Delta',
-    label: playerTurnLabel,
-    entryFilter: turnEndFilter,
-    transformFilter: (v, i, data) => {
-      return v - (data[i - 1] || v)
-    },
-  },
-
-  zerosum: {
-    title_suffix: 'Zero Sum',
-    label: playerTurnLabel,
-    entryFilter: turnEndFilter,
-    transformFilter: (v, i, data, playerId, playerData, match) => {
-      let enemysum = 0
-
-      let deltas = playerData.map((data, pid) => {
-        let v = data[i]
-        let delta = v - (data[i - 1] || v)
-
-        if (pid != playerId) {
-          enemysum += delta
-        }
-        return delta
-      })
-
-      console.log(deltas, playerData)
-
-      return deltas[playerId] - enemysum / (deltas.length - 1)
-    },
+  move: {
+    label: moveLabel,
   },
 }
 
@@ -357,7 +326,10 @@ function generateChartBuilder(
   let dset = namedChartDatasets[dataSetsName]
   let transf = namedChartTransforms[transformName]
 
-  if (!dset || !transf) throw 'Invalid chart generator names'
+  if (!dset || !transf){
+    console.error('Invalid chart generator names')
+    return
+  }
 
   let { title, stepSize = 1, sets } = dset
 
@@ -383,6 +355,59 @@ function generateChartBuilder(
 }
 
 export function getChartsByName(match: Match, names: [string, string][]) {
-  let builders = names.map((n) => generateChartBuilder(...n))
+  let builders = names.map((n) => generateChartBuilder(...n)).filter(Boolean)
   return makeCharts(match, builders)
+}
+
+export const getChartDatasetNames = () => Object.keys(namedChartDatasets)
+export const getChartTransformNames = () => Object.keys(namedChartTransforms)
+
+;(window as any)._charts = {
+  namedChartDatasets,
+  namedChartTransforms,
+
+  aiSetup: () => {
+    Object.assign(namedChartDatasets, {
+      potential: {
+        title: 'Potential',
+        sets: [{ datum: (stats) => stats.potential }],
+      },
+    })
+
+    Object.assign(namedChartTransforms, {
+      delta: {
+        title_suffix: 'Delta',
+        label: playerTurnLabel,
+        entryFilter: turnEndFilter,
+        transformFilter: (v, i, data) => {
+          return v - (data[i - 1] || v)
+        },
+      },
+
+      zerosum: {
+        title_suffix: 'Zero Sum',
+        label: playerTurnLabel,
+        entryFilter: turnEndFilter,
+        transformFilter: (v, i, data, playerId, playerData, match) => {
+          let enemysum = 0
+
+          let deltas = playerData.map((data, pid) => {
+            let v = data[i]
+            let delta = v - (data[i - 1] || v)
+
+            if (pid != playerId) {
+              enemysum += delta
+            }
+            return delta
+          })
+
+          return deltas[playerId] - enemysum / (deltas.length - 1)
+        },
+      },
+    })
+  }
+}
+
+if(initialUrlParams.ai){
+  (window as any)._charts.aiSetup()
 }

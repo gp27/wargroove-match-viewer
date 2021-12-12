@@ -8,10 +8,19 @@ const initialUrl = new URL(location.href)
 
 export const initialUrlParams = {
   match_id: initialUrl.searchParams.get('match_id'),
+  ai: initialUrl.searchParams.has('ai_tools')
 }
 
+const keepParams = ['ai_tools']
+
 const cleanUrl = new URL(initialUrl.href)
-cleanUrl.search = ''
+cleanUrl.searchParams.forEach((v, k) => {
+  if(!keepParams.includes(k)){
+    cleanUrl.searchParams.delete(k)
+  }
+})
+
+
 
 history?.replaceState(null, '', cleanUrl.href)
 

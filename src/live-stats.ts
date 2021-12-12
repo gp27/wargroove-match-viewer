@@ -79,18 +79,6 @@ function readMatchData(match: Match) {
     [chart_type: string]: ChartConfiguration<'line', number[]>[]
   } = {}
 
-  const getCharts = (chart_type: string) => {
-    if (chart_type == 'move') {
-      return match.getCharts()
-    }
-
-    if (chart_type == 'turn') {
-      return match.getTurnEndCharts()
-    }
-
-    return match.getAverageCharts()
-  }
-
   show.forEach((type) => {
     if (type == 'current_stats') {
       const players = match.getPlayers()

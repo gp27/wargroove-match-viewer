@@ -302,7 +302,7 @@ export class Match {
       })
   }
 
-  getCharts(type_name = 'move') {
+  /*getCharts(type_name = 'move') {
     return getChartsByName(this, [
       ['income', type_name],
       ['army', type_name],
@@ -310,8 +310,8 @@ export class Match {
       //['potential', 'delta'],
       //['potential', 'zerosum'],
       ['unit_count', type_name],
-      ['groove', type_name],
-      ['commander_health', type_name],
+      ['groove', 'turn_start'],
+      ['commander_health', 'turn_start'],
     ])
   }
 
@@ -321,7 +321,7 @@ export class Match {
 
   getAverageCharts(colors = {} as Record<number, string>) {
     return this.getCharts('avg')
-  }
+  }*/
 }
 
 function generateStates({ state, deltas }: MatchData) {

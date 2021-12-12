@@ -46,9 +46,10 @@
     "phaser": "^3.55.2",
     "phaser3-rex-plugins": "^1.1.61",
     "promise-file-reader": "^1.0.3",
-    "react": "^17.0.1",
+    "react": "^16.3.0",
     "react-chartjs-2": "^3.2.0",
-    "react-dom": "^17.0.1",
+    "react-dom": "^16.3.0",
+    "react-smooth-dnd": "^0.11.1",
     "react-swipeable-views": "^0.14.0",
     "styled-components": "^5.2.1",
     "wouter": "^2.8.0-alpha.1"
