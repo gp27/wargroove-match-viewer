@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useRoute, useLocation } from 'wouter'
-import Box from '@mui/material/Box'
-import Skeleton from '@mui/material/Skeleton'
+import { Box, Skeleton, Button } from '@mui/material'
+import { Settings } from '@mui/icons-material'
+
 import WargrooveGame from '../common/WargrooveGame'
-import PlayerStatusTable from '../common/PlayerStatusTable'
+import PlayerStatsTable from '../common/PlayerStatsTable'
 import PlayersUnitList from '../common/UnitList'
 import { MatchActionLog } from '../common/match/MatchActionLog'
 import { TurnMoveList, TurnMoveSwipable } from '../common/TurnMoveList'
@@ -14,12 +15,14 @@ import { IMatch, db } from '../../db'
 import { Match, MatchData } from '../../wg/match'
 import { Line } from 'react-chartjs-2'
 import { PhaserWargrooveGame } from '../../phaser/phaser-wagroove-game'
-import { ToggleButtonGroup, ToggleButton } from '@mui/material'
 import { useModal } from 'mui-modal-provider'
 import { MapEntrySuggestion } from '../common/map/MapEntryEditor'
 import { useMapInfo } from '../context/MapFinderContext'
 import { SliderControls } from '../common/generic/SliderControls'
 import { useXmas } from '../App'
+import { ChartSelectorDialog, getDefaultChartItems } from '../common/ChartSelectorDialog'
+import { getChartsByName } from '../../wg/charts'
+import { useLocalStorage } from '../../utils'
 
 function loadMatchData(id: string): Promise<MatchData | undefined> {
   let matchUrl = `https://firebasestorage.googleapis.com/v0/b/wargroove-match-storage.appspot.com/o/matches%2F${id}.json?alt=media`
@@ -194,11 +197,11 @@ function MatchDashboard({ match }: { match: Match }) {
         <Box sx={{ flexGrow: 1 }}>
           <SliderControls onSpeedChange={setSpeed} />
           {/*<Box>{match.getCurrentEntry().actionLog?.action}</Box>*/}
-          <PlayerStatusTable match={match} onPlayerColorChange={update} />
+          <PlayerStatsTable match={match} onPlayerColorChange={update} />
           <PlayersUnitList match={match} game={game} />
         </Box>
 
-        <Charts match={match} />
+        <ChartsWithConfig match={match} />
       </Box>
     </Box>
   )
@@ -208,7 +211,7 @@ function MatchSkeleton() {
   return <div />
 }
 
-function Charts({ match }: { match: Match }) {
+/*function Charts({ match }: { match: Match }) {
   const [chartType, setChartsType] = useState<
     'average' | 'turn_end' | 'all_moves'
   >('average')
@@ -223,6 +226,8 @@ function Charts({ match }: { match: Match }) {
 
   return (
     <Box sx={{ p: 1, textAlign: 'center' }}>
+      <ChartSelector />
+
       <ToggleButtonGroup
         value={chartType}
         exclusive
@@ -248,4 +253,48 @@ function Charts({ match }: { match: Match }) {
       ))}
     </Box>
   )
+}*/
+
+function ChartsWithConfig({ match }: { match: Match }) {
+  const { showModal } = useModal()
+
+  let [savedItems, setSavedItems] = useLocalStorage(
+    'match_chartsConfig',
+    getDefaultChartItems()
+  )
+
+  const [items, setItems] = useState(savedItems)
+
+  const openDialog = () => {
+    const modal = showModal(ChartSelectorDialog, {
+      items,
+      close: () => modal.destroy(),
+      setItems,
+    })
+  }
+
+  const charts = getChartsByName(match, items)
+
+  return <Box sx={{ p: 1 }}>
+    <Box>
+      <Button disableRipple onClick={openDialog} variant='outlined'>
+        <span>Charts</span>
+        <Settings />
+      </Button>
+    </Box>
+
+    {charts.map((chart, index) => (
+      <Box
+        key={index}
+        sx={{ p: 1, maxHeight: 400, minHeight: 250, height: '50%' }}
+      >
+        <Line
+          data={chart.data}
+          options={Object.assign(chart.options || {}, {
+            maintainAspectRatio: false,
+          })}
+        />
+      </Box>
+    ))}
+  </Box>
 }

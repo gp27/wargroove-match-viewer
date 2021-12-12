@@ -1,6 +1,7 @@
 const css = require('./live-stats.css').default
 import { Chart, ChartConfiguration, registerables } from 'chart.js'
-import { Match, MatchData, Status } from './wg/match'
+import { getChartsByName } from './wg/charts'
+import { Match, MatchData, Stats } from './wg/match'
 
 Chart.register(...registerables)
 
@@ -67,7 +68,7 @@ function setMatch(matchData: MatchData) {
 
 function readMatchData(match: Match) {
   let data = {
-    current_stats: null as (Status[number] & { player: string })[],
+    current_stats: null as (Stats[number] & { player: string })[],
     charts: {} as { [type: string]: ChartConfiguration<'line', number[]> },
   }
 
@@ -78,18 +79,6 @@ function readMatchData(match: Match) {
     [chart_type: string]: ChartConfiguration<'line', number[]>[]
   } = {}
 
-  const getCharts = (chart_type: string) => {
-    if (chart_type == 'move') {
-      return match.getCharts()
-    }
-
-    if (chart_type == 'turn') {
-      return match.getTurnEndCharts()
-    }
-
-    return match.getAverageCharts()
-  }
-
   show.forEach((type) => {
     if (type == 'current_stats') {
       const players = match.getPlayers()
@@ -97,31 +86,16 @@ function readMatchData(match: Match) {
       data.current_stats = players.map((player, i) =>
         Object.assign(
           { player: `P${player.id + 1} - ${player.commander}` },
-          entry.status[player.id]
+          entry.stats[player.id]
         )
       )
     }
 
     if (type.startsWith('chart_')) {
       let [name, chart_type = 'avg'] = type.split(':')
-      let [income, army, unit_count, groove] = (charts[chart_type] =
-        charts[chart_type] || getCharts(chart_type))
+      name = name.substr(6)
 
-      if (name == 'chart_income') {
-        data.charts[type] = income
-      }
-
-      if (name == 'chart_army') {
-        data.charts[type] = army
-      }
-
-      if (name == 'chart_unit_count') {
-        data.charts[type] = unit_count
-      }
-
-      if (name == 'chart_groove') {
-        data.charts[type] = groove
-      }
+      data.charts[type] = getChartsByName(match, [[name, chart_type]])[0]
     }
   })
 

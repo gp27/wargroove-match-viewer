@@ -7,6 +7,7 @@ import {
   terrains,
   tilesFromLinear,
 } from '../phaser/phaser-wargroove-map'
+import { getChartsByName } from './charts'
 import { Opening, OpeningsClusters } from './openings'
 
 const diffpatcher = jsondiffpatch.create()
@@ -111,7 +112,7 @@ export interface State {
   unitClasses?: Record<string, UnitClass>
 }
 
-export type Status = Record<
+export type Stats = Record<
   number,
   {
     gold: number
@@ -121,7 +122,10 @@ export type Status = Record<
     combatUnitCount: number
     groove: number
     maxGroove: number
+    commanderHealth: number
     //activeUnitCount: number
+
+    potential: number
   }
 >
 
@@ -136,7 +140,7 @@ export interface PlayerTurn {
 export interface Entry {
   id: number
   state: State
-  status: Status
+  stats: Stats
   turn: PlayerTurn
   moveNumber: number
   actionLog?: ActionLog
@@ -181,7 +185,7 @@ export class Match {
         ({
           id,
           state,
-          status: generateStateStatus(state, matchData),
+          stats: generateStateStats(state, matchData),
           actionLog: analyzeDelta(
             matchData.deltas[id - 1],
             states[id - 1],
@@ -298,257 +302,26 @@ export class Match {
       })
   }
 
-  getCharts(
-    entryFilter: (entry: Entry) => boolean = () => true,
-    //useCommanderName = false,
-    colors = {} as Record<number, string>
-  ): ChartConfiguration<'line', number[]>[] {
-    let labels: string[] = []
-
-    let incomeDataSet: ChartDataset<'line', number[]>[] = []
-    let armyValueDataSet: ChartDataset<'line', number[]>[] = []
-    //let unitCountDataSet: ChartDataset<'line', number[]>[] = []
-    let combatUnitCountDataSet: ChartDataset<'line', number[]>[] = []
-    let grooveDataSet: ChartDataset<'line', number[]>[] = []
-
-    let pointBackgroundColor: string[] = []
-
-    for (let entry of this.entries) {
-      if (!entryFilter(entry)) continue
-
-      let {
-        status,
-        turn: { turnNumber, playerId, entries: tEntries },
-      } = entry
-      labels.push(
-        `T${turnNumber}-P${playerId + 1}-M${tEntries.indexOf(entry) + 1}`
-      )
-
-      let color = colors[playerId] || this.getPlayerColorHex(playerId)
-      pointBackgroundColor.push(color)
-
-      Object.entries(status).forEach(
-        (
-          [
-            playerIdStr,
-            {
-              gold,
-              income,
-              armyValue,
-              unitCount,
-              combatUnitCount,
-              groove,
-              maxGroove,
-            },
-          ],
-          i
-        ) => {
-          let playerId = +playerIdStr
-          let color = colors[playerId] || this.getPlayerColorHex(playerId)
-
-          getDataSet(incomeDataSet, i, {
-            label: `P${playerId + 1} Income`,
-            borderColor: color,
-            pointBackgroundColor,
-          }).data?.push(income)
-
-          getDataSet(armyValueDataSet, i * 2, {
-            label: `P${playerId + 1} Army Value`,
-            borderColor: color,
-            pointBackgroundColor,
-          }).data?.push(armyValue)
-
-          getDataSet(armyValueDataSet, i * 2 + 1, {
-            label: `P${playerId + 1} Army Value + Gold`,
-            borderDash: [5],
-            borderColor: color,
-            pointBackgroundColor,
-          }).data?.push(armyValue + gold)
-
-          /*getDataSet(unitCountDataSet, i, {
-            label: `P${playerId + 1} Unit Count`,
-            borderColor: color,
-            pointBackgroundColor,
-          }).data?.push(unitCount)*/
-
-          getDataSet(combatUnitCountDataSet, i, {
-            label: `P${playerId + 1} Combat U.C.`,
-            borderColor: color,
-            pointBackgroundColor,
-          }).data?.push(combatUnitCount)
-
-          getDataSet(grooveDataSet, i * 2, {
-            label: `P${playerId + 1} Groove`,
-            borderColor: color,
-            pointBackgroundColor,
-          }).data?.push(groove)
-
-          getDataSet(grooveDataSet, i * 2 + 1, {
-            label: `P${playerId + 1} Max Groove`,
-            borderDash: [5],
-            borderColor: color,
-            pointRadius: 0,
-          }).data?.push(maxGroove)
-        }
-      )
-    }
-
-    return [
-      {
-        type: 'line',
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: 'Income',
-              font: {
-                size: 20,
-              },
-            },
-          },
-
-          scales: {
-            yAxes: { ticks: { stepSize: 100 } },
-          },
-        },
-        data: {
-          labels,
-          datasets: incomeDataSet,
-        },
-      },
-      {
-        type: 'line',
-        data: {
-          labels,
-          datasets: armyValueDataSet,
-        },
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: 'Army Value',
-              font: {
-                size: 20,
-              },
-            },
-          },
-        },
-      },
-      /*{
-        type: 'line',
-        options: {
-          scales: {
-            yAxes: {
-              ticks: { stepSize: 1 },
-            },
-          },
-        },
-        data: {
-          labels,
-          datasets: unitCountDataSet,
-        },
-      },*/
-      {
-        type: 'line',
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: 'Combat Unit Count',
-              font: {
-                size: 20,
-              },
-            },
-          },
-          scales: {
-            yAxes: {
-              ticks: { stepSize: 1 },
-            },
-          },
-        },
-        data: {
-          labels,
-          datasets: combatUnitCountDataSet,
-        },
-      },
-      {
-        type: 'line',
-        options: {
-          plugins: {
-            title: {
-              display: true,
-              text: 'Groove',
-              font: {
-                size: 20,
-              },
-            },
-          },
-          scales: {
-            yAxes: {
-              ticks: { stepSize: 10 },
-            },
-          },
-        },
-        data: {
-          labels,
-          datasets: grooveDataSet,
-        },
-      },
-    ]
+  /*getCharts(type_name = 'move') {
+    return getChartsByName(this, [
+      ['income', type_name],
+      ['army', type_name],
+      //['potential', type_name],
+      //['potential', 'delta'],
+      //['potential', 'zerosum'],
+      ['unit_count', type_name],
+      ['groove', 'turn_start'],
+      ['commander_health', 'turn_start'],
+    ])
   }
 
   getTurnEndCharts(colors = {} as Record<number, string>) {
-    let charts = this.getCharts((entry) => {
-      return entry.turn.entries.slice(-1)[0] == entry
-    }, colors)
-
-    charts.forEach(({ data }) => {
-      data.labels = data.labels.map(
-        (str) => String(str).match(/^(T[0-9]+-P[0-9]+)/)?.[1]
-      )
-    })
-
-    return charts
+    return this.getCharts('turn')
   }
 
   getAverageCharts(colors = {} as Record<number, string>) {
-    const n = Object.keys(this.players).length
-
-    return this.getTurnEndCharts(colors).map((chart, chartIndex) => {
-      let {
-        type,
-        options,
-        data: { datasets },
-      } = chart
-
-      let newDSet = datasets.map(
-        ({ data, label, borderColor, pointRadius }, i) => {
-          return {
-            data: data
-              .map((v, i, a) => {
-                if (i % n != 0 || i + n > a.length) return
-                return a.slice(i, i + n).reduce((a, b) => a + b, 0) / n
-              })
-              .filter((A) => A !== undefined),
-            label: label + ' Avg',
-            borderColor,
-            pointRadius,
-            borderDash:
-              [1, 3].includes(chartIndex) && i % 2 == 1 ? [5] : undefined,
-          }
-        }
-      )
-
-      return {
-        type,
-        options,
-        data: {
-          labels: newDSet[0].data.map((_, i) => `Turn ${i + 1}`),
-          datasets: newDSet,
-        },
-      } as ChartConfiguration<'line', number[]>
-    })
-  }
+    return this.getCharts('avg')
+  }*/
 }
 
 function generateStates({ state, deltas }: MatchData) {
@@ -576,11 +349,11 @@ function generateStates({ state, deltas }: MatchData) {
   return states
 }
 
-function generateStateStatus({ units, gold }: State, { players }: MatchData) {
-  let status: Status = {}
+function generateStateStats({ units, gold }: State, { players }: MatchData) {
+  let stats: Stats = {}
 
   Object.values(players).forEach((_, playerId) => {
-    status[playerId] = {
+    stats[playerId] = {
       gold: gold['p_' + playerId] ?? gold[playerId],
       income: 0,
       armyValue: 0,
@@ -588,12 +361,16 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
       combatUnitCount: 0,
       groove: 0,
       maxGroove: 0,
+      commanderHealth: 0,
+      potential: 0,
     }
   })
 
   for (let i in units) {
     let unit = units[i]
     if (!unit) continue
+
+    let potential = 0
 
     let {
       playerId,
@@ -604,17 +381,22 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
     } = unit
     if (playerId < 0) continue
 
-    let playerStatus = status[playerId]
+    let playerStats = stats[playerId]
 
-    playerStatus.groove += grooveCharge
-    playerStatus.maxGroove += maxGroove
+    playerStats.groove += grooveCharge
+    playerStats.maxGroove += maxGroove
+
+    if (unit.unitClass.isCommander) {
+      playerStats.commanderHealth += health
+    }
 
     if (['city', 'hq', 'water_city'].includes(unitClassId)) {
-      playerStatus.income += 100
+      playerStats.income += 100
+      potential += 100
     }
 
     if (unitClassId != 'hq') {
-      playerStatus.unitCount++
+      playerStats.unitCount++
     }
 
     if (
@@ -628,12 +410,20 @@ function generateStateStatus({ units, gold }: State, { players }: MatchData) {
         'water_city',
       ].includes(unitClassId)
     ) {
-      playerStatus.combatUnitCount++
-      playerStatus.armyValue += Math.round((cost * health) / 100)
+      playerStats.combatUnitCount++
+      playerStats.armyValue += Math.round((cost * health) / 100)
     }
+
+    if (potential == 0) {
+      let h = health / 100
+      let healthVal = (h + 1 - Math.pow(1 - h, 4)) / 2
+      potential += cost * healthVal
+    }
+
+    playerStats.potential += potential
   }
 
-  return status
+  return stats
 }
 
 function generatePlayers(entries: Entry[], { players }: MatchData) {
