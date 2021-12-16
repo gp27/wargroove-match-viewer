@@ -1,5 +1,4 @@
 import type { ChartConfiguration, ChartDataset } from 'chart.js'
-import { initialUrlParams } from '../utils'
 import type { Match, Entry, Stats } from './match'
 
 type Dataset = ChartDataset<'line', number[]>
@@ -294,11 +293,13 @@ const namedChartTransforms: Record<
   }
 > = {
   turn_end: {
+    title_suffix: 'Turn End',
     label: playerTurnLabel,
     entryFilter: turnEndFilter,
   },
 
   turn_start: {
+    title_suffix: 'Turn Start',
     label: playerTurnLabel,
     entryFilter: turnStartFilter,
   },
@@ -335,6 +336,8 @@ function generateChartBuilder(
 
   let { label, title_suffix = '', entryFilter, transformFilter } = transf
 
+  let dataset_title = title
+
   if (title_suffix) {
     title += ' ' + title_suffix
   }
@@ -348,7 +351,7 @@ function generateChartBuilder(
     sets: sets.map(({ datum, name, opts }) => {
       return {
         datum,
-        init: defaultDatasetInit(name || title, opts),
+        init: defaultDatasetInit(name || dataset_title, opts),
       }
     }),
   }
@@ -408,6 +411,6 @@ export const getChartTransformNames = () => Object.keys(namedChartTransforms)
   }
 }
 
-if(initialUrlParams.ai){
-  (window as any)._charts.aiSetup()
+if (new URL(location.href).searchParams.has('ai_tools')) {
+  ;(window as any)._charts.aiSetup()
 }
