@@ -125,7 +125,7 @@ export type Stats = Record<
     commanderHealth: number
     //activeUnitCount: number
 
-    potential: number
+    potentials: Record<string, number>
   }
 >
 
@@ -352,7 +352,9 @@ function generateStates({ state, deltas }: MatchData) {
 function generateStateStats({ units, gold }: State, { players }: MatchData) {
   let stats: Stats = {}
 
-  Object.values(players).forEach((_, playerId) => {
+  const ps = Object.values(players)
+
+  ps.forEach((_, playerId) => {
     stats[playerId] = {
       gold: gold['p_' + playerId] ?? gold[playerId],
       income: 0,
@@ -362,7 +364,10 @@ function generateStateStats({ units, gold }: State, { players }: MatchData) {
       groove: 0,
       maxGroove: 0,
       commanderHealth: 0,
-      potential: 0,
+      potentials: {
+        v1: 0,
+        v2: 0,
+      },
     }
   })
 
@@ -370,16 +375,33 @@ function generateStateStats({ units, gold }: State, { players }: MatchData) {
     let unit = units[i]
     if (!unit) continue
 
-    let potential = 0
+    let potentials = {
+      v1: 0,
+      v2: 0,
+    }
 
     let {
       playerId,
       health,
       unitClassId,
-      unitClass: { cost, maxGroove = 0 },
+      unitClass: { cost, maxGroove = 0, isCommander },
       grooveCharge = 0,
     } = unit
+
+    let hasIncome = ['city', 'hq', 'water_city'].includes(unitClassId)
+    let isHQ = unitClassId == 'hq'
+
     if (playerId < 0) continue
+
+    let isStructure = [
+      'city',
+      'hq',
+      'barracks',
+      'port',
+      'tower',
+      'hideout',
+      'water_city',
+    ].includes(unitClassId)
 
     let playerStats = stats[playerId]
 
@@ -390,37 +412,34 @@ function generateStateStats({ units, gold }: State, { players }: MatchData) {
       playerStats.commanderHealth += health
     }
 
-    if (['city', 'hq', 'water_city'].includes(unitClassId)) {
+    if (hasIncome) {
       playerStats.income += 100
-      potential += 100
+      potentials.v1 += 100
+      potentials.v2 += 100
     }
 
-    if (unitClassId != 'hq') {
+    if (!isHQ) {
       playerStats.unitCount++
     }
 
-    if (
-      ![
-        'city',
-        'hq',
-        'barracks',
-        'port',
-        'tower',
-        'hideout',
-        'water_city',
-      ].includes(unitClassId)
-    ) {
+    let h = health / 100
+    let healthVal = (h + 1 - Math.pow(1 - h, 4)) / 2
+
+    if (!isStructure) {
       playerStats.combatUnitCount++
       playerStats.armyValue += Math.round((cost * health) / 100)
     }
 
-    if (potential == 0) {
-      let h = health / 100
-      let healthVal = (h + 1 - Math.pow(1 - h, 4)) / 2
-      potential += cost * healthVal
+    if (!hasIncome) {
+      potentials.v1 += cost * healthVal
     }
 
-    playerStats.potential += potential
+    if (!hasIncome || isHQ) {
+      potentials.v2 += (cost + 100) * healthVal * (isCommander ? 1.5 : 1)
+    }
+
+    playerStats.potentials.v1 += potentials.v1
+    playerStats.potentials.v2 += potentials.v2
   }
 
   return stats

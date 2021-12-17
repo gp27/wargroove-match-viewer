@@ -192,7 +192,7 @@ const moveLabel = (entry: Entry) => {
   let {
     turn: { turnNumber, playerId, entries: tEntries },
   } = entry
-  return `T${turnNumber}-P${playerId + 1}-M${tEntries.indexOf(entry) + 1}`
+  return `T${turnNumber}-P${playerId + 1}-M${tEntries.indexOf(entry)}`
 }
 
 const playerTurnLabel = (entry: Entry) => {
@@ -280,7 +280,7 @@ const namedChartDatasets: Record<
         datum: (stats) => stats.commanderHealth,
       },
     ],
-  }
+  },
 }
 
 const namedChartTransforms: Record<
@@ -327,7 +327,7 @@ function generateChartBuilder(
   let dset = namedChartDatasets[dataSetsName]
   let transf = namedChartTransforms[transformName]
 
-  if (!dset || !transf){
+  if (!dset || !transf) {
     console.error('Invalid chart generator names')
     return
   }
@@ -364,16 +364,19 @@ export function getChartsByName(match: Match, names: [string, string][]) {
 
 export const getChartDatasetNames = () => Object.keys(namedChartDatasets)
 export const getChartTransformNames = () => Object.keys(namedChartTransforms)
-
 ;(window as any)._charts = {
   namedChartDatasets,
   namedChartTransforms,
 
   aiSetup: () => {
     Object.assign(namedChartDatasets, {
-      potential: {
-        title: 'Potential',
-        sets: [{ datum: (stats) => stats.potential }],
+      potential1: {
+        title: 'Potential 1',
+        sets: [{ datum: (stats) => stats.potentials.v1 }],
+      },
+      potential2: {
+        title: 'Potential 2',
+        sets: [{ datum: (stats) => stats.potentials.v2 }],
       },
     })
 
@@ -408,7 +411,7 @@ export const getChartTransformNames = () => Object.keys(namedChartTransforms)
         },
       },
     })
-  }
+  },
 }
 
 if (new URL(location.href).searchParams.has('ai_tools')) {
